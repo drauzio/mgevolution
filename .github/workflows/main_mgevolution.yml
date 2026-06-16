@@ -27,7 +27,7 @@ jobs:
           node-version: '24.x'
 
       - name: Build frontend
-        run: cd frontend && npm ci && npm run build
+        run: cd frontend && npm install && npm run build
 
       - name: Copy frontend build to backend/public
         run: cp -r frontend/dist/. backend/public/
