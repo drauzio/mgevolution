@@ -7,7 +7,7 @@ const config = {
   user: process.env.DB_USER,
   password: process.env.DB_PASS,
   options: {
-    encrypt: process.env.DB_ENCRYPT === 'true',
+    encrypt: process.env.DB_ENCRYPT !== 'false',
     trustServerCertificate: true,
     ...(process.env.DB_INSTANCE ? { instanceName: process.env.DB_INSTANCE } : {}),
   },
