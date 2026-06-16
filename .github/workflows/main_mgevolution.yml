@@ -13,7 +13,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: read #This is required for actions/checkout
 
     steps:
       - uses: actions/checkout@v4
@@ -23,14 +23,11 @@ jobs:
         with:
           node-version: '24.x'
 
-      - name: Build frontend
-        run: cd frontend && npm ci && npm run build
-
-      - name: Copy frontend build to backend/public
-        run: cp -r frontend/dist/. backend/public/
-
-      - name: npm install backend
-        run: cd backend && npm ci --omit=dev
+      - name: npm install, build, and test
+        run: |
+          npm install
+          npm run build --if-present
+          npm run test --if-present
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
@@ -42,21 +39,21 @@ jobs:
     runs-on: ubuntu-latest
     needs: build
     permissions:
-      id-token: write
-      contents: read
+      id-token: write #This is required for requesting the JWT
+      contents: read #This is required for actions/checkout
 
     steps:
       - name: Download artifact from build job
         uses: actions/download-artifact@v4
         with:
           name: node-app
-
+      
       - name: Login to Azure
         uses: azure/login@v2
         with:
-          client-id: ${{ secrets.__clientidsecretname__ }}
-          tenant-id: ${{ secrets.__tenantidsecretname__ }}
-          subscription-id: ${{ secrets.__subscriptionidsecretname__ }}
+          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_F79268791C9048B88F769FF6DA42CA35 }}
+          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_20EB5DCC965841B8939074C6E0C8686B }}
+          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_31649632DD7D4D45ACA6BB300A1A08F1 }}
 
       - name: 'Deploy to Azure Web App'
         id: deploy-to-webapp
@@ -65,3 +62,4 @@ jobs:
           app-name: 'mgevolution'
           slot-name: 'Production'
           package: .
+          
