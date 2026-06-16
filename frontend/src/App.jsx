@@ -23,6 +23,7 @@ import TreinoForm from './pages/admin/TreinoForm'
 import ExercicioList from './pages/admin/ExercicioList'
 import ExercicioForm from './pages/admin/ExercicioForm'
 import AdminDieta from './pages/admin/AdminDieta'
+import DietaForm from './pages/admin/DietaForm'
 import AdminAgenda from './pages/admin/AdminAgenda'
 import AdminPersonais from './pages/admin/AdminPersonais'
 import AvaliacaoList from './pages/admin/AvaliacaoList'
@@ -79,6 +80,8 @@ export default function App() {
               <Route path="/admin/questionario/novo" element={<QuestionarioForm />} />
               <Route path="/admin/questionario/:id" element={<QuestionarioForm />} />
               <Route path="/admin/dieta" element={<AdminDieta />} />
+              <Route path="/admin/dieta/novo" element={<DietaForm />} />
+              <Route path="/admin/dieta/:id" element={<DietaForm />} />
               <Route path="/admin/agenda" element={<AdminAgenda />} />
               <Route path="/admin/personais" element={<AdminPersonais />} />
             </Route>

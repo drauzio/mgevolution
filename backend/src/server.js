@@ -23,6 +23,7 @@ app.use('/api/treinos',     authMiddleware, require('./routes/treino.routes'))
 app.use('/api/exercicios',  authMiddleware, require('./routes/exercicio.routes'))
 app.use('/api/shape-score', authMiddleware, require('./routes/shape-score.routes'))
 app.use('/api/coach-ia',    authMiddleware, require('./routes/coach-ia.routes'))
+app.use('/api/dieta',       authMiddleware, require('./routes/dieta.routes'))
 
 // Error handler global
 app.use((err, req, res, next) => {
