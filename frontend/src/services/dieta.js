@@ -5,3 +5,5 @@ export const buscarPorId  = (id)          => api.get(`/dieta/${id}`).then(r => r
 export const criar        = (dados)       => api.post('/dieta', dados).then(r => r.data)
 export const atualizar    = (id, dados)   => api.put(`/dieta/${id}`, dados).then(r => r.data)
 export const buscarMeuPlano = ()          => api.get('/dieta/meu-plano').then(r => r.data)
+export const clonar           = (id, idUsuario) => api.post(`/dieta/${id}/clonar`, { id_usuario: idUsuario }).then(r => r.data)
+export const dadosAluno       = (idUsuario)     => api.get(`/dieta/aluno/${idUsuario}/dados`).then(r => r.data)

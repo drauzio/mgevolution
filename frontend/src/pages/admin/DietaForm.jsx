@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import useSWR from 'swr'
-import { Plus, Trash2, ChevronDown, ChevronUp } from 'lucide-react'
+import { Plus, Trash2, ChevronDown, ChevronUp, AlertTriangle } from 'lucide-react'
 import { useAuthContext } from '../../context/AuthContext'
 import { BtnSalvar, BtnCancelar } from '../../components/ui/Botoes'
 import * as alunosService from '../../services/alunos'
 import * as dietaService from '../../services/dieta'
+import * as nutricionistasService from '../../services/nutricionistas'
 
 function Campo({ label, children }) {
   return (
@@ -89,8 +90,14 @@ export default function DietaForm() {
   const { token } = useAuthContext()
 
   const { data: alunos = [] } = useSWR(token ? 'alunos-lista' : null, () => alunosService.listar())
+  const { data: nutricionistas = [] } = useSWR(token ? 'nutricionistas-lista' : null, () => nutricionistasService.listar({ status: 'ativos' }))
 
-  const [form, setForm] = useState({ id_usuario: '', nome: '', objetivo: '', calorias_meta: '', proteina_meta: '', data_inicio: '', data_fim: '', observacoes: '' })
+  const [form, setForm] = useState({ id_usuario: '', id_nutricionista: '', nome: '', objetivo: '', calorias_meta: '', proteina_meta: '', data_inicio: '', data_fim: '', observacoes: '' })
+
+  const { data: dadosAluno } = useSWR(
+    token && form.id_usuario ? ['dieta-dados-aluno', form.id_usuario] : null,
+    () => dietaService.dadosAluno(form.id_usuario)
+  )
   const [refeicoes, setRefeicoes] = useState([novaRefeicao(1)])
   const [abertas, setAbertas] = useState({ 0: true })
   const [salvando, setSalvando] = useState(false)
@@ -102,22 +109,23 @@ export default function DietaForm() {
     dietaService.buscarPorId(id)
       .then(data => {
         setForm({
-          id_usuario: data.id_usuario || '',
-          nome: data.nome || '',
-          objetivo: data.objetivo || '',
-          calorias_meta: data.calorias_meta ?? '',
-          proteina_meta: data.proteina_meta ?? '',
-          data_inicio: data.data_inicio?.slice(0, 10) || '',
-          data_fim: data.data_fim?.slice(0, 10) || '',
-          observacoes: data.observacoes || '',
+          id_usuario:       data.id_usuario ?? '',
+          id_nutricionista: data.id_nutricionista ?? '',
+          nome:             data.nome || '',
+          objetivo:         data.objetivo || '',
+          calorias_meta:    data.calorias_meta ?? '',
+          proteina_meta:    data.proteina_meta ?? '',
+          data_inicio:      data.data_inicio?.slice(0, 10) || '',
+          data_fim:         data.data_fim?.slice(0, 10) || '',
+          observacoes:      data.observacoes || '',
         })
         setRefeicoes((data.refeicoes || []).map((r, i) => ({
-          _uid: r.id_refeicao,
+          _uid: r.id_dieta_refeicao,
           nome: r.nome,
           horario: r.horario || '',
           ordem: r.ordem,
           itens: (r.itens || []).map(it => ({
-            _uid: it.id_item,
+            _uid: it.id_dieta_refeicao_item,
             descricao: it.descricao,
             quantidade: it.quantidade ?? '',
             unidade: it.unidade || 'g',
@@ -223,6 +231,13 @@ export default function DietaForm() {
             </select>
           </Campo>
 
+          <Campo label="Nutricionista responsável">
+            <select value={form.id_nutricionista} onChange={setF('id_nutricionista')} style={{ ...inputStyle, cursor: 'pointer' }}>
+              <option value="">Sem nutricionista</option>
+              {nutricionistas.map(n => <option key={n.id_usuario} value={n.id_usuario}>{n.nome}</option>)}
+            </select>
+          </Campo>
+
           <Campo label="Nome do plano">
             <input style={inputStyle} placeholder="Ex: Dieta de Cutting" value={form.nome} onChange={setF('nome')} />
           </Campo>
@@ -253,6 +268,68 @@ export default function DietaForm() {
             <input style={inputStyle} placeholder="Orientações gerais..." value={form.observacoes} onChange={setF('observacoes')} />
           </Campo>
         </div>
+
+        {/* Dados da avaliação do aluno */}
+        {dadosAluno && (
+          <div style={{ padding: '14px 18px', borderRadius: 12, background: '#F7F3EE', border: '1px solid #E0D6CA', display: 'flex', flexDirection: 'column', gap: 10 }}>
+            <p style={{ fontSize: 11, fontWeight: 700, color: '#8A7F76', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Dados da avaliação</p>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
+              {dadosAluno.objetivo && (
+                <div style={{ padding: '6px 12px', borderRadius: 8, background: '#FFFFFF', border: '1px solid #E0D6CA' }}>
+                  <p style={{ fontSize: 10, color: '#8A7F76', fontWeight: 700, marginBottom: 2 }}>OBJETIVO</p>
+                  <p style={{ fontSize: 13, fontWeight: 600, color: '#1A1A1A' }}>{dadosAluno.objetivo}</p>
+                </div>
+              )}
+              {dadosAluno.nivel && (
+                <div style={{ padding: '6px 12px', borderRadius: 8, background: '#FFFFFF', border: '1px solid #E0D6CA' }}>
+                  <p style={{ fontSize: 10, color: '#8A7F76', fontWeight: 700, marginBottom: 2 }}>NÍVEL</p>
+                  <p style={{ fontSize: 13, fontWeight: 600, color: '#1A1A1A' }}>{dadosAluno.nivel}</p>
+                </div>
+              )}
+              {dadosAluno.sexo && (
+                <div style={{ padding: '6px 12px', borderRadius: 8, background: '#FFFFFF', border: '1px solid #E0D6CA' }}>
+                  <p style={{ fontSize: 10, color: '#8A7F76', fontWeight: 700, marginBottom: 2 }}>SEXO</p>
+                  <p style={{ fontSize: 13, fontWeight: 600, color: '#1A1A1A' }}>{dadosAluno.sexo === 'M' ? 'Masculino' : 'Feminino'}</p>
+                </div>
+              )}
+              {dadosAluno.idade && (
+                <div style={{ padding: '6px 12px', borderRadius: 8, background: '#FFFFFF', border: '1px solid #E0D6CA' }}>
+                  <p style={{ fontSize: 10, color: '#8A7F76', fontWeight: 700, marginBottom: 2 }}>IDADE</p>
+                  <p style={{ fontSize: 13, fontWeight: 600, color: '#1A1A1A' }}>{dadosAluno.idade} anos</p>
+                </div>
+              )}
+              {dadosAluno.peso && (
+                <div style={{ padding: '6px 12px', borderRadius: 8, background: '#FFFFFF', border: '1px solid #E0D6CA' }}>
+                  <p style={{ fontSize: 10, color: '#8A7F76', fontWeight: 700, marginBottom: 2 }}>PESO</p>
+                  <p style={{ fontSize: 13, fontWeight: 600, color: '#1A1A1A' }}>{dadosAluno.peso} kg</p>
+                </div>
+              )}
+              {dadosAluno.altura && (
+                <div style={{ padding: '6px 12px', borderRadius: 8, background: '#FFFFFF', border: '1px solid #E0D6CA' }}>
+                  <p style={{ fontSize: 10, color: '#8A7F76', fontWeight: 700, marginBottom: 2 }}>ALTURA</p>
+                  <p style={{ fontSize: 13, fontWeight: 600, color: '#1A1A1A' }}>{dadosAluno.altura} cm</p>
+                </div>
+              )}
+              {dadosAluno.peso && dadosAluno.altura && (
+                <div style={{ padding: '6px 12px', borderRadius: 8, background: '#FFFFFF', border: '1px solid #E0D6CA' }}>
+                  <p style={{ fontSize: 10, color: '#8A7F76', fontWeight: 700, marginBottom: 2 }}>IMC</p>
+                  <p style={{ fontSize: 13, fontWeight: 600, color: '#1A1A1A' }}>
+                    {(dadosAluno.peso / Math.pow(dadosAluno.altura / 100, 2)).toFixed(1)}
+                  </p>
+                </div>
+              )}
+            </div>
+            {dadosAluno.tem_lesao && (
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, padding: '8px 12px', borderRadius: 8, background: 'rgba(234,179,8,0.08)', border: '1px solid rgba(234,179,8,0.3)' }}>
+                <AlertTriangle size={14} color="#CA8A04" style={{ flexShrink: 0, marginTop: 1 }} />
+                <div>
+                  <p style={{ fontSize: 11, fontWeight: 700, color: '#CA8A04', marginBottom: 2 }}>LESÃO / LIMITAÇÃO</p>
+                  <p style={{ fontSize: 12, color: '#6B6560' }}>{dadosAluno.lesao_detalhe || 'Possui lesão (sem descrição)'}</p>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Totais calculados */}
         {(totalCal > 0 || totalProt > 0) && (

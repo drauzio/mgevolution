@@ -96,12 +96,12 @@ export default function Dieta() {
         {(plano.refeicoes || []).map((r, i) => {
           const calRef  = (r.itens || []).reduce((a, it) => a + (it.calorias || 0), 0)
           const protRef = (r.itens || []).reduce((a, it) => a + (it.proteina || 0), 0)
-          const aberta  = !!abertas[r.id_refeicao]
+          const aberta  = !!abertas[r.id_dieta_refeicao]
 
           return (
-            <div key={r.id_refeicao} style={{ borderTop: i > 0 ? '1px solid #F0EBE4' : 'none' }}>
+            <div key={r.id_dieta_refeicao} style={{ borderTop: i > 0 ? '1px solid #F0EBE4' : 'none' }}>
               <div
-                onClick={() => r.itens?.length && toggleRefeicao(r.id_refeicao)}
+                onClick={() => r.itens?.length && toggleRefeicao(r.id_dieta_refeicao)}
                 style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '16px 24px', cursor: r.itens?.length ? 'pointer' : 'default', transition: 'background 0.15s' }}
                 onMouseEnter={e => { if (r.itens?.length) e.currentTarget.style.background = '#FDFAF7' }}
                 onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
@@ -134,7 +134,7 @@ export default function Dieta() {
               {aberta && r.itens?.length > 0 && (
                 <div style={{ background: '#FDFAF7', padding: '0 24px 16px', display: 'flex', flexDirection: 'column', gap: 8 }}>
                   {r.itens.map(it => (
-                    <div key={it.id_item} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '8px 12px', background: '#FFFFFF', borderRadius: 10, border: '1px solid #F0EBE4' }}>
+                    <div key={it.id_dieta_refeicao_item} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '8px 12px', background: '#FFFFFF', borderRadius: 10, border: '1px solid #F0EBE4' }}>
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <p style={{ fontSize: 13, fontWeight: 600, color: '#1A1A1A' }}>{it.descricao}</p>
                         {it.quantidade && <p style={{ fontSize: 11, color: '#8A7F76', marginTop: 2 }}>{it.quantidade} {it.unidade}</p>}

@@ -37,4 +37,20 @@ async function meuPlano(req, res, next) {
   } catch (err) { next(err) }
 }
 
-module.exports = { listar, buscar, criar, atualizar, meuPlano }
+async function dadosAluno(req, res, next) {
+  try {
+    const dados = await svc.dadosAlunoParaDieta(Number(req.params.id))
+    res.json(dados || null)
+  } catch (err) { next(err) }
+}
+
+async function clonar(req, res, next) {
+  try {
+    const { id_usuario } = req.body
+    if (!id_usuario) return res.status(400).json({ erro: 'id_usuario é obrigatório' })
+    const result = await svc.clonar(Number(req.params.id), Number(id_usuario), req.usuario.id)
+    res.status(201).json(result)
+  } catch (err) { next(err) }
+}
+
+module.exports = { listar, buscar, criar, atualizar, meuPlano, clonar, dadosAluno }

@@ -67,4 +67,19 @@ async function toggleAtivo(id) {
     .query(`UPDATE dbo.exercicio SET ativo = ~ativo WHERE id_exercicio = @id`)
 }
 
-module.exports = { listar, buscarPorId, criar, atualizar, toggleAtivo }
+async function salvarVideoFilekey(id, filekey) {
+  const pool = await getPool()
+  await pool.request()
+    .input('id',      sql.Int,          id)
+    .input('filekey', sql.VarChar(500),  filekey)
+    .query(`UPDATE dbo.exercicio SET video_url = @filekey WHERE id_exercicio = @id`)
+}
+
+async function removerVideoFilekey(id) {
+  const pool = await getPool()
+  await pool.request()
+    .input('id', sql.Int, id)
+    .query(`UPDATE dbo.exercicio SET video_url = NULL WHERE id_exercicio = @id`)
+}
+
+module.exports = { listar, buscarPorId, criar, atualizar, toggleAtivo, salvarVideoFilekey, removerVideoFilekey }
