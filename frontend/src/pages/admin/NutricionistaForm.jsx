@@ -4,6 +4,8 @@ import { BtnSalvar, BtnCancelar, BtnExcluir } from '../../components/ui/Botoes'
 import * as nutricionistasService from '../../services/nutricionistas'
 import { mascaraFone } from '../../utils/formatters'
 
+const TIPOS_DOCUMENTO = ['CPF', 'RG', 'CRN', 'CREF', 'CRM', 'CRP', 'CREFITO', 'Outro']
+
 function Campo({ label, children }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
@@ -27,7 +29,7 @@ export default function NutricionistaForm() {
   const isEdicao = !!id
   const navigate = useNavigate()
 
-  const [form, setForm] = useState({ nome: '', email: '', telefone: '', senha: '' })
+  const [form, setForm] = useState({ nome: '', email: '', telefone: '', tipo_documento: '', numero_documento: '', senha: '' })
   const [erro, setErro] = useState(null)
   const [salvando, setSalvando] = useState(false)
   const [inativando, setInativando] = useState(false)
@@ -38,7 +40,14 @@ export default function NutricionistaForm() {
     if (!isEdicao) return
     nutricionistasService.buscarPorId(id)
       .then(data => {
-        setForm({ nome: data.nome, email: data.email, telefone: mascaraFone(data.telefone), senha: '' })
+        setForm({
+          nome: data.nome,
+          email: data.email,
+          telefone: mascaraFone(data.telefone),
+          tipo_documento: data.tipo_documento || '',
+          numero_documento: data.numero_documento || '',
+          senha: '',
+        })
         setNutriAtiva(data.ativo)
       })
       .finally(() => setCarregando(false))
@@ -48,7 +57,6 @@ export default function NutricionistaForm() {
 
   async function salvar() {
     if (!form.nome || !form.email) { setErro('Nome e e-mail são obrigatórios'); return }
-    if (!isEdicao && !form.senha) { setErro('Senha é obrigatória para nova nutricionista'); return }
     setSalvando(true); setErro(null)
     try {
       if (isEdicao) {
@@ -124,8 +132,21 @@ export default function NutricionistaForm() {
             />
           </Campo>
 
-          <Campo label={isEdicao ? 'Nova senha (deixe em branco para não alterar)' : 'Senha provisória'}>
+          <Campo label={isEdicao ? 'Nova senha (deixe em branco para não alterar)' : 'Senha provisória (obrigatória para novo usuário)'}>
             <input style={inputStyle} type="password" placeholder="••••••••" value={form.senha} onChange={set('senha')} />
+          </Campo>
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: '140px 1fr', gap: 16 }}>
+          <Campo label="Tipo de documento">
+            <select style={{ ...inputStyle, cursor: 'pointer' }} value={form.tipo_documento} onChange={set('tipo_documento')}>
+              <option value="">— Selecione —</option>
+              {TIPOS_DOCUMENTO.map(t => <option key={t} value={t}>{t}</option>)}
+            </select>
+          </Campo>
+
+          <Campo label="Número do documento">
+            <input style={inputStyle} placeholder="Ex: 12345-P" value={form.numero_documento} onChange={set('numero_documento')} />
           </Campo>
         </div>
 

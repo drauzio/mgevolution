@@ -3,7 +3,7 @@
 -- Depende: 003_menu.sql
 -- ============================================================
 
-DECLARE @m_admin INT = (SELECT id_menu FROM dbo.menu WHERE nome = 'Admin');
+DECLARE @m_admin INT = (SELECT id_menu FROM dbo.menu WHERE nome = 'Administração');
 
 IF NOT EXISTS (SELECT 1 FROM dbo.menu_item WHERE caminho = '/admin/avaliacoes')
 BEGIN

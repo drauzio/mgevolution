@@ -1,12 +1,13 @@
 import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom'
-import { MoreHorizontal, LogOut, Menu, X, Bell } from 'lucide-react'
+import { Home, LogOut, Menu, X } from 'lucide-react'
 import { useState } from 'react'
 import { useAuthContext } from '../../context/AuthContext'
 import { APP } from '../../config/app'
 import { useMenu } from '../../hooks/useMenu'
 import { getIcon } from '../../utils/menuIcons'
+import NotificacaoBell from './NotificacaoBell'
 
-const MAIS_ITEM = { caminho: '/mais', icone: 'MoreHorizontal', nome: 'Mais' }
+const HOME_ITEM = { caminho: '/dashboard', icone: 'Home', nome: 'Início' }
 
 function SideNavItem({ to, Icon, label, onClick, exact }) {
   return (
@@ -14,16 +15,43 @@ function SideNavItem({ to, Icon, label, onClick, exact }) {
       to={to}
       end={exact}
       onClick={onClick}
-      className="flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-semibold transition-all border border-transparent"
-      style={({ isActive }) => isActive
-        ? { background: 'rgba(204,26,26,0.08)', color: '#CC1A1A', borderColor: 'rgba(204,26,26,0.2)' }
-        : { color: '#6B6560' }
-      }
-      onMouseEnter={e => { e.currentTarget.style.background = '#F0EBE4'; e.currentTarget.style.color = '#1A1A1A' }}
-      onMouseLeave={e => { e.currentTarget.style.background = ''; e.currentTarget.style.color = '' }}
+      style={({ isActive }) => ({
+        display: 'flex', alignItems: 'center', gap: 10,
+        padding: '7px 10px',
+        borderRadius: 9,
+        fontSize: 13, fontWeight: isActive ? 700 : 500,
+        textDecoration: 'none', transition: 'all 0.15s',
+        background: isActive ? 'rgba(204,26,26,0.08)' : 'transparent',
+        color: isActive ? '#CC1A1A' : '#6B6560',
+        borderLeft: `3px solid ${isActive ? '#CC1A1A' : 'transparent'}`,
+      })}
+      onMouseEnter={e => {
+        if (e.currentTarget.style.borderLeftColor !== 'rgb(204, 26, 26)') {
+          e.currentTarget.style.background = '#F0EBE4'
+          e.currentTarget.style.color = '#1A1A1A'
+        }
+      }}
+      onMouseLeave={e => {
+        if (e.currentTarget.style.borderLeftColor !== 'rgb(204, 26, 26)') {
+          e.currentTarget.style.background = 'transparent'
+          e.currentTarget.style.color = '#6B6560'
+        }
+      }}
     >
-      <Icon size={17} strokeWidth={1.7} />
-      <span>{label}</span>
+      {({ isActive }) => (
+        <>
+          <div style={{
+            width: 28, height: 28, borderRadius: 7, flexShrink: 0,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            background: isActive ? 'rgba(204,26,26,0.12)' : 'rgba(0,0,0,0.04)',
+            color: isActive ? '#CC1A1A' : '#8A7F76',
+            transition: 'all 0.15s',
+          }}>
+            <Icon size={14} strokeWidth={isActive ? 2.2 : 1.7} />
+          </div>
+          <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{label}</span>
+        </>
+      )}
     </NavLink>
   )
 }
@@ -35,8 +63,8 @@ function Sidebar({ onClose }) {
     <div className="flex flex-col h-full">
       {/* Logo */}
       <div className="flex items-center gap-3" style={{ height: 64, padding: '0 16px 0 20px', borderBottom: '1px solid #E0D6CA', flexShrink: 0 }}>
-        <div className="w-9 h-9 rounded-xl flex items-center justify-center font-black text-white text-sm shrink-0" style={{ background: '#CC1A1A' }}>
-          {APP.sigla}
+        <div style={{ width: 40, height: 40, borderRadius: 10, background: '#FFFFFF', boxShadow: '0 1px 4px rgba(0,0,0,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, padding: 2 }}>
+          <img src="/logo_mg.png" alt={APP.sigla} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
         </div>
         <div className="min-w-0 flex-1">
           <p className="font-black text-sm leading-none tracking-wide truncate" style={{ color: '#1A1A1A' }}>
@@ -66,11 +94,22 @@ function Sidebar({ onClose }) {
             else grupos.push({ id_menu: item.id_menu, grupo: item.grupo, itens: [item] })
           })
           return grupos.map((grupo, gi) => (
-            <div key={grupo.id_menu}>
-              {gi > 0 && (
-                <div style={{ margin: '10px 4px', height: 1, background: '#E0D6CA' }} />
-              )}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+            <div key={grupo.id_menu} style={{ marginBottom: 6 }}>
+              {gi > 0 && <div style={{ height: 1, background: '#F0EBE4', margin: '6px 4px 10px' }} />}
+
+              {grupo.grupo && (() => {
+                const GrupoIcon = getIcon(grupo.grupo_icone || grupo.itens[0]?.icone)
+                return (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '0 8px', marginBottom: 4 }}>
+                    <GrupoIcon size={11} strokeWidth={1.8} style={{ color: '#B0A89E', flexShrink: 0 }} />
+                    <span style={{ fontSize: 10, fontWeight: 800, color: '#B0A89E', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+                      {grupo.grupo}
+                    </span>
+                  </div>
+                )
+              })()}
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
                 {grupo.itens.map(item => {
                   const Icon = getIcon(item.icone)
                   return (
@@ -106,8 +145,8 @@ function TopBar({ onMenuClick }) {
 
   return (
     <header
-      className="sticky top-0 z-40 flex items-center gap-4 h-16 backdrop-blur-sm"
-      style={{ paddingLeft: 40, paddingRight: 32, background: 'rgba(255,255,255,0.95)', borderBottom: '1px solid #E0D6CA', boxShadow: '0 1px 8px rgba(0,0,0,0.05)' }}
+      className="sticky top-0 z-40 flex items-center gap-3 h-16 backdrop-blur-sm"
+      style={{ paddingLeft: 24, paddingRight: 24, background: 'rgba(255,255,255,0.95)', borderBottom: '1px solid #E0D6CA', boxShadow: '0 1px 8px rgba(0,0,0,0.05)' }}
     >
       {onMenuClick && (
         <button onClick={onMenuClick} className="lg:hidden p-1 transition-colors" style={{ color: '#8A7F76' }}>
@@ -118,14 +157,7 @@ function TopBar({ onMenuClick }) {
       <h1 className="font-black text-base uppercase tracking-wide flex-1" style={{ color: '#1A1A1A' }}>{titulo}</h1>
 
       <div className="flex items-center gap-3">
-        <button
-          className="w-9 h-9 rounded-lg flex items-center justify-center transition-colors"
-          style={{ background: '#F7F3EE', border: '1px solid #E0D6CA', color: '#8A7F76' }}
-          onMouseEnter={e => { e.currentTarget.style.color = '#1A1A1A'; e.currentTarget.style.borderColor = '#C4B9A8' }}
-          onMouseLeave={e => { e.currentTarget.style.color = '#8A7F76'; e.currentTarget.style.borderColor = '#E0D6CA' }}
-        >
-          <Bell size={16} strokeWidth={1.8} />
-        </button>
+        <NotificacaoBell />
 
         <div style={{ width: 1, height: 28, background: '#E0D6CA', flexShrink: 0 }} />
 
@@ -159,11 +191,14 @@ function TopBar({ onMenuClick }) {
 
 function BottomNav() {
   const { itens } = useMenu()
-  const primeiros = itens.slice(0, 4)
-  const todos = [...primeiros, MAIS_ITEM]
+  const semDashboard = itens.filter(i => i.caminho !== '/dashboard').slice(0, 4)
+  const todos = [HOME_ITEM, ...semDashboard]
 
   return (
-    <nav className="lg:hidden fixed bottom-0 inset-x-0 z-40 flex" style={{ background: '#FFFFFF', borderTop: '1px solid #E0D6CA' }}>
+    <nav
+      className="lg:hidden fixed bottom-0 inset-x-0 z-40 flex"
+      style={{ background: '#FFFFFF', borderTop: '1px solid #E0D6CA', paddingBottom: 'env(safe-area-inset-bottom)' }}
+    >
       {todos.map(item => {
         const Icon = getIcon(item.icone)
         return (
@@ -171,11 +206,30 @@ function BottomNav() {
             key={item.caminho}
             to={item.caminho}
             end={item.caminho === '/dashboard'}
-            className="flex-1 flex flex-col items-center gap-1 py-2.5 text-[10px] font-semibold transition-colors"
-            style={({ isActive }) => ({ color: isActive ? '#CC1A1A' : '#B0A89E' })}
+            style={({ isActive }) => ({
+              flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+              gap: 3, padding: '10px 4px 8px', textDecoration: 'none', position: 'relative',
+              color: isActive ? '#CC1A1A' : '#B0A89E',
+            })}
           >
-            <Icon size={19} strokeWidth={1.8} />
-            <span>{item.nome}</span>
+            {({ isActive }) => (
+              <>
+                {isActive && (
+                  <div style={{ position: 'absolute', top: 0, left: '50%', transform: 'translateX(-50%)', width: 28, height: 3, background: '#CC1A1A', borderRadius: '0 0 3px 3px' }} />
+                )}
+                <div style={{
+                  width: 36, height: 36, borderRadius: 10,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  background: isActive ? 'rgba(204,26,26,0.1)' : 'transparent',
+                  transition: 'all 0.15s',
+                }}>
+                  <Icon size={19} strokeWidth={isActive ? 2.2 : 1.7} />
+                </div>
+                <span style={{ fontSize: 10, fontWeight: isActive ? 700 : 500, lineHeight: 1 }}>
+                  {item.nome}
+                </span>
+              </>
+            )}
           </NavLink>
         )
       })}

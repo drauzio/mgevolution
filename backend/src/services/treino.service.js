@@ -63,7 +63,7 @@ async function buscarCompleto(idProtocolo) {
   const exercicios = await pool.request()
     .input('id', sql.Int, idProtocolo)
     .query(`
-      SELECT tde.*, e.nome AS exercicio_nome, e.grupo_muscular, e.equipamento
+      SELECT tde.*, e.nome AS exercicio_nome, e.grupo_muscular, e.equipamento, e.video_url
       FROM dbo.treino_dia_exercicio tde
       JOIN dbo.treino_dia td ON td.id_treino_dia = tde.id_treino_dia
       JOIN dbo.exercicio  e  ON e.id_exercicio   = tde.id_exercicio

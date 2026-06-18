@@ -29,4 +29,12 @@ async function media(req, res) {
   }
 }
 
-module.exports = { registrar, historico, media }
+async function resumo(req, res) {
+  try {
+    res.json(await service.resumo(req.usuario.id))
+  } catch (e) {
+    res.status(500).json({ erro: 'Erro ao buscar resumo' })
+  }
+}
+
+module.exports = { registrar, historico, media, resumo }

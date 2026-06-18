@@ -1,6 +1,7 @@
 const multer = require('multer')
 const svc = require('../services/exercicio.service')
 const { uploadBuffer, gerarSasReadUrl, deleteBlob } = require('../utils/azureBlob')
+const blobPaths = require('../utils/blobPaths')
 
 const uploadMiddleware = multer({
   storage: multer.memoryStorage(),
@@ -68,12 +69,7 @@ function uploadVideo(req, res) {
         try { await deleteBlob(ex.video_url) } catch (_) {}
       }
 
-      const ext = req.file.mimetype === 'video/quicktime' ? 'mov'
-                : req.file.mimetype === 'video/webm'      ? 'webm'
-                : req.file.mimetype === 'video/avi'       ? 'avi'
-                : 'mp4'
-
-      const blobName = `mgevolution/exercicios/${id}/video.${ext}`
+      const blobName = blobPaths.videoExercicio({ id_exercicio: id, mimeType: req.file.mimetype })
       await uploadBuffer({ buffer: req.file.buffer, blobName, contentType: req.file.mimetype })
       await svc.salvarVideoFilekey(id, blobName)
 

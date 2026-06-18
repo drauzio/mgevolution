@@ -1,6 +1,7 @@
 -- ============================================================
 -- 000 - Criar banco de dados
--- Execute conectado ao master: sqlcmd -S localhost\SQLEXPRESS -E -i 000_create_database.sql
+-- Execute conectado ao master:
+--   sqlcmd -S localhost\SQLEXPRESS -E -i 000_create_database.sql
 -- ============================================================
 
 USE master;
@@ -18,6 +19,3 @@ GO
 
 USE mgevolution;
 GO
-
-admin@mgevolution.com
-Admin@123

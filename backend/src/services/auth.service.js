@@ -95,4 +95,57 @@ async function criarUsuario({ nome, email, cpf, senha, administrador = false }) 
   return result.recordset[0].id_usuario
 }
 
-module.exports = { login, registro, criarUsuario }
+async function esqueciSenha(email) {
+  const pool = await getPool()
+
+  const result = await pool.request()
+    .input('email', sql.VarChar(120), email)
+    .query(`SELECT id_usuario, nome, email FROM dbo.usuario WHERE email = @email AND ativo = 1`)
+
+  if (result.recordset.length === 0) return // silencia para não revelar e-mails cadastrados
+
+  const usuario = result.recordset[0]
+
+  const token = jwt.sign(
+    { id: usuario.id_usuario, email: usuario.email, type: 'reset' },
+    process.env.JWT_SECRET,
+    { expiresIn: '1h' }
+  )
+
+  const appUrl = process.env.APP_URL || 'http://localhost:5173'
+  const link = `${appUrl}/redefinir-senha?token=${token}`
+
+  const { enviarRedefinicaoSenha } = require('./email.service')
+  await enviarRedefinicaoSenha(usuario.email, usuario.nome, link)
+}
+
+async function redefinirSenha(token, novaSenha) {
+  let payload
+  try {
+    payload = jwt.verify(token, process.env.JWT_SECRET)
+  } catch {
+    throw { status: 400, mensagem: 'Link inválido ou expirado' }
+  }
+
+  if (payload.type !== 'reset') throw { status: 400, mensagem: 'Token inválido' }
+
+  if (!novaSenha || novaSenha.length < 6) {
+    throw { status: 400, mensagem: 'A senha deve ter no mínimo 6 caracteres' }
+  }
+
+  const pool = await getPool()
+  const hash = await bcrypt.hash(novaSenha, 10)
+
+  const result = await pool.request()
+    .input('id',   sql.Int,            payload.id)
+    .input('hash', sql.VarBinary(256), Buffer.from(hash))
+    .query(`
+      UPDATE dbo.usuario
+      SET senha_hash = @hash, senha_provisoria = 0
+      WHERE id_usuario = @id AND ativo = 1
+    `)
+
+  if (result.rowsAffected[0] === 0) throw { status: 404, mensagem: 'Usuário não encontrado' }
+}
+
+module.exports = { login, registro, criarUsuario, esqueciSenha, redefinirSenha }

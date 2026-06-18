@@ -15,6 +15,8 @@ async function listar({ busca = '', status = 'todos' } = {}) {
       u.nome,
       u.email,
       u.telefone,
+      u.tipo_documento,
+      u.numero_documento,
       u.ativo,
       CONVERT(VARCHAR(10), u.data_criacao, 103) AS data_criacao,
       (
@@ -33,19 +35,73 @@ async function listar({ busca = '', status = 'todos' } = {}) {
   return result.recordset
 }
 
-async function criar({ nome, email, telefone, senha }) {
+async function criar({ nome, email, telefone, tipo_documento, numero_documento, senha }) {
   const pool = await getPool()
+
+  // Verifica se já existe usuário com este e-mail
+  const existente = await pool.request()
+    .input('email', sql.VarChar(120), email)
+    .query(`SELECT id_usuario FROM dbo.usuario WHERE email = @email`)
+
+  if (existente.recordset.length > 0) {
+    const id = existente.recordset[0].id_usuario
+
+    // Verifica se já tem perfil nutricionista ativo
+    const jaVinculado = await pool.request()
+      .input('id', sql.Int, id)
+      .query(`
+        SELECT 1 FROM dbo.usuario_perfil up
+        INNER JOIN dbo.perfil p ON p.id_perfil = up.id_perfil
+        WHERE up.id_usuario = @id AND p.nome = 'nutricionista' AND up.ativo = 1
+      `)
+
+    if (jaVinculado.recordset.length > 0) {
+      const err = new Error('Já existe uma nutricionista cadastrada com este e-mail.')
+      err.status = 409
+      throw err
+    }
+
+    // Vincula ao perfil nutricionista e atualiza documento
+    await pool.request()
+      .input('id',               sql.Int,         id)
+      .input('tipo_documento',   sql.VarChar(20),  tipo_documento   || null)
+      .input('numero_documento', sql.VarChar(30),  numero_documento || null)
+      .query(`
+        UPDATE dbo.usuario
+        SET tipo_documento = @tipo_documento, numero_documento = @numero_documento
+        WHERE id_usuario = @id
+      `)
+
+    await pool.request()
+      .input('id_usuario', sql.Int, id)
+      .query(`
+        INSERT INTO dbo.usuario_perfil (id_usuario, id_perfil)
+        SELECT @id_usuario, id_perfil FROM dbo.perfil WHERE nome = 'nutricionista'
+      `)
+
+    return { id, vinculado: true }
+  }
+
+  // Usuário novo — senha obrigatória
+  if (!senha) {
+    const err = new Error('Senha é obrigatória para criar um novo usuário.')
+    err.status = 400
+    throw err
+  }
+
   const hash = await bcrypt.hash(senha, 10)
 
   const result = await pool.request()
-    .input('nome',     sql.VarChar(120),  nome)
-    .input('email',    sql.VarChar(120),  email)
-    .input('telefone', sql.VarChar(20),   telefone || null)
-    .input('hash',     sql.VarBinary(256), Buffer.from(hash))
+    .input('nome',             sql.VarChar(120),   nome)
+    .input('email',            sql.VarChar(120),   email)
+    .input('telefone',         sql.VarChar(20),    telefone         || null)
+    .input('tipo_documento',   sql.VarChar(20),    tipo_documento   || null)
+    .input('numero_documento', sql.VarChar(30),    numero_documento || null)
+    .input('hash',             sql.VarBinary(256), Buffer.from(hash))
     .query(`
-      INSERT INTO dbo.usuario (nome, cpf, email, senha_hash, telefone, administrador, senha_provisoria)
+      INSERT INTO dbo.usuario (nome, cpf, email, senha_hash, telefone, tipo_documento, numero_documento, administrador, senha_provisoria)
       OUTPUT INSERTED.id_usuario
-      VALUES (@nome, '00000000000', @email, @hash, @telefone, 0, 1)
+      VALUES (@nome, '00000000000', @email, @hash, @telefone, @tipo_documento, @numero_documento, 0, 1)
     `)
 
   const id = result.recordset[0].id_usuario
@@ -57,7 +113,7 @@ async function criar({ nome, email, telefone, senha }) {
       SELECT @id_usuario, id_perfil FROM dbo.perfil WHERE nome = 'nutricionista'
     `)
 
-  return id
+  return { id, vinculado: false }
 }
 
 async function buscarPorId(id_usuario) {
@@ -65,7 +121,7 @@ async function buscarPorId(id_usuario) {
   const result = await pool.request()
     .input('id', sql.Int, id_usuario)
     .query(`
-      SELECT u.id_usuario, u.nome, u.email, u.telefone, u.ativo
+      SELECT u.id_usuario, u.nome, u.email, u.telefone, u.tipo_documento, u.numero_documento, u.ativo
       FROM dbo.usuario u
       INNER JOIN dbo.usuario_perfil up ON up.id_usuario = u.id_usuario AND up.ativo = 1
       INNER JOIN dbo.perfil p          ON p.id_perfil  = up.id_perfil  AND p.nome = 'nutricionista'
@@ -74,32 +130,38 @@ async function buscarPorId(id_usuario) {
   return result.recordset[0] || null
 }
 
-async function atualizar(id_usuario, { nome, email, telefone, senha }) {
+async function atualizar(id_usuario, { nome, email, telefone, tipo_documento, numero_documento, senha }) {
   const pool = await getPool()
 
   if (senha) {
     const hash = await bcrypt.hash(senha, 10)
     await pool.request()
-      .input('id',       sql.Int,           id_usuario)
-      .input('nome',     sql.VarChar(120),   nome)
-      .input('email',    sql.VarChar(120),   email)
-      .input('telefone', sql.VarChar(20),    telefone || null)
-      .input('hash',     sql.VarBinary(256), Buffer.from(hash))
+      .input('id',               sql.Int,           id_usuario)
+      .input('nome',             sql.VarChar(120),   nome)
+      .input('email',            sql.VarChar(120),   email)
+      .input('telefone',         sql.VarChar(20),    telefone         || null)
+      .input('tipo_documento',   sql.VarChar(20),    tipo_documento   || null)
+      .input('numero_documento', sql.VarChar(30),    numero_documento || null)
+      .input('hash',             sql.VarBinary(256), Buffer.from(hash))
       .query(`
         UPDATE dbo.usuario
         SET nome = @nome, email = @email, telefone = @telefone,
+            tipo_documento = @tipo_documento, numero_documento = @numero_documento,
             senha_hash = @hash, senha_provisoria = 1
         WHERE id_usuario = @id
       `)
   } else {
     await pool.request()
-      .input('id',       sql.Int,          id_usuario)
-      .input('nome',     sql.VarChar(120),  nome)
-      .input('email',    sql.VarChar(120),  email)
-      .input('telefone', sql.VarChar(20),   telefone || null)
+      .input('id',               sql.Int,          id_usuario)
+      .input('nome',             sql.VarChar(120),  nome)
+      .input('email',            sql.VarChar(120),  email)
+      .input('telefone',         sql.VarChar(20),   telefone         || null)
+      .input('tipo_documento',   sql.VarChar(20),   tipo_documento   || null)
+      .input('numero_documento', sql.VarChar(30),   numero_documento || null)
       .query(`
         UPDATE dbo.usuario
-        SET nome = @nome, email = @email, telefone = @telefone
+        SET nome = @nome, email = @email, telefone = @telefone,
+            tipo_documento = @tipo_documento, numero_documento = @numero_documento
         WHERE id_usuario = @id
       `)
   }

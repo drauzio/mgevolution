@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import useSWR from 'swr'
 import { ClipboardList, Search, Home } from 'lucide-react'
 import { useAuthContext } from '../../context/AuthContext'
@@ -29,6 +29,8 @@ function BadgeSexo({ sexo }) {
 export default function AvaliacaoList() {
   const { token } = useAuthContext()
   const navigate  = useNavigate()
+  const location  = useLocation()
+  const home = location.pathname.startsWith('/gestao') ? '/gestao' : '/admin'
   const [busca,  setBusca]  = useState('')
   const [query,  setQuery]  = useState({})
   const [status, setStatus] = useState('')
@@ -145,7 +147,7 @@ export default function AvaliacaoList() {
           <p style={{ fontSize: 14, color: '#8A7F76' }}>{avaliacoes.filter(a => a.status === 'concluida').length} concluídas</p>
         </div>
         <button
-          onClick={() => navigate('/admin')}
+          onClick={() => navigate(home)}
           style={{ height: 36, paddingInline: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, border: '1px solid #E0D6CA', borderRadius: 8, background: '#FFFFFF', cursor: 'pointer', flexShrink: 0, fontSize: 12, fontWeight: 700, color: '#6B6560' }}
           onMouseEnter={e => { e.currentTarget.style.borderColor = '#C4B9A8'; e.currentTarget.style.color = '#1A1A1A' }}
           onMouseLeave={e => { e.currentTarget.style.borderColor = '#E0D6CA'; e.currentTarget.style.color = '#6B6560' }}

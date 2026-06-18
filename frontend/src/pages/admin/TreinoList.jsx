@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import useSWR from 'swr'
-import { Dumbbell, Search, Home, LayoutTemplate, Users } from 'lucide-react'
+import { Search, Home, LayoutTemplate, Users } from 'lucide-react'
 import { useAuthContext } from '../../context/AuthContext'
 import { BtnIncluir, BtnEditar } from '../../components/ui/Botoes'
 import { DataTable } from '../../components/ui/DataTable'
@@ -9,33 +9,40 @@ import * as treinosService from '../../services/treinos'
 import { data } from '../../utils/formatters'
 
 export default function TreinoList() {
-  const { token } = useAuthContext()
-  const navigate  = useNavigate()
-  const [modo, setModo]   = useState('templates')   // templates é o padrão
+  const { token }  = useAuthContext()
+  const navigate   = useNavigate()
+  const location   = useLocation()
   const [busca, setBusca] = useState('')
   const [query, setQuery] = useState('')
 
-  const ehTemplate = modo === 'templates'
+  const isProtocolos = location.pathname.startsWith('/conteudo/protocolos') || location.pathname.startsWith('/admin/protocolos')
+  const base = location.pathname.startsWith('/conteudo/protocolos') ? '/conteudo/protocolos'
+             : location.pathname.startsWith('/admin/protocolos')    ? '/admin/protocolos'
+             : location.pathname.startsWith('/conteudo/treinos')    ? '/conteudo/treinos'
+             : '/admin/treinos'
+  const home = location.pathname.startsWith('/conteudo') ? '/admin'
+             : location.pathname.startsWith('/gestao')   ? '/gestao'
+             : '/admin'
 
-  const { data: protocolos = [], isLoading } = useSWR(
-    token ? ['treinos', modo] : null,
-    () => treinosService.listar(ehTemplate ? { templates: '1' } : { templates: '0' })
+  const { data: itens = [], isLoading } = useSWR(
+    token ? ['treinos-lista', isProtocolos] : null,
+    () => treinosService.listar(isProtocolos ? { templates: '1' } : { templates: '0' })
   )
 
   const filtrados = useMemo(() => {
-    if (!query) return protocolos
+    if (!query) return itens
     const q = query.toLowerCase()
-    return protocolos.filter(p =>
+    return itens.filter(p =>
       p.nome.toLowerCase().includes(q) ||
       p.aluno_nome?.toLowerCase().includes(q) ||
       p.criterio_objetivo?.toLowerCase().includes(q)
     )
-  }, [protocolos, query])
+  }, [itens, query])
 
-  const colTemplates = useMemo(() => [
+  const colProtocolos = useMemo(() => [
     {
       accessorKey: 'nome',
-      header: 'Template',
+      header: 'Protocolo',
       cell: ({ row: { original: p } }) => (
         <div>
           <p style={{ fontSize: 14, fontWeight: 600, color: '#1A1A1A', marginBottom: 2 }}>{p.nome}</p>
@@ -64,8 +71,7 @@ export default function TreinoList() {
       cell: ({ row: { original: p } }) => {
         const sexo  = p.criterio_sexo === 'M' ? 'Masculino' : p.criterio_sexo === 'F' ? 'Feminino' : null
         const idade = (p.criterio_idade_min || p.criterio_idade_max)
-          ? `${p.criterio_idade_min ?? '?'}–${p.criterio_idade_max ?? '?'} anos`
-          : null
+          ? `${p.criterio_idade_min ?? '?'}–${p.criterio_idade_max ?? '?'} anos` : null
         if (!sexo && !idade) return <span style={{ fontSize: 12, color: '#C4B9A8' }}>Qualquer</span>
         return (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
@@ -79,9 +85,7 @@ export default function TreinoList() {
       accessorKey: 'dias_treino',
       header: 'Dias',
       size: 70,
-      cell: ({ getValue }) => (
-        <span style={{ fontSize: 13, fontWeight: 700, color: '#CC1A1A' }}>{getValue()}x</span>
-      ),
+      cell: ({ getValue }) => <span style={{ fontSize: 13, fontWeight: 700, color: '#CC1A1A' }}>{getValue()}x</span>,
     },
     {
       accessorKey: 'ativo',
@@ -89,23 +93,18 @@ export default function TreinoList() {
       size: 100,
       enableSorting: false,
       cell: ({ getValue }) => (
-        <span style={{ display: 'inline-flex', alignItems: 'center', padding: '2px 10px', borderRadius: 6, fontSize: 10, fontWeight: 700, background: getValue() ? 'rgba(34,197,94,0.1)' : '#F0EBE4', color: getValue() ? '#15803d' : '#8A7F76' }}>
+        <span style={{ display: 'inline-flex', padding: '2px 10px', borderRadius: 6, fontSize: 10, fontWeight: 700, background: getValue() ? 'rgba(34,197,94,0.1)' : '#F0EBE4', color: getValue() ? '#15803d' : '#8A7F76' }}>
           {getValue() ? 'ATIVO' : 'INATIVO'}
         </span>
       ),
     },
     {
-      id: 'acoes',
-      header: '',
-      size: 48,
-      enableSorting: false,
-      cell: ({ row: { original: p } }) => (
-        <BtnEditar iconOnly onClick={() => navigate(`/admin/treinos/${p.id_protocolo}`)} />
-      ),
+      id: 'acoes', header: '', size: 48, enableSorting: false,
+      cell: ({ row: { original: p } }) => <BtnEditar iconOnly onClick={() => navigate(`${base}/${p.id_protocolo}`)} />,
     },
-  ], [])
+  ], [base])
 
-  const colIndividuais = useMemo(() => [
+  const colTreinos = useMemo(() => [
     {
       accessorKey: 'aluno_nome',
       header: 'Aluno',
@@ -118,7 +117,7 @@ export default function TreinoList() {
     },
     {
       accessorKey: 'nome',
-      header: 'Protocolo',
+      header: 'Treino',
       cell: ({ row: { original: p } }) => (
         <div>
           <p style={{ fontSize: 13, fontWeight: 600, color: '#1A1A1A', marginBottom: 2 }}>{p.nome}</p>
@@ -130,17 +129,13 @@ export default function TreinoList() {
       accessorKey: 'dias_treino',
       header: 'Dias',
       size: 70,
-      cell: ({ getValue }) => (
-        <span style={{ fontSize: 13, fontWeight: 700, color: '#CC1A1A' }}>{getValue()}x</span>
-      ),
+      cell: ({ getValue }) => <span style={{ fontSize: 13, fontWeight: 700, color: '#CC1A1A' }}>{getValue()}x</span>,
     },
     {
       accessorKey: 'data_inicio',
       header: 'Início',
       size: 110,
-      cell: ({ row: { original: p } }) => (
-        <span style={{ fontSize: 12, color: '#6B6560' }}>{data(p.data_inicio)}</span>
-      ),
+      cell: ({ row: { original: p } }) => <span style={{ fontSize: 12, color: '#6B6560' }}>{data(p.data_inicio)}</span>,
     },
     {
       accessorKey: 'ativo',
@@ -148,38 +143,33 @@ export default function TreinoList() {
       size: 100,
       enableSorting: false,
       cell: ({ getValue }) => (
-        <span style={{ display: 'inline-flex', alignItems: 'center', padding: '2px 10px', borderRadius: 6, fontSize: 10, fontWeight: 700, background: getValue() ? 'rgba(34,197,94,0.1)' : '#F0EBE4', color: getValue() ? '#15803d' : '#8A7F76' }}>
+        <span style={{ display: 'inline-flex', padding: '2px 10px', borderRadius: 6, fontSize: 10, fontWeight: 700, background: getValue() ? 'rgba(34,197,94,0.1)' : '#F0EBE4', color: getValue() ? '#15803d' : '#8A7F76' }}>
           {getValue() ? 'ATIVO' : 'INATIVO'}
         </span>
       ),
     },
     {
-      id: 'acoes',
-      header: '',
-      size: 48,
-      enableSorting: false,
-      cell: ({ row: { original: p } }) => (
-        <BtnEditar iconOnly onClick={() => navigate(`/admin/treinos/${p.id_protocolo}`)} />
-      ),
+      id: 'acoes', header: '', size: 48, enableSorting: false,
+      cell: ({ row: { original: p } }) => <BtnEditar iconOnly onClick={() => navigate(`${base}/${p.id_protocolo}`)} />,
     },
-  ], [])
+  ], [base])
 
   function renderCard(p) {
     return (
       <div key={p.id_protocolo} style={{ padding: '14px 20px', borderTop: '1px solid #F0EBE4' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
           <div style={{ flex: 1, minWidth: 0 }}>
-            {!ehTemplate && <p style={{ fontSize: 14, fontWeight: 700, color: '#1A1A1A', marginBottom: 2 }}>{p.aluno_nome}</p>}
+            {!isProtocolos && <p style={{ fontSize: 14, fontWeight: 700, color: '#1A1A1A', marginBottom: 2 }}>{p.aluno_nome}</p>}
             <p style={{ fontSize: 13, color: '#6B6560', marginBottom: 4 }}>{p.nome}</p>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
               <span style={{ fontSize: 12, fontWeight: 700, color: '#CC1A1A' }}>{p.dias_treino}x/sem</span>
-              {ehTemplate && p.criterio_objetivo && <span style={{ fontSize: 11, color: '#8A7F76' }}>{p.criterio_objetivo}</span>}
+              {isProtocolos && p.criterio_objetivo && <span style={{ fontSize: 11, color: '#8A7F76' }}>{p.criterio_objetivo}</span>}
               <span style={{ display: 'inline-flex', padding: '2px 8px', borderRadius: 6, fontSize: 10, fontWeight: 700, background: p.ativo ? 'rgba(34,197,94,0.1)' : '#F0EBE4', color: p.ativo ? '#15803d' : '#8A7F76' }}>
                 {p.ativo ? 'ATIVO' : 'INATIVO'}
               </span>
             </div>
           </div>
-          <BtnEditar iconOnly onClick={() => navigate(`/admin/treinos/${p.id_protocolo}`)} />
+          <BtnEditar iconOnly onClick={() => navigate(`${base}/${p.id_protocolo}`)} />
         </div>
       </div>
     )
@@ -190,45 +180,29 @@ export default function TreinoList() {
 
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16 }}>
         <div>
-          <h1 style={{ fontSize: 26, fontWeight: 900, color: '#1A1A1A', textTransform: 'uppercase', letterSpacing: '0.03em', marginBottom: 6 }}>Treinos</h1>
+          <h1 style={{ fontSize: 26, fontWeight: 900, color: '#1A1A1A', textTransform: 'uppercase', letterSpacing: '0.03em', marginBottom: 6 }}>
+            {isProtocolos ? 'Protocolos' : 'Treinos'}
+          </h1>
           <p style={{ fontSize: 14, color: '#8A7F76' }}>
-            {ehTemplate
-              ? `${protocolos.length} template${protocolos.length !== 1 ? 's' : ''}`
-              : `${protocolos.filter(p => p.ativo).length} protocolos ativos`}
+            {isProtocolos
+              ? `${itens.length} template${itens.length !== 1 ? 's' : ''} — atribuídos automaticamente pelo perfil do aluno`
+              : `${itens.filter(p => p.ativo).length} treinos ativos`}
           </p>
         </div>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
           <button
-            onClick={() => navigate('/admin')}
-            style={{ height: 36, paddingInline: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, border: '1px solid #E0D6CA', borderRadius: 8, background: '#FFFFFF', cursor: 'pointer', flexShrink: 0, fontSize: 12, fontWeight: 700, color: '#6B6560' }}
+            onClick={() => navigate(home)}
+            style={{ height: 36, paddingInline: 14, display: 'flex', alignItems: 'center', gap: 6, border: '1px solid #E0D6CA', borderRadius: 8, background: '#FFFFFF', cursor: 'pointer', fontSize: 12, fontWeight: 700, color: '#6B6560' }}
             onMouseEnter={e => { e.currentTarget.style.borderColor = '#C4B9A8'; e.currentTarget.style.color = '#1A1A1A' }}
             onMouseLeave={e => { e.currentTarget.style.borderColor = '#E0D6CA'; e.currentTarget.style.color = '#6B6560' }}
           >
-            <Home size={14} />
-            Home
+            <Home size={14} /> Home
           </button>
-          <BtnIncluir onClick={() => navigate(ehTemplate ? '/admin/treinos/novo?template=1' : '/admin/treinos/novo')} label={ehTemplate ? 'Novo template' : 'Novo protocolo'} />
+          <BtnIncluir
+            onClick={() => navigate(isProtocolos ? `${base}/novo` : `${base}/novo`)}
+            label={isProtocolos ? 'Novo protocolo' : 'Novo treino'}
+          />
         </div>
-      </div>
-
-      {/* Toggle Templates / Individuais */}
-      <div style={{ display: 'flex', gap: 0, background: '#F7F3EE', borderRadius: 10, padding: 4, width: 'fit-content' }}>
-        {[
-          { key: 'templates',   label: 'Templates',   icon: LayoutTemplate },
-          { key: 'individuais', label: 'Individuais',  icon: Users },
-        ].map(({ key, label, icon: Icon }) => {
-          const ativo = modo === key
-          return (
-            <button
-              key={key}
-              onClick={() => { setModo(key); setQuery(''); setBusca('') }}
-              style={{ display: 'flex', alignItems: 'center', gap: 6, height: 32, paddingInline: 14, borderRadius: 7, border: 'none', cursor: 'pointer', fontSize: 12, fontWeight: 700, transition: 'all 0.15s', background: ativo ? '#FFFFFF' : 'transparent', color: ativo ? '#CC1A1A' : '#8A7F76', boxShadow: ativo ? '0 1px 4px rgba(0,0,0,0.08)' : 'none' }}
-            >
-              <Icon size={13} />
-              {label}
-            </button>
-          )
-        })}
       </div>
 
       {/* Busca */}
@@ -239,7 +213,7 @@ export default function TreinoList() {
             value={busca}
             onChange={e => setBusca(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && setQuery(busca)}
-            placeholder={ehTemplate ? 'Buscar por nome ou objetivo...' : 'Buscar por aluno ou protocolo...'}
+            placeholder={isProtocolos ? 'Buscar por nome ou objetivo...' : 'Buscar por aluno ou treino...'}
             style={{ flex: 1, border: 'none', outline: 'none', fontSize: 14, color: '#1A1A1A', background: 'transparent' }}
           />
         </div>
@@ -256,10 +230,10 @@ export default function TreinoList() {
       <div style={{ background: '#FFFFFF', border: '1px solid #E0D6CA', borderRadius: 20, overflow: 'hidden', boxShadow: '0 2px 16px rgba(0,0,0,0.05)' }}>
         <DataTable
           data={filtrados}
-          columns={ehTemplate ? colTemplates : colIndividuais}
+          columns={isProtocolos ? colProtocolos : colTreinos}
           loading={isLoading}
-          emptyIcon={<Dumbbell size={32} color="#C4B9A8" />}
-          emptyText={ehTemplate ? 'Nenhum template cadastrado' : 'Nenhum protocolo encontrado'}
+          emptyIcon={isProtocolos ? <LayoutTemplate size={32} color="#C4B9A8" /> : <Users size={32} color="#C4B9A8" />}
+          emptyText={isProtocolos ? 'Nenhum protocolo cadastrado' : 'Nenhum treino individual cadastrado'}
           pageSize={20}
           renderCard={renderCard}
         />

@@ -53,4 +53,66 @@ async function clonar(req, res, next) {
   } catch (err) { next(err) }
 }
 
-module.exports = { listar, buscar, criar, atualizar, meuPlano, clonar, dadosAluno }
+async function atualizarStatusPlano(req, res, next) {
+  try {
+    const { status } = req.body
+    if (!['rascunho', 'revisao', 'liberado'].includes(status))
+      return res.status(400).json({ erro: 'Status inválido' })
+    await svc.atualizarStatusPlano(Number(req.params.id), status)
+    res.json({ ok: true })
+  } catch (err) { next(err) }
+}
+
+async function toggleAtivo(req, res, next) {
+  try {
+    await svc.toggleAtivo(Number(req.params.id))
+    res.json({ ok: true })
+  } catch (err) { next(err) }
+}
+
+async function deletar(req, res, next) {
+  try {
+    await svc.deletar(Number(req.params.id))
+    res.json({ ok: true })
+  } catch (err) { next(err) }
+}
+
+async function meuPlanoAndamento(req, res, next) {
+  try {
+    const plano = await svc.buscarPlanoEmAndamento(req.usuario.id)
+    res.json(plano || null)
+  } catch (err) { next(err) }
+}
+
+async function minhaSolicitacao(req, res, next) {
+  try {
+    const sol = await svc.buscarSolicitacao(req.usuario.id)
+    res.json(sol || null)
+  } catch (err) { next(err) }
+}
+
+async function solicitarDieta(req, res, next) {
+  try {
+    const result = await svc.solicitarDieta(req.usuario.id, req.body)
+    res.status(201).json(result)
+  } catch (err) { next(err) }
+}
+
+async function listarSolicitacoes(req, res, next) {
+  try {
+    const { status } = req.query
+    const lista = await svc.listarSolicitacoes(status || null)
+    res.json(lista)
+  } catch (err) { next(err) }
+}
+
+async function atualizarStatusSolicitacao(req, res, next) {
+  try {
+    const { status } = req.body
+    if (!status) return res.status(400).json({ erro: 'status é obrigatório' })
+    await svc.atualizarStatusSolicitacao(Number(req.params.id), status)
+    res.json({ ok: true })
+  } catch (err) { next(err) }
+}
+
+module.exports = { listar, buscar, criar, atualizar, toggleAtivo, deletar, atualizarStatusPlano, meuPlano, meuPlanoAndamento, clonar, dadosAluno, minhaSolicitacao, solicitarDieta, listarSolicitacoes, atualizarStatusSolicitacao }

@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import useSWR from 'swr'
 import { Search, Users, CheckCircle, Clock, Home } from 'lucide-react'
 import { useAuthContext } from '../../context/AuthContext'
@@ -19,6 +19,9 @@ function Avatar({ nome }) {
 export default function AlunoList() {
   const { token } = useAuthContext()
   const navigate = useNavigate()
+  const location = useLocation()
+  const base = location.pathname.startsWith('/nutri') ? '/nutri/alunos' : '/admin/alunos'
+  const home = location.pathname.startsWith('/nutri') ? '/nutri/alunos' : '/admin'
   const [busca, setBusca] = useState('')
   const [filtro, setFiltro] = useState('todos')
   const [query, setQuery] = useState({ busca: '', status: 'todos' })
@@ -101,7 +104,7 @@ export default function AlunoList() {
       size: 48,
       enableSorting: false,
       cell: ({ row: { original: a } }) => (
-        <BtnEditar iconOnly onClick={e => { e.stopPropagation(); navigate(`/admin/alunos/${a.id_usuario}`) }} />
+        <BtnEditar iconOnly onClick={e => { e.stopPropagation(); navigate(`${base}/${a.id_usuario}`) }} />
       ),
     },
   ], [alunos])
@@ -125,7 +128,7 @@ export default function AlunoList() {
             </span>
           </div>
         </div>
-        <BtnEditar iconOnly onClick={() => navigate(`/admin/alunos/${a.id_usuario}`)} />
+        <BtnEditar iconOnly onClick={() => navigate(`${base}/${a.id_usuario}`)} />
       </div>
     )
   }
@@ -140,7 +143,7 @@ export default function AlunoList() {
         </div>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
           <button
-            onClick={() => navigate('/admin')}
+            onClick={() => navigate(home)}
             style={{ height: 36, paddingInline: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, border: '1px solid #E0D6CA', borderRadius: 8, background: '#FFFFFF', cursor: 'pointer', flexShrink: 0, fontSize: 12, fontWeight: 700, color: '#6B6560' }}
             onMouseEnter={e => { e.currentTarget.style.borderColor = '#C4B9A8'; e.currentTarget.style.color = '#1A1A1A' }}
             onMouseLeave={e => { e.currentTarget.style.borderColor = '#E0D6CA'; e.currentTarget.style.color = '#6B6560' }}
@@ -148,7 +151,7 @@ export default function AlunoList() {
             <Home size={14} color="currentColor" />
             Home
           </button>
-          <BtnIncluir onClick={() => navigate('/admin/alunos/novo')} label="Novo aluno" />
+          <BtnIncluir onClick={() => navigate(`${base}/novo`)} label="Novo aluno" />
         </div>
       </div>
 

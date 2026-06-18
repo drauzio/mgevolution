@@ -2,12 +2,12 @@ import useSWR from 'swr'
 import { useAuthContext } from '../context/AuthContext'
 import api from '../services/api'
 
-const fetcher = () => api.get('/menu').then(r => r.data)
+const fetcher = ([, id]) => api.get('/menu').then(r => r.data)
 
 export function useMenu() {
-  const { token } = useAuthContext()
+  const { token, usuario } = useAuthContext()
   const { data, error, isLoading } = useSWR(
-    token ? 'menu' : null,
+    token ? ['menu', usuario?.id] : null,
     fetcher,
     { revalidateOnFocus: false, dedupingInterval: 60000 }
   )

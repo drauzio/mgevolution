@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from 'react'
-import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
+import { useNavigate, useParams, useLocation } from 'react-router-dom'
 import useSWR from 'swr'
-import { Plus, Trash2, Search, GripVertical } from 'lucide-react'
+import { Plus, Trash2, Search, GripVertical, LayoutTemplate } from 'lucide-react'
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors } from '@dnd-kit/core'
 import { SortableContext, useSortable, verticalListSortingStrategy, arrayMove } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
@@ -209,12 +209,23 @@ export default function TreinoForm() {
   const { id } = useParams()
   const isEdicao = !!id
   const navigate = useNavigate()
+  const location = useLocation()
   const { token } = useAuthContext()
-  const [searchParams] = useSearchParams()
+
+  const isProtocolos = location.pathname.startsWith('/conteudo/protocolos') || location.pathname.startsWith('/admin/protocolos')
+  const base = location.pathname.startsWith('/conteudo/protocolos') ? '/conteudo/protocolos'
+             : location.pathname.startsWith('/admin/protocolos')    ? '/admin/protocolos'
+             : location.pathname.startsWith('/conteudo/treinos')    ? '/conteudo/treinos'
+             : '/admin/treinos'
 
   const { data: alunos = [] } = useSWR(
-    token ? 'alunos-lista' : null,
+    token && !isProtocolos ? 'alunos-lista' : null,
     () => alunosService.listar()
+  )
+
+  const { data: templatesList = [] } = useSWR(
+    token && !isProtocolos && !isEdicao ? 'treinos-templates-base' : null,
+    () => treinosService.listar({ templates: '1' })
   )
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }))
@@ -229,7 +240,7 @@ export default function TreinoForm() {
     return () => window.removeEventListener('beforeunload', fn)
   }, [isDirty])
 
-  const [isTemplate, setIsTemplate] = useState(!isEdicao && searchParams.get('template') === '1')
+  const [isTemplate, setIsTemplate] = useState(isProtocolos)
   const [form, setForm] = useState({ id_usuario: '', nome: '', objetivo: '', data_inicio: '', data_fim: '', criterio_objetivo: '', criterio_nivel: '', criterio_sexo: '', criterio_idade_min: '', criterio_idade_max: '' })
   const [dias, setDias] = useState(
     DIAS.map(d => ({ dia_semana: d.num, nome: '', descanso: d.num === 7, exercicios: [] }))
@@ -238,6 +249,10 @@ export default function TreinoForm() {
   const [salvando, setSalvando] = useState(false)
   const [erro, setErro] = useState(null)
   const [carregando, setCarregando] = useState(isEdicao)
+
+  const [protocoloBaseId, setProtocoloBaseId] = useState('')
+  const [carregandoBase, setCarregandoBase] = useState(false)
+  const [baseCarregada, setBaseCarregada] = useState(false)
 
   useEffect(() => {
     if (!isEdicao) return
@@ -254,6 +269,49 @@ export default function TreinoForm() {
       })
       .finally(() => setCarregando(false))
   }, [id])
+
+  async function carregarBase() {
+    if (!protocoloBaseId) return
+    setCarregandoBase(true)
+    try {
+      const proto = await treinosService.buscarPorId(protocoloBaseId)
+      const diasBase = DIAS.map(d => {
+        const found = proto.dias?.find(x => x.dia_semana === d.num)
+        if (found) return {
+          dia_semana: d.num,
+          nome: found.nome,
+          descanso: !!found.descanso,
+          exercicios: found.exercicios.map((e, i) => ({
+            _uid: `base-${d.num}-${i}-${Date.now()}`,
+            id_exercicio: e.id_exercicio,
+            nome: e.exercicio_nome,
+            grupo_muscular: e.grupo_muscular,
+            series: e.series ?? '3',
+            repeticoes: e.repeticoes ?? '12',
+            carga_sugerida: e.carga_sugerida ?? '',
+            descanso_seg: e.descanso_seg ?? '60',
+            observacao: '',
+          }))
+        }
+        return { dia_semana: d.num, nome: '', descanso: d.num === 7, exercicios: [] }
+      })
+      setDias(diasBase)
+      if (!form.nome && proto.nome) {
+        setForm(f => ({ ...f, nome: proto.nome + ' (cópia)', objetivo: proto.objetivo || '' }))
+      }
+      setBaseCarregada(true)
+      setIsDirty(true)
+    } finally {
+      setCarregandoBase(false)
+    }
+  }
+
+  function limparBase() {
+    setBaseCarregada(false)
+    setProtocoloBaseId('')
+    setDias(DIAS.map(d => ({ dia_semana: d.num, nome: '', descanso: d.num === 7, exercicios: [] })))
+    setIsDirty(false)
+  }
 
   function setF(k) { return e => { setForm(f => ({ ...f, [k]: e.target.value })); setIsDirty(true) } }
 
@@ -306,9 +364,9 @@ export default function TreinoForm() {
   }
 
   async function salvar() {
-    if (!form.nome) { setErro('Nome do protocolo é obrigatório'); return }
+    if (!form.nome) { setErro('Nome é obrigatório'); return }
     if (!isTemplate && !form.id_usuario) { setErro('Selecione o aluno'); return }
-    if (isTemplate && !form.criterio_objetivo) { setErro('Selecione o objetivo do template'); return }
+    if (isTemplate && !form.criterio_objetivo) { setErro('Selecione o objetivo do protocolo'); return }
     setSalvando(true); setErro(null)
     try {
       const payload = { ...form, is_template: isTemplate, dias }
@@ -318,7 +376,7 @@ export default function TreinoForm() {
         await treinosService.criar(payload)
       }
       setIsDirty(false)
-      navigate('/admin/treinos')
+      navigate(base)
     } catch (e) {
       setErro(e.response?.data?.erro || e.message || 'Erro ao salvar')
     } finally {
@@ -334,10 +392,18 @@ export default function TreinoForm() {
 
   function handleCancel() {
     if (isDirty) { setShowLeaveModal(true); return }
-    navigate('/admin/treinos')
+    navigate(base)
   }
 
   const diaCorrente = dias.find(d => d.dia_semana === diaAtivo)
+
+  const titulo = isEdicao
+    ? (isTemplate ? 'Editar Protocolo' : 'Editar Treino')
+    : (isTemplate ? 'Novo Protocolo'   : 'Novo Treino')
+
+  const subtitulo = isTemplate
+    ? 'Configure o protocolo — será atribuído automaticamente pelo perfil do aluno.'
+    : 'Selecione o aluno e configure os dias de treino individualmente.'
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
@@ -346,13 +412,9 @@ export default function TreinoForm() {
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16 }}>
         <div>
           <h1 style={{ fontSize: 26, fontWeight: 900, color: '#1A1A1A', textTransform: 'uppercase', letterSpacing: '0.03em', marginBottom: 6 }}>
-            {isEdicao
-              ? (isTemplate ? 'Editar Template' : 'Editar Protocolo')
-              : (isTemplate ? 'Novo Template'   : 'Novo Protocolo')}
+            {titulo}
           </h1>
-          <p style={{ fontSize: 14, color: '#8A7F76' }}>
-            {isTemplate ? 'Configure o template — será atribuído automaticamente pelo perfil do aluno.' : 'Configure os dias e exercícios do protocolo.'}
-          </p>
+          <p style={{ fontSize: 14, color: '#8A7F76' }}>{subtitulo}</p>
         </div>
         <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
           <BtnCancelar onClick={handleCancel} />
@@ -360,22 +422,71 @@ export default function TreinoForm() {
         </div>
       </div>
 
+      {/* Seletor de base em protocolo (somente treinos individuais novos) */}
+      {!isTemplate && !isEdicao && templatesList.length > 0 && (
+        <div style={{ background: '#F7F3EE', border: '1px solid #E0D6CA', borderRadius: 16, padding: 20, display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <LayoutTemplate size={14} color="#8A7F76" />
+            <p style={{ fontSize: 11, fontWeight: 700, color: '#8A7F76', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+              Usar protocolo como base — opcional
+            </p>
+          </div>
+          {baseCarregada ? (
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+              <p style={{ fontSize: 13, color: '#1A1A1A' }}>
+                Base: <strong>{templatesList.find(t => String(t.id_protocolo) === String(protocoloBaseId))?.nome}</strong> — dias e exercícios carregados
+              </p>
+              <button
+                onClick={limparBase}
+                style={{ fontSize: 12, color: '#CC1A1A', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 700, flexShrink: 0 }}
+              >
+                Remover base
+              </button>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+              <select
+                value={protocoloBaseId}
+                onChange={e => setProtocoloBaseId(e.target.value)}
+                style={{ ...selectStyle, height: 38, fontSize: 13, flex: 1 }}
+              >
+                <option value="">Selecione um protocolo para usar como ponto de partida...</option>
+                {templatesList.map(t => (
+                  <option key={t.id_protocolo} value={t.id_protocolo}>
+                    {t.nome}{t.criterio_objetivo ? ` — ${t.criterio_objetivo}` : ''}
+                  </option>
+                ))}
+              </select>
+              <button
+                onClick={carregarBase}
+                disabled={!protocoloBaseId || carregandoBase}
+                style={{ height: 38, paddingInline: 16, borderRadius: 10, border: `1px solid ${protocoloBaseId ? '#CC1A1A' : '#E0D6CA'}`, background: protocoloBaseId ? 'rgba(204,26,26,0.06)' : '#F0EBE4', color: protocoloBaseId ? '#CC1A1A' : '#C4B9A8', fontSize: 12, fontWeight: 700, cursor: protocoloBaseId ? 'pointer' : 'not-allowed', flexShrink: 0, whiteSpace: 'nowrap' }}
+              >
+                {carregandoBase ? 'Carregando...' : 'Carregar base'}
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Dados básicos */}
       <div style={{ background: '#FFFFFF', border: '1px solid #E0D6CA', borderRadius: 20, padding: 28, display: 'flex', flexDirection: 'column', gap: 18, boxShadow: '0 2px 16px rgba(0,0,0,0.04)' }}>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <p style={{ fontSize: 12, fontWeight: 700, color: '#8A7F76', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Informações do Protocolo</p>
+          <p style={{ fontSize: 12, fontWeight: 700, color: '#8A7F76', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+            {isTemplate ? 'Informações do Protocolo' : 'Informações do Treino'}
+          </p>
           {isTemplate && (
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '3px 10px', borderRadius: 6, background: 'rgba(204,26,26,0.08)', border: '1px solid rgba(204,26,26,0.2)', fontSize: 10, fontWeight: 800, color: '#CC1A1A', letterSpacing: '0.06em' }}>
               <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#CC1A1A' }} />
-              TEMPLATE
+              PROTOCOLO
             </span>
           )}
         </div>
 
         {isTemplate && (
           <div style={{ padding: '10px 14px', borderRadius: 10, background: 'rgba(204,26,26,0.04)', border: '1px solid rgba(204,26,26,0.15)', fontSize: 12, color: '#8A7F76' }}>
-            Templates são atribuídos automaticamente quando o aluno conclui o onboarding, com base no objetivo, nível, sexo e idade. Critérios em branco aceitam qualquer valor.
+            Protocolos são templates atribuídos automaticamente quando o aluno conclui o onboarding, com base no objetivo, nível, sexo e idade. Critérios em branco aceitam qualquer valor.
           </div>
         )}
 
@@ -399,8 +510,8 @@ export default function TreinoForm() {
             </Campo>
           )}
 
-          <Campo label="Nome do protocolo">
-            <input style={inputStyle} placeholder="Ex: Hipertrofia — Fase 1" value={form.nome} onChange={setF('nome')} />
+          <Campo label="Nome">
+            <input style={inputStyle} placeholder={isTemplate ? 'Ex: Hipertrofia — Fase 1' : 'Ex: Treino do João — Cutting'} value={form.nome} onChange={setF('nome')} />
           </Campo>
 
           {isTemplate && (
@@ -548,7 +659,7 @@ export default function TreinoForm() {
                 Continuar editando
               </button>
               <button
-                onClick={() => navigate('/admin/treinos')}
+                onClick={() => navigate(base)}
                 style={{ flex: 1, height: 42, borderRadius: 12, border: 'none', background: '#CC1A1A', fontSize: 13, fontWeight: 700, color: '#FFFFFF', cursor: 'pointer' }}
               >
                 Sair sem salvar

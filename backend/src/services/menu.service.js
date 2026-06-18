@@ -16,6 +16,7 @@ async function getMenuByPerfis(perfis) {
       mi.id_menu_item AS id,
       m.id_menu,
       m.nome          AS grupo,
+      m.icone         AS grupo_icone,
       m.ordem         AS grupo_ordem,
       mi.nome,
       mi.caminho,

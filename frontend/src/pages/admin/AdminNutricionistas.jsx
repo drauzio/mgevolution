@@ -60,7 +60,7 @@ export default function AdminNutricionistas() {
       cell: ({ row: { original: n } }) => (
         <div style={{ minWidth: 0 }}>
           <p style={{ fontSize: 13, color: '#1A1A1A', marginBottom: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{n.email}</p>
-          <p style={{ fontSize: 11, color: '#8A7F76' }}>{fone(n.telefone)}</p>
+          <p style={{ fontSize: 11, color: '#8A7F76' }}>{fone(n.telefone)}{n.tipo_documento && n.numero_documento ? ` · ${n.tipo_documento} ${n.numero_documento}` : ''}</p>
         </div>
       ),
     },
@@ -105,7 +105,7 @@ export default function AdminNutricionistas() {
         <Avatar nome={n.nome} />
         <div style={{ flex: 1, minWidth: 0 }}>
           <p style={{ fontSize: 14, fontWeight: 600, color: '#1A1A1A', marginBottom: 2 }}>{n.nome}</p>
-          <p style={{ fontSize: 11, color: '#8A7F76', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{n.email}</p>
+          <p style={{ fontSize: 11, color: '#8A7F76', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{n.email}{n.tipo_documento && n.numero_documento ? ` · ${n.tipo_documento} ${n.numero_documento}` : ''}</p>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 6 }}>
             <button
               onClick={e => handleToggle(e, n.id_usuario)}

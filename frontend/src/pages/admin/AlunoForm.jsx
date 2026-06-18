@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams, useLocation } from 'react-router-dom'
 import { useAuthContext } from '../../context/AuthContext'
 import { BtnSalvar, BtnCancelar, BtnExcluir } from '../../components/ui/Botoes'
 import * as alunosService from '../../services/alunos'
@@ -27,6 +27,8 @@ export default function AlunoForm() {
   const { id } = useParams()
   const isEdicao = !!id
   const navigate = useNavigate()
+  const location = useLocation()
+  const voltarAlunos = location.pathname.startsWith('/nutri') ? '/nutri/alunos' : '/admin/alunos'
   const { token } = useAuthContext()
 
   const [form, setForm] = useState({ nome: '', email: '', telefone: '', senha: '' })
@@ -58,7 +60,7 @@ export default function AlunoForm() {
       } else {
         await alunosService.criar(form)
       }
-      navigate('/admin/alunos')
+      navigate(voltarAlunos)
     } catch (e) {
       setErro(e.response?.data?.erro || e.message || 'Erro ao salvar')
     } finally {
@@ -72,7 +74,7 @@ export default function AlunoForm() {
     setInativando(true)
     try {
       await alunosService.toggleAtivo(id)
-      navigate('/admin/alunos')
+      navigate(voltarAlunos)
     } catch { setErro('Erro ao alterar status') }
     finally { setInativando(false) }
   }
@@ -100,7 +102,7 @@ export default function AlunoForm() {
           {isEdicao && (
             <BtnExcluir onClick={toggleAtivo} loading={inativando} label={alunoAtivo ? 'Inativar' : 'Reativar'} />
           )}
-          <BtnCancelar onClick={() => navigate('/admin/alunos')} />
+          <BtnCancelar onClick={() => navigate(voltarAlunos)} />
           <BtnSalvar onClick={salvar} loading={salvando} />
         </div>
       </div>

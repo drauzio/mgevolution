@@ -66,4 +66,28 @@ async function mediaSemanal(id_usuario) {
   return result.recordset[0]?.media || 0
 }
 
-module.exports = { registrar, historico, mediaSemanal }
+async function resumo(id_usuario) {
+  const pool = await getPool()
+  const hoje = new Date().toISOString().slice(0, 10)
+
+  const [hojeR, histR, mediaR] = await Promise.all([
+    pool.request()
+      .input('id_usuario', sql.Int, id_usuario)
+      .input('hoje', sql.Date, hoje)
+      .query(`SELECT TOP 1 * FROM dbo.shape_score WHERE id_usuario = @id_usuario AND data = @hoje`),
+    pool.request()
+      .input('id_usuario', sql.Int, id_usuario)
+      .query(`SELECT TOP 7 data, pontos, treino, cardio, dieta, sono, agua FROM dbo.shape_score WHERE id_usuario = @id_usuario ORDER BY data DESC`),
+    pool.request()
+      .input('id_usuario', sql.Int, id_usuario)
+      .query(`SELECT ROUND(AVG(CAST(pontos AS FLOAT)), 0) AS media FROM dbo.shape_score WHERE id_usuario = @id_usuario AND data >= DATEADD(DAY, -7, CAST(GETDATE() AS DATE))`),
+  ])
+
+  return {
+    hoje:      hojeR.recordset[0] || null,
+    historico: histR.recordset,
+    media:     mediaR.recordset[0]?.media || 0,
+  }
+}
+
+module.exports = { registrar, historico, mediaSemanal, resumo }

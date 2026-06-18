@@ -1,0 +1,15 @@
+import api from './api'
+
+export const buscarResumo        = ()              => api.get('/evolucao/resumo').then(r => r.data)
+export const buscarSessoes       = ()              => api.get('/evolucao/sessoes').then(r => r.data)
+export const buscarMedidas       = ()              => api.get('/evolucao/medidas').then(r => r.data)
+export const adicionarMedida     = (dados)         => api.post('/evolucao/medidas', dados).then(r => r.data)
+export const buscarHistoricoCarga = (idExercicio)  => api.get('/evolucao/carga', { params: { idExercicio } }).then(r => r.data)
+export const buscarExercicios    = ()              => api.get('/evolucao/exercicios').then(r => r.data)
+export const buscarAnaliseIA     = ()              => api.get('/evolucao/analise-ia').then(r => r.data)
+export const gerarAnaliseIA      = ()              => api.post('/evolucao/analise-ia').then(r => r.data)
+export const buscarFotos         = ()              => api.get('/evolucao/fotos').then(r => r.data)
+export const uploadFoto          = (formData)      => api.post('/evolucao/fotos', formData, { headers: { 'Content-Type': 'multipart/form-data' } }).then(r => r.data)
+export const deletarFoto         = (id)            => api.delete(`/evolucao/fotos/${id}`).then(r => r.data)
+export const buscarShapeFuture   = ()              => api.get('/evolucao/shape-future').then(r => r.data)
+export const gerarShapeFuture    = ()              => api.post('/evolucao/shape-future').then(r => r.data)

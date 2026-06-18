@@ -1,6 +1,6 @@
 import useSWR from 'swr'
 import { useNavigate } from 'react-router-dom'
-import { ClipboardList, Dumbbell, ChevronLeft, User, Target, Layers, Calendar } from 'lucide-react'
+import { ClipboardList, Dumbbell, User, Target, Layers, Calendar, Home } from 'lucide-react'
 import { buscarMinhaAvaliacao } from '../../services/avaliacao'
 
 const SEXO_LABEL = { M: 'Masculino', F: 'Feminino' }
@@ -48,12 +48,11 @@ export default function MinhaAvaliacao() {
 
   if (!avaliacao) return (
     <div style={{ maxWidth: 480, display: 'flex', flexDirection: 'column', gap: 20 }}>
-      <button
-        onClick={() => navigate(-1)}
-        style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'none', border: 'none', cursor: 'pointer', color: '#8A7F76', fontSize: 13, fontWeight: 600, padding: 0, width: 'fit-content' }}
-      >
-        <ChevronLeft size={16} /> Voltar
-      </button>
+      <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+        <button onClick={() => navigate('/dashboard')} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, height: 36, paddingInline: 14, borderRadius: 10, border: '1px solid #E0D6CA', background: '#FFFFFF', cursor: 'pointer', fontSize: 12, fontWeight: 700, color: '#6B6560' }}>
+          <Home size={14} />Home
+        </button>
+      </div>
       <div style={{ background: '#FFFFFF', border: '1px solid #E0D6CA', borderRadius: 20, padding: '40px 24px', textAlign: 'center', boxShadow: '0 2px 16px rgba(0,0,0,0.04)' }}>
         <ClipboardList size={40} color="#C4B9A8" style={{ marginBottom: 16 }} />
         <p style={{ fontSize: 16, fontWeight: 700, color: '#1A1A1A', marginBottom: 8 }}>Avaliação não encontrada</p>
@@ -71,19 +70,17 @@ export default function MinhaAvaliacao() {
   return (
     <div style={{ maxWidth: 540, display: 'flex', flexDirection: 'column', gap: 20 }}>
 
-      <button
-        onClick={() => navigate(-1)}
-        style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'none', border: 'none', cursor: 'pointer', color: '#8A7F76', fontSize: 13, fontWeight: 600, padding: 0, width: 'fit-content' }}
-      >
-        <ChevronLeft size={16} /> Voltar
-      </button>
-
       {/* Header */}
-      <div>
-        <h1 style={{ fontSize: 26, fontWeight: 900, color: '#1A1A1A', textTransform: 'uppercase', letterSpacing: '0.03em', marginBottom: 4 }}>
-          Minha Avaliação
-        </h1>
-        <p style={{ fontSize: 13, color: '#8A7F76' }}>Concluída em {formatarData(avaliacao.data_finalizacao)}</p>
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+        <div>
+          <h1 style={{ fontSize: 26, fontWeight: 900, color: '#1A1A1A', textTransform: 'uppercase', letterSpacing: '0.03em', marginBottom: 4 }}>
+            Minha Avaliação
+          </h1>
+          <p style={{ fontSize: 13, color: '#8A7F76' }}>Concluída em {formatarData(avaliacao.data_finalizacao)}</p>
+        </div>
+        <button onClick={() => navigate('/dashboard')} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, height: 36, paddingInline: 14, borderRadius: 10, border: '1px solid #E0D6CA', background: '#FFFFFF', cursor: 'pointer', fontSize: 12, fontWeight: 700, color: '#6B6560', flexShrink: 0 }}>
+          <Home size={14} />Home
+        </button>
       </div>
 
       {/* Chips de perfil */}

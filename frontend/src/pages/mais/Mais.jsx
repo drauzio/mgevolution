@@ -14,7 +14,7 @@ const extras = [
   { icon: Users,    label: 'Comunidade',  desc: 'Você nunca estará sozinho',       to: '#' },
   { icon: Trophy,   label: 'Desafios',    desc: 'Participe e conquiste recompensas', to: '#' },
   { icon: BookOpen, label: 'Cursos',      desc: 'Conteúdo exclusivo MG',           to: '#' },
-  { icon: Settings, label: 'Configurações', desc: 'Conta e preferências',          to: '#' },
+  { icon: Settings, label: 'Configurações', desc: 'Conta e preferências',          to: '/perfil' },
 ]
 
 function MenuItem({ icon: Icon, label, desc, to, iconColor = '#CC1A1A', iconBg = 'rgba(204,26,26,0.08)', iconBorder = 'rgba(204,26,26,0.18)' }) {
@@ -55,7 +55,7 @@ export default function Mais() {
           <p style={{ fontSize: 13, color: '#8A7F76' }}>{usuario?.email}</p>
         </div>
         <Link
-          to="#"
+          to="/perfil"
           style={{ width: 36, height: 36, borderRadius: 10, background: '#F7F3EE', border: '1px solid #E0D6CA', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
           onMouseEnter={e => e.currentTarget.style.borderColor = 'rgba(204,26,26,0.3)'}
           onMouseLeave={e => e.currentTarget.style.borderColor = '#E0D6CA'}

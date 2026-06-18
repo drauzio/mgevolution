@@ -28,6 +28,9 @@ body {
   min-height: 100svh;
 }
 
+/* Scrollbar global */
+* { scrollbar-color: #B0A89E transparent; }
+
 @keyframes pulse {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.45; }
