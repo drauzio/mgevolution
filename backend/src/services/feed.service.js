@@ -25,7 +25,7 @@ async function listar(id_usuario_logado, pagina = 1) {
       SELECT
         f.id_feed, f.tipo, f.titulo, f.subtitulo, f.id_referencia,
         CONVERT(VARCHAR(16), f.data_criacao, 120) AS data_criacao,
-        u.id_usuario, u.nome AS nome_usuario,
+        u.id_usuario, u.nome AS nome_usuario, u.foto_url,
         (SELECT COUNT(*) FROM dbo.feed_reacao r WHERE r.id_feed = f.id_feed) AS total_reacoes,
         CASE WHEN EXISTS (SELECT 1 FROM dbo.feed_reacao r WHERE r.id_feed = f.id_feed AND r.id_usuario = @uid) THEN 1 ELSE 0 END AS eu_curti
       FROM dbo.feed_item f

@@ -44,7 +44,7 @@ async function enviarBoasVindas({ phone, nomeAluno }) {
   })
 }
 
-async function enviarAssinaturaNova({ phone, nomeAluno, nomePlano, dataFim }) {
+async function enviarAssinaturaNova({ phone, nomeAluno, nomePlano, dataInicio, dataFim, valor }) {
   return postTemplate({
     messaging_product: 'whatsapp',
     to: phone,
@@ -55,9 +55,11 @@ async function enviarAssinaturaNova({ phone, nomeAluno, nomePlano, dataFim }) {
       components: [{
         type: 'body',
         parameters: [
-          { type: 'text', text: nomeAluno || '' },
-          { type: 'text', text: nomePlano || '' },
-          { type: 'text', text: dataFim   || '' },
+          { type: 'text', text: nomeAluno   || '' },
+          { type: 'text', text: nomePlano   || '' },
+          { type: 'text', text: dataInicio  || '' },
+          { type: 'text', text: dataFim     || '' },
+          { type: 'text', text: valor       || '' },
         ],
       }],
     },
@@ -86,7 +88,7 @@ async function enviarAssinaturaVencendo({ phone, nomeAluno, nomePlano, diasResta
   })
 }
 
-async function enviarAlunoInativo({ phone, nomeAluno, diasSemTreinar, nomeAcademia }) {
+async function enviarAlunoInativo({ phone, nomeAluno, diasSemTreinar }) {
   return postTemplate({
     messaging_product: 'whatsapp',
     to: phone,
@@ -97,9 +99,8 @@ async function enviarAlunoInativo({ phone, nomeAluno, diasSemTreinar, nomeAcadem
       components: [{
         type: 'body',
         parameters: [
-          { type: 'text', text: nomeAluno          || '' },
-          { type: 'text', text: String(diasSemTreinar) },
-          { type: 'text', text: nomeAcademia       || 'MG Evolution' },
+          { type: 'text', text: nomeAluno             || '' },
+          { type: 'text', text: String(diasSemTreinar)     },
         ],
       }],
     },

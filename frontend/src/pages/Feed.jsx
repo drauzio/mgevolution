@@ -11,17 +11,22 @@ const TIPO_CONFIG = {
   medida:    { icone: <Activity size={14} />, cor: '#15803d', bg: '#F0FDF4' },
 }
 
-function TipoBadge({ tipo }) {
-  const cfg = TIPO_CONFIG[tipo] || { icone: null, cor: '#6B6560', bg: '#F9F6F2' }
+
+function Avatar({ nome, fotoUrl }) {
+  const inicial = (nome || '?')[0].toUpperCase()
+  if (fotoUrl) return (
+    <img src={fotoUrl} alt={nome} style={{ width: 38, height: 38, borderRadius: '50%', objectFit: 'cover', flexShrink: 0, border: '2px solid #F0EBE4' }} />
+  )
   return (
-    <div style={{ width: 32, height: 32, borderRadius: '50%', background: cfg.bg, border: `1px solid ${cfg.cor}30`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: cfg.cor, flexShrink: 0 }}>
-      {cfg.icone}
+    <div style={{ width: 38, height: 38, borderRadius: '50%', background: '#F0EBE4', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 15, fontWeight: 800, color: '#8A7F76' }}>
+      {inicial}
     </div>
   )
 }
 
 function CardFeed({ item, onReagir }) {
   const [loading, setLoading] = useState(false)
+  const cfg = TIPO_CONFIG[item.tipo] || { icone: null, cor: '#6B6560', bg: '#F9F6F2' }
 
   async function curtir() {
     if (loading) return
@@ -31,16 +36,19 @@ function CardFeed({ item, onReagir }) {
 
   return (
     <div style={{ background: '#FFFFFF', borderRadius: 14, border: '1px solid #F0EBE4', padding: '14px 16px', display: 'flex', gap: 12 }}>
-      <TipoBadge tipo={item.tipo} />
+      <Avatar nome={item.nome_usuario} fotoUrl={item.foto_url} />
       <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 3 }}>
+          <span style={{ fontSize: 12, fontWeight: 700, color: '#1A1A1A' }}>{item.nome_usuario}</span>
+          <span style={{ fontSize: 10, padding: '1px 6px', borderRadius: 10, background: cfg.bg, color: cfg.cor, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 3 }}>
+            {cfg.icone}{item.tipo}
+          </span>
+        </div>
         <p style={{ fontSize: 13, color: '#1A1A1A', lineHeight: 1.4, marginBottom: 2 }}>{item.titulo}</p>
         {item.subtitulo && <p style={{ fontSize: 11, color: '#8A7F76', marginBottom: 6 }}>{item.subtitulo}</p>}
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <span style={{ fontSize: 10, color: '#C4B9A8' }}>{item.data_criacao}</span>
-          <button
-            onClick={curtir}
-            style={{ display: 'flex', alignItems: 'center', gap: 4, border: 'none', background: 'none', cursor: 'pointer', padding: 0, color: item.eu_curti ? '#CC1A1A' : '#C4B9A8' }}
-          >
+          <button onClick={curtir} style={{ display: 'flex', alignItems: 'center', gap: 4, border: 'none', background: 'none', cursor: 'pointer', padding: 0, color: item.eu_curti ? '#CC1A1A' : '#C4B9A8' }}>
             <Heart size={13} fill={item.eu_curti ? '#CC1A1A' : 'none'} />
             <span style={{ fontSize: 11, fontWeight: 600 }}>{item.total_reacoes || ''}</span>
           </button>

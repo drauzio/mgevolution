@@ -1,5 +1,6 @@
 const { getPool, sql } = require('../database/connection')
-const wa = require('../integrations/whatsapp')
+const wa     = require('../integrations/whatsapp')
+const config = require('./configuracao.service')
 
 async function gravarLog({ tipo, id_usuario, telefone, status, message_id, motivo_erro }) {
   try {
@@ -36,22 +37,37 @@ async function enviarELogar(tipo, id_usuario, resultadoEnvio) {
 
 async function boasVindasAluno(aluno) {
   if (!aluno.telefone || !wa.isConfigurado()) return
+  const cfg = await config.getCategoria('notificacoes')
+  if (!cfg.notif_boasvindas) return
   const r = await wa.enviarBoasVindas({ phone: aluno.telefone, nomeAluno: aluno.nome })
   await enviarELogar('boasvindas_aluno', aluno.id_usuario, r)
 }
 
-async function assinaturaNova({ id_usuario, nomeAluno, telefone, nomePlano, dataFim }) {
+async function assinaturaNova({ id_usuario, nomeAluno, telefone, nomePlano, dataInicio, dataFim, valor }) {
   if (!telefone || !wa.isConfigurado()) return
-  const fimFmt = new Date(dataFim + 'T12:00:00').toLocaleDateString('pt-BR')
-  const r = await wa.enviarAssinaturaNova({ phone: telefone, nomeAluno, nomePlano, dataFim: fimFmt })
+  const cfg = await config.getCategoria('notificacoes')
+  if (!cfg.notif_assinatura_nova) return
+  const fmt = d => new Date(d + 'T12:00:00').toLocaleDateString('pt-BR')
+  const valorFmt = Number(valor || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+  const r = await wa.enviarAssinaturaNova({
+    phone: telefone, nomeAluno, nomePlano,
+    dataInicio: fmt(dataInicio),
+    dataFim:    fmt(dataFim),
+    valor:      valorFmt,
+  })
   await enviarELogar('assinatura_nova', id_usuario, r)
 }
 
-// ─── Cron: assinaturas vencendo em 7 dias ─────────────────────────────────────
+// ─── Cron: assinaturas vencendo ───────────────────────────────────────────────
 async function cronAssinaturaVencendo() {
   if (!wa.isConfigurado()) return
+  const cfg = await config.getCategoria('notificacoes')
+  if (!cfg.notif_vencimento) return
+  const dias = cfg.dias_vencimento || 7
   const pool = await getPool()
-  const result = await pool.request().query(`
+  const result = await pool.request()
+    .input('dias', sql.Int, dias)
+    .query(`
     SELECT
       u.id_usuario, u.nome, u.telefone,
       p.nome AS nome_plano,
@@ -61,7 +77,7 @@ async function cronAssinaturaVencendo() {
     INNER JOIN dbo.usuario u ON u.id_usuario = a.id_usuario
     INNER JOIN dbo.plano   p ON p.id_plano   = a.id_plano
     WHERE a.status = 'ativa'
-      AND DATEDIFF(day, CAST(GETDATE() AS DATE), a.data_fim) = 7
+      AND DATEDIFF(day, CAST(GETDATE() AS DATE), a.data_fim) = @dias
       AND u.telefone IS NOT NULL
       AND NOT EXISTS (
         SELECT 1 FROM dbo.whatsapp_log wl
@@ -87,11 +103,13 @@ async function cronAssinaturaVencendo() {
   }
 }
 
-// ─── Cron: alunos inativos ─────────────────────────────────────────────────────
+// ─── Cron: alunos inativos ────────────────────────────────────────────────────
 async function cronAlunoInativo() {
   if (!wa.isConfigurado()) return
+  const cfg = await config.getCategoria('notificacoes')
+  if (!cfg.notif_inativo) return
+  const diasInativo = cfg.dias_inativo || 7
   const pool = await getPool()
-  const diasInativo = Number(process.env.WHATSAPP_DIAS_INATIVO) || 7
   const result = await pool.request()
     .input('dias', sql.Int, diasInativo)
     .query(`
@@ -121,14 +139,12 @@ async function cronAlunoInativo() {
         )
     `)
 
-  const nomeAcademia = process.env.NOME_ACADEMIA || 'MG Evolution'
   for (const row of result.recordset) {
     if (!row.telefone) continue
     const r = await wa.enviarAlunoInativo({
       phone:          row.telefone,
       nomeAluno:      row.nome,
       diasSemTreinar: row.dias_sem_treino,
-      nomeAcademia,
     })
     await enviarELogar('aluno_inativo', row.id_usuario, r)
   }

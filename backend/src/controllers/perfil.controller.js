@@ -1,5 +1,5 @@
 const svc        = require('../services/perfil.service')
-const { uploadBuffer } = require('../utils/azureBlob')
+const { uploadBuffer, gerarSasReadUrl } = require('../utils/azureBlob')
 const blobPaths  = require('../utils/blobPaths')
 
 async function buscar(req, res, next) {
@@ -17,9 +17,10 @@ async function uploadFoto(req, res, next) {
   try {
     if (!req.file) return res.status(400).json({ erro: 'Nenhuma imagem enviada' })
     const blobName = blobPaths.fotoUsuario({ id_usuario: req.usuario.id, mimeType: req.file.mimetype })
-    const { url }  = await uploadBuffer({ buffer: req.file.buffer, blobName, contentType: req.file.mimetype })
-    await svc.atualizarFoto(req.usuario.id, url)
-    res.json({ foto_url: url })
+    await uploadBuffer({ buffer: req.file.buffer, blobName, contentType: req.file.mimetype })
+    const sasUrl = await gerarSasReadUrl(blobName, { minutes: 60 * 24 * 365 * 5 })
+    await svc.atualizarFoto(req.usuario.id, sasUrl)
+    res.json({ foto_url: sasUrl })
   } catch (e) { next(e) }
 }
 

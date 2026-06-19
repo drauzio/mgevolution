@@ -31,7 +31,7 @@ async function criar(req, res, next) {
             dados_depois: a,
           })
           if (a.aluno_telefone) {
-            waSvc.assinaturaNova({ id_usuario: a.id_usuario, nomeAluno: a.aluno_nome, telefone: a.aluno_telefone, nomePlano: a.plano_nome, dataFim: a.data_fim }).catch(() => {})
+            waSvc.assinaturaNova({ id_usuario: a.id_usuario, nomeAluno: a.aluno_nome, telefone: a.aluno_telefone, nomePlano: a.plano_nome, dataInicio: a.data_inicio, dataFim: a.data_fim, valor: a.plano_preco }).catch(() => {})
           }
         }
       }).catch(() => {})

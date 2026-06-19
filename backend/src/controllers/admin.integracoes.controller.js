@@ -1,14 +1,16 @@
-const wa  = require('../integrations/whatsapp')
-const svc = require('../services/whatsapp.service')
+const wa     = require('../integrations/whatsapp')
+const svc    = require('../services/whatsapp.service')
+const config = require('../services/configuracao.service')
 
 async function status(req, res, next) {
   try {
     const configurado = wa.isConfigurado()
+    const cfg = await config.getCategoria('notificacoes')
     res.json({
       configurado,
-      phone_number_id: configurado ? process.env.WHATSAPP_PHONE_NUMBER_ID : null,
-      dias_inativo:    Number(process.env.WHATSAPP_DIAS_INATIVO) || 7,
-      nome_academia:   process.env.NOME_ACADEMIA || 'MG Evolution',
+      phone_number_id:   configurado ? process.env.WHATSAPP_PHONE_NUMBER_ID : null,
+      dias_inativo:      cfg.dias_inativo   || 7,
+      dias_vencimento:   cfg.dias_vencimento || 7,
       telefone_academia: process.env.TELEFONE_ACADEMIA || '',
     })
   } catch (err) { next(err) }

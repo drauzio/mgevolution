@@ -187,7 +187,7 @@ export default function AdminIntegracoes() {
         {[
           { tipo: 'boasvindas_aluno',    label: 'Boas-vindas',           desc: 'Enviado quando um aluno é cadastrado',                          quando: 'Imediato' },
           { tipo: 'assinatura_nova',     label: 'Assinatura nova',       desc: 'Enviado quando uma assinatura é criada',                        quando: 'Imediato' },
-          { tipo: 'assinatura_vencendo', label: 'Assinatura vencendo',   desc: 'Avisa o aluno quando a assinatura vence em 7 dias',              quando: 'Cron · 9h' },
+          { tipo: 'assinatura_vencendo', label: 'Assinatura vencendo',   desc: `Avisa o aluno quando a assinatura vence em ${statusData?.dias_vencimento || 7} dias`, quando: 'Cron · 9h' },
           { tipo: 'aluno_inativo',       label: 'Aluno inativo',         desc: `Avisa quando o aluno não treina há ${statusData?.dias_inativo || 7} dias`, quando: 'Cron · 10h' },
         ].map((item, i, arr) => (
           <div key={item.tipo} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, padding: '16px 28px', borderBottom: i < arr.length - 1 ? '1px solid #F7F3EE' : 'none' }}>
@@ -267,30 +267,6 @@ export default function AdminIntegracoes() {
               </div>
             )}
           </div>
-        </div>
-      </div>
-
-      {/* Templates */}
-      <div style={{ background: '#FFFFFF', border: '1px solid #E0D6CA', borderRadius: 20, overflow: 'hidden', boxShadow: '0 2px 16px rgba(0,0,0,0.04)' }}>
-        <p style={{ fontSize: 14, fontWeight: 800, color: '#1A1A1A', padding: '20px 28px', borderBottom: '1px solid #F0EBE4' }}>Templates necessários na Meta</p>
-        <div style={{ padding: '0 28px 20px' }}>
-          <p style={{ fontSize: 12, color: '#8A7F76', marginTop: 16, marginBottom: 16 }}>
-            Crie os seguintes templates no <strong>Meta Business Manager → WhatsApp → Templates de mensagem</strong> antes de usar:
-          </p>
-          {[
-            { name: 'boasvindas_aluno',    params: '{{1}} nome do aluno',                                                          desc: 'Boas-vindas ao cadastrar aluno' },
-            { name: 'assinatura_nova',     params: '{{1}} nome aluno · {{2}} nome do plano · {{3}} data de vencimento',            desc: 'Confirmação de nova assinatura' },
-            { name: 'assinatura_vencendo', params: '{{1}} nome aluno · {{2}} plano · {{3}} dias · {{4}} data fim · {{5}} telefone', desc: 'Aviso de assinatura vencendo' },
-            { name: 'aluno_inativo',       params: '{{1}} nome aluno · {{2}} dias sem treinar · {{3}} nome academia',              desc: 'Engajamento aluno inativo' },
-          ].map((t, i, arr) => (
-            <div key={t.name} style={{ padding: '14px 0', borderBottom: i < arr.length - 1 ? '1px solid #F7F3EE' : 'none' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-                <code style={{ fontSize: 12, fontWeight: 800, color: '#CC1A1A', background: 'rgba(204,26,26,0.07)', borderRadius: 6, padding: '2px 8px' }}>{t.name}</code>
-                <span style={{ fontSize: 11, color: '#8A7F76' }}>{t.desc}</span>
-              </div>
-              <p style={{ fontSize: 11, color: '#A09890' }}>Parâmetros: {t.params}</p>
-            </div>
-          ))}
         </div>
       </div>
 
