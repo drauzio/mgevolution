@@ -30,7 +30,7 @@ async function resumo(id_usuario) {
           (SELECT COUNT(*) FROM dbo.treino_dia_exercicio tde WHERE tde.id_treino_dia = td.id_treino_dia) AS qtd_exercicios
         FROM dbo.treino_protocolo tp
         JOIN dbo.treino_dia td ON td.id_protocolo = tp.id_protocolo
-        WHERE tp.id_usuario = @id AND tp.is_template = 0 AND tp.ativo = 1
+        WHERE tp.id_usuario = @id AND tp.ativo = 1
           AND td.dia_semana = ${diaSemanaSQL}
         ORDER BY tp.data_criacao DESC
       `),

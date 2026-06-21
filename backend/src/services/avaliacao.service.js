@@ -1,5 +1,5 @@
 const { getPool, sql } = require('../database/connection')
-const { clonarTemplateParaAluno } = require('./treino.service')
+const { clonarParaAluno } = require('./template.service')
 
 async function getStatus(id_usuario) {
   const pool = await getPool()
@@ -129,7 +129,7 @@ async function salvar(id_usuario, respostas) {
 
     // Auto-atribuir template (erro não bloqueia a avaliação)
     try {
-      await clonarTemplateParaAluno(tx, id_usuario, objetivo, nivel, sexo, idade)
+      await clonarParaAluno(tx, id_usuario, null, objetivo, nivel, sexo, idade)
     } catch (tmplErr) {
       console.error('[avaliacao] template não atribuído:', tmplErr.message)
     }
@@ -158,7 +158,7 @@ async function getMinhaAvaliacao(id_usuario) {
       OUTER APPLY (
         SELECT TOP 1 id_protocolo, nome
         FROM dbo.treino_protocolo
-        WHERE id_usuario = af.id_usuario AND is_template = 0 AND ativo = 1
+        WHERE id_usuario = af.id_usuario AND ativo = 1
         ORDER BY data_criacao DESC
       ) tp
       WHERE af.id_usuario = @id_usuario AND af.ativo = 1

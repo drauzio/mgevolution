@@ -122,7 +122,7 @@ async function exerciciosDoProtocolo(idUsuario) {
       JOIN dbo.treino_dia        td  ON td.id_protocolo  = p.id_protocolo
       JOIN dbo.treino_dia_exercicio tde ON tde.id_treino_dia = td.id_treino_dia
       JOIN dbo.exercicio         e   ON e.id_exercicio   = tde.id_exercicio
-      WHERE p.id_usuario = @id AND p.ativo = 1 AND p.is_template = 0
+      WHERE p.id_usuario = @id AND p.ativo = 1
       ORDER BY e.grupo_muscular, e.nome
     `)
   return result.recordset

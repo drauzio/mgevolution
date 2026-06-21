@@ -43,6 +43,8 @@ import AdminIntegracoes from './pages/admin/AdminIntegracoes'
 import AdminLogs from './pages/admin/AdminLogs'
 import AdminDesafios from './pages/admin/AdminDesafios'
 import AdminConfiguracoes from './pages/admin/AdminConfiguracoes'
+import IaDiretrizes from './pages/admin/IaDiretrizes'
+import IaDiretrizForm from './pages/admin/IaDiretrizForm'
 import AdminPagamentos from './pages/admin/AdminPagamentos'
 import Feed from './pages/Feed'
 import Conquistas from './pages/Conquistas'
@@ -114,6 +116,9 @@ export default function App() {
                   <Route path="/nutri/dietas/:id" element={<DietaForm />} />
                   <Route path="/nutri/alunos" element={<AlunoList />} />
                   <Route path="/nutri/alunos/:id" element={<AlunoForm />} />
+                  <Route path="/nutri/ia-diretrizes" element={<IaDiretrizes />} />
+                  <Route path="/nutri/ia-diretrizes/nova" element={<IaDiretrizForm />} />
+                  <Route path="/nutri/ia-diretrizes/:id" element={<IaDiretrizForm />} />
                 </Route>
 
                 {/* Admin */}
@@ -157,6 +162,9 @@ export default function App() {
                   <Route path="/admin/configuracoes" element={<AdminConfiguracoes />} />
                   <Route path="/admin/pagamentos" element={<AdminPagamentos />} />
                   <Route path="/admin/desafios" element={<AdminDesafios />} />
+                  <Route path="/admin/ia-diretrizes" element={<IaDiretrizes />} />
+                  <Route path="/admin/ia-diretrizes/nova" element={<IaDiretrizForm />} />
+                  <Route path="/admin/ia-diretrizes/:id" element={<IaDiretrizForm />} />
 
                   {/* Gestão */}
                   <Route path="/gestao" element={<AdminDashboard />} />

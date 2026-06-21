@@ -10,7 +10,7 @@ async function buscarParaAluno(id_usuario) {
 
     pool.request()
       .input('id', sql.Int, id_usuario)
-      .query(`SELECT COUNT(*) AS total FROM dbo.treino_protocolo WHERE id_usuario = @id AND ativo = 1 AND is_template = 0`),
+      .query(`SELECT COUNT(*) AS total FROM dbo.treino_protocolo WHERE id_usuario = @id AND ativo = 1`),
 
     pool.request()
       .input('id', sql.Int, id_usuario)
@@ -66,7 +66,7 @@ async function buscarParaAdmin() {
        WHERE u.ativo = 1
          AND NOT EXISTS (
            SELECT 1 FROM dbo.treino_protocolo tp
-           WHERE tp.id_usuario = u.id_usuario AND tp.ativo = 1 AND tp.is_template = 0
+           WHERE tp.id_usuario = u.id_usuario AND tp.ativo = 1
          )
       ) AS sem_treino,
 

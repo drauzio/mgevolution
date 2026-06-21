@@ -1,12 +1,13 @@
 import { useState, useMemo } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import useSWR, { mutate } from 'swr'
-import { Salad, Search, Home, Copy, X, ClipboardList, ChevronDown, ChevronUp, UserRound, PowerOff, Trash2, Power, Send, FileEdit, Eye } from 'lucide-react'
+import { Salad, Search, Home, Copy, X, ClipboardList, ChevronDown, ChevronUp, UserRound, PowerOff, Trash2, Power, Send, FileEdit, Eye, Sparkles } from 'lucide-react'
 import { useAuthContext } from '../../context/AuthContext'
 import { BtnIncluir, BtnEditar } from '../../components/ui/Botoes'
 import { DataTable } from '../../components/ui/DataTable'
 import * as dietaService from '../../services/dieta'
 import * as alunosService from '../../services/alunos'
+import * as nutricionistasService from '../../services/nutricionistas'
 import { data } from '../../utils/formatters'
 
 function ModalReplicar({ plano, alunos, onClose }) {
@@ -102,9 +103,11 @@ function fmtData(d) {
   return new Date(s.includes('T') ? s : s + 'T12:00:00').toLocaleDateString('pt-BR')
 }
 
-function PainelSolicitacoes({ solicitacoes, onCriarDieta, onMarcarAndamento }) {
-  const [aberto, setAberto]       = useState(true)
-  const [expandido, setExpandido] = useState(null)
+function PainelSolicitacoes({ solicitacoes, nutricionistas, onCriarDieta, onMarcarAndamento, onGerarComIA }) {
+  const [aberto, setAberto]           = useState(true)
+  const [expandido, setExpandido]     = useState(null)
+  const [gerando, setGerando]         = useState(null)
+  const [idNutri, setIdNutri]         = useState('')
 
   if (!solicitacoes.length) return null
 
@@ -129,6 +132,20 @@ function PainelSolicitacoes({ solicitacoes, onCriarDieta, onMarcarAndamento }) {
         </div>
         {aberto ? <ChevronUp size={16} color="#B45309" /> : <ChevronDown size={16} color="#B45309" />}
       </div>
+
+      {aberto && nutricionistas.length > 0 && (
+        <div style={{ padding: '10px 24px', background: 'rgba(245,158,11,0.04)', borderBottom: '1px solid #FEF3C7', display: 'flex', alignItems: 'center', gap: 10 }}>
+          <span style={{ fontSize: 11, fontWeight: 700, color: '#B45309', textTransform: 'uppercase', letterSpacing: '0.08em', flexShrink: 0 }}>Nutricionista (IA)</span>
+          <select
+            value={idNutri}
+            onChange={e => setIdNutri(e.target.value)}
+            style={{ height: 32, padding: '0 10px', border: '1px solid #FDE68A', borderRadius: 8, fontSize: 12, color: '#92400E', background: '#FFFBEB', cursor: 'pointer', outline: 'none', flex: 1, maxWidth: 260 }}
+          >
+            <option value="">Sem diretriz (padrão)</option>
+            {nutricionistas.map(n => <option key={n.id_usuario} value={n.id_usuario}>{n.nome}</option>)}
+          </select>
+        </div>
+      )}
 
       {aberto && (
         <div style={{ display: 'flex', flexDirection: 'column' }}>
@@ -183,21 +200,32 @@ function PainelSolicitacoes({ solicitacoes, onCriarDieta, onMarcarAndamento }) {
                       </div>
                     )}
 
-                    <div style={{ display: 'flex', gap: 8, paddingTop: 4 }}>
-                      {sol.status === 'pendente' && (
-                        <button
-                          onClick={() => onMarcarAndamento(sol)}
-                          style={{ height: 34, paddingInline: 14, borderRadius: 9, border: '1px solid #2563EB', background: 'rgba(37,99,235,0.06)', color: '#2563EB', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
-                        >
-                          Marcar em andamento
-                        </button>
-                      )}
+                    <div style={{ display: 'flex', gap: 8, paddingTop: 4, flexWrap: 'wrap', alignItems: 'center' }}>
+                      <button
+                        onClick={async () => {
+                          if (!idNutri) return
+                          setGerando(sol.id_dieta_solicitacao)
+                          try { await onGerarComIA(sol, idNutri) }
+                          finally { setGerando(null) }
+                        }}
+                        disabled={gerando === sol.id_dieta_solicitacao || !idNutri}
+                        title={!idNutri ? 'Selecione a nutricionista acima para gerar com IA' : ''}
+                        style={{ height: 34, paddingInline: 14, borderRadius: 9, border: 'none', background: (!idNutri || gerando === sol.id_dieta_solicitacao) ? '#B0A89E' : '#CC1A1A', color: '#FFFFFF', fontSize: 12, fontWeight: 700, cursor: (!idNutri || gerando === sol.id_dieta_solicitacao) ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}
+                      >
+                        <Sparkles size={13} />
+                        {gerando === sol.id_dieta_solicitacao ? 'Gerando...' : 'Gerar com IA'}
+                      </button>
                       <button
                         onClick={() => onCriarDieta(sol)}
-                        style={{ height: 34, paddingInline: 14, borderRadius: 9, border: 'none', background: '#CC1A1A', color: '#FFFFFF', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
+                        style={{ height: 34, paddingInline: 14, borderRadius: 9, border: '1px solid #E0D6CA', background: '#FFFFFF', color: '#6B6560', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
                       >
-                        Criar dieta para este aluno
+                        Criar manualmente
                       </button>
+                      {!idNutri && (
+                        <span style={{ fontSize: 11, color: '#B45309', fontStyle: 'italic' }}>
+                          Selecione a nutricionista acima para gerar com IA
+                        </span>
+                      )}
                     </div>
                   </div>
                 )}
@@ -247,6 +275,11 @@ export default function AdminDieta() {
     () => alunosService.listar()
   )
 
+  const { data: nutricionistas = [] } = useSWR(
+    token ? 'nutricionistas-lista' : null,
+    () => nutricionistasService.listar({ status: 'ativos' })
+  )
+
   const { data: solicitacoes = [] } = useSWR(
     token ? 'dieta-solicitacoes' : null,
     () => dietaService.listarSolicitacoes()
@@ -259,6 +292,13 @@ export default function AdminDieta() {
 
   function handleCriarDieta(sol) {
     navigate(`${base}/novo?id_usuario=${sol.id_usuario}&id_solicitacao=${sol.id_dieta_solicitacao}`, { state: { aluno_nome: sol.aluno_nome } })
+  }
+
+  async function handleGerarComIA(sol, idNutricionista) {
+    const result = await dietaService.gerarComIA(sol.id_dieta_solicitacao, idNutricionista)
+    mutate('dieta-planos')
+    mutate('dieta-solicitacoes')
+    navigate(`${base}/${result.id_dieta_plano}`)
   }
 
   const filtrados = useMemo(() => {
@@ -464,8 +504,10 @@ export default function AdminDieta() {
       {/* Solicitações pendentes */}
       <PainelSolicitacoes
         solicitacoes={solicitacoes}
+        nutricionistas={nutricionistas}
         onCriarDieta={handleCriarDieta}
         onMarcarAndamento={handleMarcarAndamento}
+        onGerarComIA={handleGerarComIA}
       />
 
       {/* Busca */}

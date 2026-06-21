@@ -15,3 +15,5 @@ export const buscarMinhaSolicitacao  = ()             => api.get('/dieta/solicit
 export const solicitarDieta         = (dados)         => api.post('/dieta/solicitacao', dados).then(r => r.data)
 export const listarSolicitacoes     = (status)        => api.get('/dieta/solicitacoes', { params: status ? { status } : {} }).then(r => r.data)
 export const atualizarStatusSolicitacao = (id, status) => api.patch(`/dieta/solicitacoes/${id}/status`, { status }).then(r => r.data)
+export const gerarComIA                 = (id, idNutricionista) => api.post(`/dieta/solicitacoes/${id}/gerar-ia`, idNutricionista ? { id_nutricionista: idNutricionista } : {}).then(r => r.data)
+export const gerarSubstituicoes         = (id)         => api.post(`/dieta/${id}/gerar-substituicoes`).then(r => r.data)

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams, useSearchParams, useLocation } from 'react-router-dom'
 import useSWR from 'swr'
-import { Plus, Trash2, ChevronDown, ChevronUp, AlertTriangle, ClipboardList } from 'lucide-react'
+import { Plus, Trash2, ChevronDown, ChevronUp, AlertTriangle, ClipboardList, Sparkles } from 'lucide-react'
 import { useAuthContext } from '../../context/AuthContext'
 import { BtnSalvar, BtnCancelar } from '../../components/ui/Botoes'
 import * as alunosService from '../../services/alunos'
@@ -134,57 +134,75 @@ export default function DietaForm() {
   )
   const [refeicoes, setRefeicoes] = useState([novaRefeicao(1)])
   const [abertas, setAbertas] = useState({ 0: true })
-  const [salvando, setSalvando] = useState(false)
-  const [erro, setErro] = useState(null)
-  const [carregando, setCarregando] = useState(isEdicao)
+  const [salvando, setSalvando]         = useState(false)
+  const [gerandoSub, setGerandoSub]     = useState(false)
+  const [msgSucesso, setMsgSucesso]     = useState(null)
+  const [erro, setErro]                 = useState(null)
+  const [carregando, setCarregando]     = useState(isEdicao)
+
+  function aplicarDados(data) {
+    setForm({
+      id_usuario:       data.id_usuario ?? '',
+      id_nutricionista: data.id_nutricionista ?? '',
+      nome:             data.nome || '',
+      objetivo:         data.objetivo || '',
+      calorias_meta:    data.calorias_meta ?? '',
+      proteina_meta:    data.proteina_meta ?? '',
+      data_inicio:      data.data_inicio?.slice(0, 10) || '',
+      data_fim:         data.data_fim?.slice(0, 10) || '',
+      observacoes:      data.observacoes || '',
+      ativo:            data.ativo       ?? 1,
+      status_plano:     data.status_plano || 'liberado',
+    })
+    setRefeicoes((data.refeicoes || []).map(r => ({
+      _uid: r.id_dieta_refeicao,
+      nome: r.nome,
+      horario: normalizarHorario(r.horario),
+      ordem: r.ordem,
+      itens: (r.itens || []).map(it => ({
+        _uid: it.id_dieta_refeicao_item,
+        descricao:   it.descricao,
+        quantidade:  it.quantidade  ?? '',
+        unidade:     it.unidade     || 'g',
+        calorias:    it.calorias    ?? '',
+        proteina:    it.proteina    ?? '',
+        carboidrato: it.carboidrato ?? '',
+        gordura:     it.gordura     ?? '',
+        substituicoes: (it.substituicoes || []).map(s => ({
+          _uid: s.id_substituicao,
+          descricao:   s.descricao,
+          quantidade:  s.quantidade  ?? '',
+          unidade:     s.unidade     || 'g',
+          calorias:    s.calorias    ?? '',
+          proteina:    s.proteina    ?? '',
+          carboidrato: s.carboidrato ?? '',
+          gordura:     s.gordura     ?? '',
+        })),
+      })),
+    })))
+    setAbertas({ 0: true })
+  }
 
   useEffect(() => {
     if (!isEdicao) return
-    dietaService.buscarPorId(id)
-      .then(data => {
-        setForm({
-          id_usuario:       data.id_usuario ?? '',
-          id_nutricionista: data.id_nutricionista ?? '',
-          nome:             data.nome || '',
-          objetivo:         data.objetivo || '',
-          calorias_meta:    data.calorias_meta ?? '',
-          proteina_meta:    data.proteina_meta ?? '',
-          data_inicio:      data.data_inicio?.slice(0, 10) || '',
-          data_fim:         data.data_fim?.slice(0, 10) || '',
-          observacoes:      data.observacoes || '',
-          ativo:            data.ativo       ?? 1,
-          status_plano:     data.status_plano || 'liberado',
-        })
-        setRefeicoes((data.refeicoes || []).map((r, i) => ({
-          _uid: r.id_dieta_refeicao,
-          nome: r.nome,
-          horario: normalizarHorario(r.horario),
-          ordem: r.ordem,
-          itens: (r.itens || []).map(it => ({
-            _uid: it.id_dieta_refeicao_item,
-            descricao:   it.descricao,
-            quantidade:  it.quantidade  ?? '',
-            unidade:     it.unidade     || 'g',
-            calorias:    it.calorias    ?? '',
-            proteina:    it.proteina    ?? '',
-            carboidrato: it.carboidrato ?? '',
-            gordura:     it.gordura     ?? '',
-            substituicoes: (it.substituicoes || []).map(s => ({
-              _uid: s.id_substituicao,
-              descricao:   s.descricao,
-              quantidade:  s.quantidade  ?? '',
-              unidade:     s.unidade     || 'g',
-              calorias:    s.calorias    ?? '',
-              proteina:    s.proteina    ?? '',
-              carboidrato: s.carboidrato ?? '',
-              gordura:     s.gordura     ?? '',
-            })),
-          })),
-        })))
-        setAbertas({ 0: true })
-      })
-      .finally(() => setCarregando(false))
+    dietaService.buscarPorId(id).then(aplicarDados).finally(() => setCarregando(false))
   }, [id])
+
+  async function handleGerarSubstituicoes() {
+    setGerandoSub(true); setErro(null); setMsgSucesso(null)
+    try {
+      const result = await dietaService.gerarSubstituicoes(id)
+      const data = await dietaService.buscarPorId(id)
+      aplicarDados(data)
+      setMsgSucesso(result.adicionadas > 0
+        ? `${result.adicionadas} substituições geradas com sucesso!`
+        : 'Todos os itens já possuem substituições.')
+    } catch (e) {
+      setErro(e.response?.data?.erro || 'Erro ao gerar substituições')
+    } finally {
+      setGerandoSub(false)
+    }
+  }
 
   function setF(k) { return e => setForm(f => ({ ...f, [k]: e.target.value })) }
 
@@ -298,6 +316,13 @@ export default function DietaForm() {
           <BtnSalvar onClick={salvar} loading={salvando} />
         </div>
       </div>
+
+      {/* Feedback de geração de substituições */}
+      {msgSucesso && (
+        <div style={{ padding: '12px 16px', borderRadius: 10, background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.3)', color: '#15803D', fontSize: 13, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 8 }}>
+          <Sparkles size={14} /> {msgSucesso}
+        </div>
+      )}
 
       {/* Banner de solicitação */}
       {idSolicitacao && !isEdicao && (
@@ -477,12 +502,24 @@ export default function DietaForm() {
           <p style={{ fontSize: 12, fontWeight: 700, color: '#8A7F76', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
             Refeições ({refeicoes.length})
           </p>
-          <button
-            onClick={adicionarRefeicao}
-            style={{ display: 'flex', alignItems: 'center', gap: 6, height: 34, paddingInline: 14, borderRadius: 8, border: '1px dashed #CC1A1A', background: 'rgba(204,26,26,0.04)', color: '#CC1A1A', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
-          >
-            <Plus size={13} /> Adicionar refeição
-          </button>
+          <div style={{ display: 'flex', gap: 8 }}>
+            {isEdicao && (
+              <button
+                onClick={handleGerarSubstituicoes}
+                disabled={gerandoSub}
+                style={{ display: 'flex', alignItems: 'center', gap: 6, height: 34, paddingInline: 14, borderRadius: 8, border: '1px dashed #CC1A1A', background: gerandoSub ? '#F7F3EE' : 'rgba(204,26,26,0.04)', color: gerandoSub ? '#B0A89E' : '#CC1A1A', fontSize: 12, fontWeight: 700, cursor: gerandoSub ? 'not-allowed' : 'pointer' }}
+              >
+                <Sparkles size={13} />
+                {gerandoSub ? 'Gerando...' : 'Gerar substituições'}
+              </button>
+            )}
+            <button
+              onClick={adicionarRefeicao}
+              style={{ display: 'flex', alignItems: 'center', gap: 6, height: 34, paddingInline: 14, borderRadius: 8, border: '1px dashed #CC1A1A', background: 'rgba(204,26,26,0.04)', color: '#CC1A1A', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
+            >
+              <Plus size={13} /> Adicionar refeição
+            </button>
+          </div>
         </div>
 
         {refeicoes.map((ref, i) => {

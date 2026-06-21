@@ -47,7 +47,6 @@ async function login(req, res) {
     const data = await authService.login(email, senha)
     res.json(data)
   } catch (e) {
-    console.error('[login]', e.message || e)
     res.status(e.status || 500).json({ erro: e.mensagem || 'Erro interno' })
   }
 }

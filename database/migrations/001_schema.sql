@@ -215,20 +215,67 @@ CREATE TABLE dbo.exercicio (
   CONSTRAINT PK_exercicio PRIMARY KEY (id_exercicio)
 );
 
+-- Templates reutilizáveis criados pelo personal/admin
+CREATE TABLE dbo.treino_protocolo_template (
+  id_template        INT          IDENTITY(1,1) NOT NULL,
+  id_personal        INT          NULL,
+  nome               VARCHAR(120) NOT NULL,
+  objetivo           VARCHAR(200) NULL,
+  observacoes        VARCHAR(500) NULL,
+  criterio_objetivo  VARCHAR(100) NULL,
+  criterio_nivel     VARCHAR(50)  NULL,
+  criterio_sexo      VARCHAR(1)   NULL,   -- 'M', 'F' ou NULL (qualquer)
+  criterio_idade_min INT          NULL,
+  criterio_idade_max INT          NULL,
+  ativo              BIT          NOT NULL DEFAULT 1,
+  data_criacao       DATETIME     NOT NULL DEFAULT SYSUTCDATETIME(),
+  data_atualizacao   DATETIME     NULL,
+  CONSTRAINT PK_treino_protocolo_template PRIMARY KEY (id_template),
+  CONSTRAINT FK_tpt_personal              FOREIGN KEY (id_personal) REFERENCES dbo.usuario(id_usuario)
+);
+
+CREATE INDEX IX_tpt_criterio ON dbo.treino_protocolo_template (criterio_objetivo, criterio_nivel, criterio_sexo, ativo);
+
+CREATE TABLE dbo.treino_template_dia (
+  id_template_dia INT         IDENTITY(1,1) NOT NULL,
+  id_template     INT         NOT NULL,
+  dia_semana      TINYINT     NOT NULL,   -- 1=Seg 2=Ter 3=Qua 4=Qui 5=Sex 6=Sab 7=Dom
+  nome            VARCHAR(80) NOT NULL,
+  descanso        BIT         NOT NULL DEFAULT 0,
+  ordem           TINYINT     NOT NULL DEFAULT 1,
+  CONSTRAINT PK_treino_template_dia        PRIMARY KEY (id_template_dia),
+  CONSTRAINT FK_ttd_template               FOREIGN KEY (id_template) REFERENCES dbo.treino_protocolo_template(id_template),
+  CONSTRAINT UQ_treino_template_dia_semana UNIQUE (id_template, dia_semana)
+);
+
+CREATE INDEX IX_ttd_template ON dbo.treino_template_dia (id_template, dia_semana);
+
+CREATE TABLE dbo.treino_template_dia_exercicio (
+  id_template_dia_exercicio INT          IDENTITY(1,1) NOT NULL,
+  id_template_dia           INT          NOT NULL,
+  id_exercicio              INT          NOT NULL,
+  series                    TINYINT      NOT NULL DEFAULT 3,
+  repeticoes                VARCHAR(20)  NOT NULL DEFAULT '15',
+  carga_sugerida            VARCHAR(30)  NULL,
+  descanso_seg              SMALLINT     NULL,
+  observacao                VARCHAR(300) NULL,
+  ordem                     TINYINT      NOT NULL DEFAULT 1,
+  CONSTRAINT PK_treino_template_dia_exercicio PRIMARY KEY (id_template_dia_exercicio),
+  CONSTRAINT FK_ttde_dia                      FOREIGN KEY (id_template_dia) REFERENCES dbo.treino_template_dia(id_template_dia),
+  CONSTRAINT FK_ttde_exercicio                FOREIGN KEY (id_exercicio)    REFERENCES dbo.exercicio(id_exercicio)
+);
+
+CREATE INDEX IX_ttde_dia ON dbo.treino_template_dia_exercicio (id_template_dia, ordem);
+
+-- Protocolo individual do aluno (sempre vinculado a um aluno)
 CREATE TABLE dbo.treino_protocolo (
   id_protocolo        INT          IDENTITY(1,1) NOT NULL,
-  id_usuario          INT          NULL,   -- NULL para templates
-  id_personal         INT          NULL,   -- NULL para templates
-  id_template_origem  INT          NULL,   -- template que originou este protocolo
+  id_usuario          INT          NOT NULL,   -- aluno (NOT NULL — protocolo sempre tem dono)
+  id_personal         INT          NULL,
+  id_template_origem  INT          NULL,   -- FK para template (NULL se criado do zero)
   nome                VARCHAR(120) NOT NULL,
   objetivo            VARCHAR(200) NULL,
   observacoes         VARCHAR(500) NULL,
-  is_template         BIT          NOT NULL DEFAULT 0,
-  criterio_objetivo   VARCHAR(100) NULL,
-  criterio_nivel      VARCHAR(50)  NULL,
-  criterio_sexo       VARCHAR(1)   NULL,   -- 'M', 'F' ou NULL (qualquer)
-  criterio_idade_min  INT          NULL,
-  criterio_idade_max  INT          NULL,
   data_inicio         DATE         NULL,
   data_fim            DATE         NULL,
   ativo               BIT          NOT NULL DEFAULT 1,
@@ -237,12 +284,10 @@ CREATE TABLE dbo.treino_protocolo (
   CONSTRAINT PK_treino_protocolo          PRIMARY KEY (id_protocolo),
   CONSTRAINT FK_protocolo_aluno           FOREIGN KEY (id_usuario)         REFERENCES dbo.usuario(id_usuario),
   CONSTRAINT FK_protocolo_personal        FOREIGN KEY (id_personal)        REFERENCES dbo.usuario(id_usuario),
-  CONSTRAINT FK_protocolo_template_origem FOREIGN KEY (id_template_origem) REFERENCES dbo.treino_protocolo(id_protocolo)
+  CONSTRAINT FK_protocolo_template_origem FOREIGN KEY (id_template_origem) REFERENCES dbo.treino_protocolo_template(id_template)
 );
 
-CREATE INDEX IX_protocolo_usuario  ON dbo.treino_protocolo (id_usuario, ativo);
-CREATE INDEX IX_protocolo_template ON dbo.treino_protocolo (is_template, criterio_objetivo, criterio_nivel, criterio_sexo)
-  WHERE is_template = 1;
+CREATE INDEX IX_protocolo_usuario         ON dbo.treino_protocolo (id_usuario, ativo);
 CREATE INDEX IX_protocolo_template_origem ON dbo.treino_protocolo (id_template_origem)
   WHERE id_template_origem IS NOT NULL;
 

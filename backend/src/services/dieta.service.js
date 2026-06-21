@@ -1,4 +1,5 @@
 const { getPool, sql } = require('../database/connection')
+const { buscarParaGeracao: buscarDiretriz } = require('./ia-diretriz.service')
 
 async function listarPlanos(idAluno) {
   const pool = await getPool()
@@ -431,7 +432,178 @@ async function atualizarStatusSolicitacao(idSolicitacao, status) {
     `)
 }
 
+async function gerarComIA(idSolicitacao, idNutricionista) {
+  const pool = await getPool()
+
+  const solR = await pool.request()
+    .input('id', sql.Int, idSolicitacao)
+    .query(`
+      SELECT s.*, u.nome AS aluno_nome
+      FROM dbo.dieta_solicitacao s
+      JOIN dbo.usuario u ON u.id_usuario = s.id_usuario
+      WHERE s.id_dieta_solicitacao = @id
+    `)
+  const sol = solR.recordset[0]
+  if (!sol) throw Object.assign(new Error('Solicitação não encontrada'), { status: 404 })
+
+  const perfil = await dadosAlunoParaDieta(sol.id_usuario)
+  const numRef = sol.refeicoes_dia || 5
+
+  const diretriz = idNutricionista
+    ? await buscarDiretriz(idNutricionista, 'dieta', perfil?.objetivo || sol.objetivo, perfil?.sexo, perfil?.nivel)
+    : null
+
+  const linhas = [
+    `Crie um plano alimentar completo retornando APENAS JSON válido, sem texto extra.`,
+    diretriz ? `\nDIRETRIZES DA NUTRICIONISTA (seguir obrigatoriamente):\n${diretriz}\n` : null,
+    ``,
+    `PERFIL:`,
+    `- Nome: ${sol.aluno_nome}`,
+    perfil?.objetivo   ? `- Objetivo fitness: ${perfil.objetivo}` : null,
+    sol.objetivo       ? `- Objetivo da dieta: ${sol.objetivo}`   : null,
+    perfil?.sexo === 'M' ? '- Sexo: Masculino' : perfil?.sexo === 'F' ? '- Sexo: Feminino' : null,
+    perfil?.idade      ? `- Idade: ${perfil.idade} anos`          : null,
+    perfil?.peso       ? `- Peso: ${perfil.peso} kg`              : null,
+    perfil?.altura     ? `- Altura: ${perfil.altura} cm`          : null,
+    sol.restricoes     ? `- Restrições: ${sol.restricoes}`        : null,
+    sol.preferencias   ? `- Preferências: ${sol.preferencias}`    : null,
+    sol.observacao     ? `- Observações: ${sol.observacao}`       : null,
+    ``,
+    `Retorne JSON com esta estrutura exata:`,
+    `{"nome":"Nome do plano","objetivo":"Objetivo resumido","calorias_totais":2500,"proteina_total":180,"carboidrato_total":250,"gordura_total":70,"observacoes":"Orientações gerais","refeicoes":[{"nome":"Café da manhã","horario":"07:00","itens":[{"descricao":"Ovo inteiro","quantidade":3,"unidade":"un","calorias":210,"proteina":18,"carboidrato":0,"gordura":15,"substituicoes":[{"descricao":"Clara de ovo","quantidade":150,"unidade":"g","calorias":75,"proteina":16,"carboidrato":1,"gordura":0}]}]}]}`,
+    ``,
+    `Crie ${numRef} refeições. Use alimentos brasileiros comuns. Todos os valores numéricos devem ser números. Inclua obrigatoriamente pelo menos 1 substituição para cada alimento (nunca deixe "substituicoes" vazio).`,
+  ].filter(l => l !== null).join('\n')
+
+  const OpenAI = require('openai')
+  const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
+
+  const resp = await openai.chat.completions.create({
+    model: 'gpt-4o',
+    messages: [{ role: 'user', content: linhas }],
+    response_format: { type: 'json_object' },
+  })
+
+  const plano = JSON.parse(resp.choices[0].message.content)
+
+  const tx = pool.transaction()
+  await tx.begin()
+  try {
+    const r1 = await tx.request()
+      .input('id_usuario',       sql.Int,         sol.id_usuario)
+      .input('id_nutricionista', sql.Int,          idNutricionista || null)
+      .input('nome',             sql.VarChar(120),  plano.nome || `Dieta ${sol.aluno_nome}`)
+      .input('objetivo',         sql.VarChar(200),  plano.objetivo || sol.objetivo || null)
+      .input('calorias_meta',    sql.Int,           plano.calorias_totais ? Math.round(plano.calorias_totais) : null)
+      .input('proteina_meta',    sql.Int,           plano.proteina_total  ? Math.round(plano.proteina_total)  : null)
+      .input('observacoes',      sql.VarChar(500),  plano.observacoes || null)
+      .input('status_plano',     sql.VarChar(20),  'revisao')
+      .query(`
+        INSERT INTO dbo.dieta_plano
+          (id_usuario, id_nutricionista, nome, objetivo, calorias_meta, proteina_meta, observacoes, status_plano)
+        OUTPUT INSERTED.id_dieta_plano
+        VALUES (@id_usuario, @id_nutricionista, @nome, @objetivo, @calorias_meta, @proteina_meta, @observacoes, @status_plano)
+      `)
+
+    const idPlano = r1.recordset[0].id_dieta_plano
+    await _inserirRefeicoes(tx, idPlano, plano.refeicoes || [])
+    await tx.commit()
+
+    await pool.request()
+      .input('id', sql.Int, idSolicitacao)
+      .query(`UPDATE dbo.dieta_solicitacao SET status = 'em_andamento', data_atualizacao = SYSUTCDATETIME() WHERE id_dieta_solicitacao = @id`)
+
+    return { id_dieta_plano: idPlano }
+  } catch (err) {
+    await tx.rollback()
+    throw err
+  }
+}
+
+async function gerarSubstituicoes(idPlano) {
+  const pool = await getPool()
+  const plano = await buscarCompleto(idPlano)
+  if (!plano) throw Object.assign(new Error('Plano não encontrado'), { status: 404 })
+
+  const itensSemSub = []
+  for (const ref of plano.refeicoes || []) {
+    for (const it of ref.itens || []) {
+      if (!it.substituicoes || it.substituicoes.length === 0) {
+        itensSemSub.push({
+          id:          it.id_dieta_refeicao_item,
+          refeicao:    ref.nome,
+          descricao:   it.descricao,
+          quantidade:  it.quantidade,
+          unidade:     it.unidade,
+          calorias:    it.calorias,
+          proteina:    it.proteina,
+          carboidrato: it.carboidrato,
+          gordura:     it.gordura,
+        })
+      }
+    }
+  }
+
+  if (itensSemSub.length === 0) return { adicionadas: 0 }
+
+  const listaItens = itensSemSub.map((it, i) =>
+    `${i + 1}. [${it.refeicao}] ${it.descricao} (${it.quantidade ?? ''}${it.unidade}) — ${it.calorias ?? 0}kcal P:${it.proteina ?? 0}g C:${it.carboidrato ?? 0}g G:${it.gordura ?? 0}g`
+  ).join('\n')
+
+  const prompt = `Para cada alimento abaixo, gere 1 ou 2 substituições equivalentes em calorias e macros. Use alimentos brasileiros comuns e acessíveis.
+
+Alimentos sem substituição:
+${listaItens}
+
+Retorne APENAS JSON válido:
+{"itens":[{"indice":1,"substituicoes":[{"descricao":"Nome","quantidade":150,"unidade":"g","calorias":200,"proteina":30,"carboidrato":5,"gordura":8}]}]}
+
+Use o mesmo número "indice" de cada alimento. Todos os valores numéricos devem ser números.`
+
+  const OpenAI = require('openai')
+  const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
+
+  const resp = await openai.chat.completions.create({
+    model: 'gpt-4o',
+    messages: [{ role: 'user', content: prompt }],
+    response_format: { type: 'json_object' },
+  })
+
+  const resultado = JSON.parse(resp.choices[0].message.content)
+
+  let adicionadas = 0
+  for (const itemResp of resultado.itens || []) {
+    const idx = (itemResp.indice ?? 0) - 1
+    const orig = itensSemSub[idx]
+    if (!orig || !itemResp.substituicoes?.length) continue
+
+    for (let k = 0; k < itemResp.substituicoes.length; k++) {
+      const sub = itemResp.substituicoes[k]
+      if (!sub.descricao?.trim()) continue
+      await pool.request()
+        .input('id_item',     sql.Int,          orig.id)
+        .input('descricao',   sql.NVarChar(200), sub.descricao)
+        .input('quantidade',  sql.Decimal(8, 1), sub.quantidade  ? Number(sub.quantidade)  : null)
+        .input('unidade',     sql.VarChar(20),   sub.unidade || 'g')
+        .input('calorias',    sql.Int,           sub.calorias    ? Number(sub.calorias)    : null)
+        .input('proteina',    sql.Int,           sub.proteina    ? Number(sub.proteina)    : null)
+        .input('carboidrato', sql.Int,           sub.carboidrato ? Number(sub.carboidrato) : null)
+        .input('gordura',     sql.Int,           sub.gordura     ? Number(sub.gordura)     : null)
+        .input('ordem',       sql.TinyInt,       k + 1)
+        .query(`
+          INSERT INTO dbo.dieta_refeicao_item_substituicao
+            (id_dieta_refeicao_item, descricao, quantidade, unidade, calorias, proteina, carboidrato, gordura, ordem)
+          VALUES
+            (@id_item, @descricao, @quantidade, @unidade, @calorias, @proteina, @carboidrato, @gordura, @ordem)
+        `)
+      adicionadas++
+    }
+  }
+
+  return { adicionadas }
+}
+
 module.exports = {
   listarPlanos, buscarCompleto, buscarPlanoAtivo, buscarPlanoEmAndamento, criar, atualizar, toggleAtivo, deletar, atualizarStatusPlano, clonar, dadosAlunoParaDieta,
-  buscarSolicitacao, solicitarDieta, listarSolicitacoes, atualizarStatusSolicitacao,
+  buscarSolicitacao, solicitarDieta, listarSolicitacoes, atualizarStatusSolicitacao, gerarComIA, gerarSubstituicoes,
 }

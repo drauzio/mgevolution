@@ -6,6 +6,7 @@ import { useAuthContext } from '../../context/AuthContext'
 import { BtnIncluir, BtnEditar } from '../../components/ui/Botoes'
 import { DataTable } from '../../components/ui/DataTable'
 import * as treinosService from '../../services/treinos'
+import * as templatesService from '../../services/templates'
 import { data } from '../../utils/formatters'
 
 export default function TreinoList() {
@@ -25,8 +26,8 @@ export default function TreinoList() {
              : '/admin'
 
   const { data: itens = [], isLoading } = useSWR(
-    token ? ['treinos-lista', isProtocolos] : null,
-    () => treinosService.listar(isProtocolos ? { templates: '1' } : { templates: '0' })
+    token ? ['lista', isProtocolos] : null,
+    () => isProtocolos ? templatesService.listar() : treinosService.listar()
   )
 
   const filtrados = useMemo(() => {
@@ -38,6 +39,8 @@ export default function TreinoList() {
       p.criterio_objetivo?.toLowerCase().includes(q)
     )
   }, [itens, query])
+
+  const idKey = isProtocolos ? 'id_template' : 'id_protocolo'
 
   const colProtocolos = useMemo(() => [
     {
@@ -100,7 +103,7 @@ export default function TreinoList() {
     },
     {
       id: 'acoes', header: '', size: 48, enableSorting: false,
-      cell: ({ row: { original: p } }) => <BtnEditar iconOnly onClick={() => navigate(`${base}/${p.id_protocolo}`)} />,
+      cell: ({ row: { original: p } }) => <BtnEditar iconOnly onClick={() => navigate(`${base}/${p.id_template}`)} />,
     },
   ], [base])
 
@@ -121,7 +124,7 @@ export default function TreinoList() {
       cell: ({ row: { original: p } }) => (
         <div>
           <p style={{ fontSize: 13, fontWeight: 600, color: '#1A1A1A', marginBottom: 2 }}>{p.nome}</p>
-          {p.objetivo && <p style={{ fontSize: 11, color: '#8A7F76' }}>{p.objetivo}</p>}
+          {p.template_nome && <p style={{ fontSize: 11, color: '#8A7F76' }}>Base: {p.template_nome}</p>}
         </div>
       ),
     },
@@ -155,8 +158,9 @@ export default function TreinoList() {
   ], [base])
 
   function renderCard(p) {
+    const id = p[idKey]
     return (
-      <div key={p.id_protocolo} style={{ padding: '14px 20px', borderTop: '1px solid #F0EBE4' }}>
+      <div key={id} style={{ padding: '14px 20px', borderTop: '1px solid #F0EBE4' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
           <div style={{ flex: 1, minWidth: 0 }}>
             {!isProtocolos && <p style={{ fontSize: 14, fontWeight: 700, color: '#1A1A1A', marginBottom: 2 }}>{p.aluno_nome}</p>}
@@ -169,7 +173,7 @@ export default function TreinoList() {
               </span>
             </div>
           </div>
-          <BtnEditar iconOnly onClick={() => navigate(`${base}/${p.id_protocolo}`)} />
+          <BtnEditar iconOnly onClick={() => navigate(`${base}/${id}`)} />
         </div>
       </div>
     )
@@ -199,13 +203,12 @@ export default function TreinoList() {
             <Home size={14} /> Home
           </button>
           <BtnIncluir
-            onClick={() => navigate(isProtocolos ? `${base}/novo` : `${base}/novo`)}
+            onClick={() => navigate(`${base}/novo`)}
             label={isProtocolos ? 'Novo protocolo' : 'Novo treino'}
           />
         </div>
       </div>
 
-      {/* Busca */}
       <div style={{ display: 'flex', alignItems: 'center', background: '#FFFFFF', border: '1px solid #E0D6CA', borderRadius: 12, overflow: 'hidden', height: 40 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '0 14px', flex: 1 }}>
           <Search size={15} color="#8A7F76" />

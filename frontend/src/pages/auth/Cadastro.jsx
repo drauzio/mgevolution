@@ -372,6 +372,12 @@ export default function Cadastro() {
             </button>
           </form>
 
+          {faseOTP !== 'ok' && (
+            <p style={{ fontSize: 11, color: '#B0A89E', textAlign: 'center', marginTop: 8 }}>
+              Verifique o WhatsApp para continuar
+            </p>
+          )}
+
           <p className="text-center text-sm" style={{ marginTop: 18, color: '#8A7F76' }}>
             Já tem conta?{' '}
             <Link to="/login" className="font-semibold" style={{ color: '#CC1A1A' }}>Entrar</Link>

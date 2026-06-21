@@ -115,4 +115,19 @@ async function atualizarStatusSolicitacao(req, res, next) {
   } catch (err) { next(err) }
 }
 
-module.exports = { listar, buscar, criar, atualizar, toggleAtivo, deletar, atualizarStatusPlano, meuPlano, meuPlanoAndamento, clonar, dadosAluno, minhaSolicitacao, solicitarDieta, listarSolicitacoes, atualizarStatusSolicitacao }
+async function gerarComIA(req, res, next) {
+  try {
+    const idNutri = req.body?.id_nutricionista ? Number(req.body.id_nutricionista) : req.usuario.id
+    const result = await svc.gerarComIA(Number(req.params.id), idNutri)
+    res.status(201).json(result)
+  } catch (err) { next(err) }
+}
+
+async function gerarSubstituicoes(req, res, next) {
+  try {
+    const result = await svc.gerarSubstituicoes(Number(req.params.id))
+    res.json(result)
+  } catch (err) { next(err) }
+}
+
+module.exports = { listar, buscar, criar, atualizar, toggleAtivo, deletar, atualizarStatusPlano, meuPlano, meuPlanoAndamento, clonar, dadosAluno, minhaSolicitacao, solicitarDieta, listarSolicitacoes, atualizarStatusSolicitacao, gerarComIA, gerarSubstituicoes }

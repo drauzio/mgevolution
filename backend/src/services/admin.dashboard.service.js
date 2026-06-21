@@ -24,7 +24,7 @@ async function stats() {
        WHERE u.ativo = 1
          AND NOT EXISTS (
            SELECT 1 FROM dbo.treino_protocolo tp
-           WHERE tp.id_usuario = u.id_usuario AND tp.ativo = 1 AND tp.is_template = 0
+           WHERE tp.id_usuario = u.id_usuario AND tp.ativo = 1
          )
       ) AS alunos_sem_treino,
 
@@ -44,8 +44,8 @@ async function stats() {
        WHERE u.ativo = 1) AS nutricionistas_ativas,
 
       -- Treinos e dietas
-      (SELECT COUNT(*) FROM dbo.treino_protocolo WHERE ativo = 1 AND is_template = 0) AS treinos_ativos,
-      (SELECT COUNT(*) FROM dbo.treino_protocolo WHERE ativo = 1 AND is_template = 1) AS treinos_template,
+      (SELECT COUNT(*) FROM dbo.treino_protocolo WHERE ativo = 1) AS treinos_ativos,
+      (SELECT COUNT(*) FROM dbo.treino_protocolo_template WHERE ativo = 1) AS treinos_template,
 
       (SELECT COUNT(*) FROM dbo.dieta_plano WHERE ativo = 1 AND status_plano = 'liberado') AS dietas_liberadas,
       (SELECT COUNT(*) FROM dbo.dieta_plano WHERE ativo = 1 AND status_plano = 'rascunho') AS dietas_rascunho,
@@ -77,7 +77,7 @@ async function alunosRecentes() {
     JOIN dbo.usuario_perfil up ON up.id_usuario = u.id_usuario AND up.ativo = 1
     JOIN dbo.perfil p          ON p.id_perfil  = up.id_perfil  AND p.nome = 'aluno'
     LEFT JOIN dbo.treino_protocolo tp
-           ON tp.id_usuario = u.id_usuario AND tp.ativo = 1 AND tp.is_template = 0
+           ON tp.id_usuario = u.id_usuario AND tp.ativo = 1
     LEFT JOIN dbo.usuario per ON per.id_usuario = tp.id_personal
     LEFT JOIN dbo.avaliacao_fitness av
            ON av.id_usuario = u.id_usuario AND av.status = 'concluida' AND av.ativo = 1

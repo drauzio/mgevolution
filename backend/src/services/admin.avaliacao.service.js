@@ -1,5 +1,5 @@
 const { getPool, sql } = require('../database/connection')
-const { clonarTemplateParaAluno } = require('./treino.service')
+const { clonarParaAluno } = require('./template.service')
 
 async function listar({ busca, status } = {}) {
   const pool = await getPool()
@@ -35,7 +35,7 @@ async function listar({ busca, status } = {}) {
     OUTER APPLY (
       SELECT TOP 1 id_protocolo, nome
       FROM dbo.treino_protocolo
-      WHERE id_usuario = af.id_usuario AND is_template = 0 AND ativo = 1
+      WHERE id_usuario = af.id_usuario AND ativo = 1
       ORDER BY data_criacao DESC
     ) tp
     WHERE af.ativo = 1 ${filtro}
@@ -61,7 +61,7 @@ async function buscarCompleta(id) {
       OUTER APPLY (
         SELECT TOP 1 id_protocolo, nome
         FROM dbo.treino_protocolo
-        WHERE id_usuario = af.id_usuario AND is_template = 0 AND ativo = 1
+        WHERE id_usuario = af.id_usuario AND ativo = 1
         ORDER BY data_criacao DESC
       ) tp
       WHERE af.id_avaliacao_fitness = @id
@@ -116,10 +116,10 @@ async function reatribuirTemplate(id_avaliacao) {
       .input('id_usuario', sql.Int, id_usuario)
       .query(`
         UPDATE dbo.treino_protocolo SET ativo = 0, data_atualizacao = SYSUTCDATETIME()
-        WHERE id_usuario = @id_usuario AND is_template = 0 AND ativo = 1
+        WHERE id_usuario = @id_usuario AND ativo = 1
       `)
 
-    const novoId = await clonarTemplateParaAluno(tx, id_usuario, objetivo, nivel, sexo, idade)
+    const novoId = await clonarParaAluno(tx, id_usuario, null, objetivo, nivel, sexo, idade)
     await tx.commit()
     return { id_protocolo: novoId }
   } catch (err) {
