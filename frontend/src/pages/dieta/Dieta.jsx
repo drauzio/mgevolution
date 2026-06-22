@@ -275,7 +275,7 @@ export default function Dieta() {
     buscarMeuPlanoAndamento
   )
 
-  const { data: solicitacao } = useSWR(
+  const { data: solicitacao, isLoading: loadingSol } = useSWR(
     token ? 'minha-solicitacao-dieta' : null,
     buscarMinhaSolicitacao
   )
