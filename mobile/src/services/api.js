@@ -10,7 +10,11 @@ function resolveApiUrl() {
   // Em dev, deriva o IP da máquina a partir do host do Expo dev server
   // Ex: "192.168.1.100:8081" → "http://192.168.1.100:3000/api"
   const host = Constants.expoConfig?.hostUri?.split(':')[0];
-  if (host) return `http://${host}:3000/api`;
+  if (host && host !== 'localhost' && host !== '127.0.0.1') return `http://${host}:3000/api`;
+
+  // Fallback: IP fixo da máquina de desenvolvimento
+  const DEV_IP = Constants.expoConfig?.extra?.devIp;
+  if (DEV_IP) return `http://${DEV_IP}:3000/api`;
 
   return PROD_URL;
 }

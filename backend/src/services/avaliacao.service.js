@@ -141,6 +141,24 @@ async function salvar(id_usuario, respostas) {
         WHERE id_avaliacao_fitness = @id
       `)
 
+    // Atualiza sexo e data_nascimento no perfil do usuário
+    const dataNascFormatada = dataNasc
+      ? (String(dataNasc).includes('/')
+          ? String(dataNasc).split('/').reverse().join('-')
+          : String(dataNasc))
+      : null
+
+    await tx.request()
+      .input('id_usuario',      sql.Int,        id_usuario)
+      .input('sexo',            sql.VarChar(1),  sexo)
+      .input('data_nascimento', sql.Date,        dataNascFormatada)
+      .query(`
+        UPDATE dbo.usuario
+        SET sexo             = COALESCE(@sexo, sexo),
+            data_nascimento  = COALESCE(@data_nascimento, data_nascimento)
+        WHERE id_usuario = @id_usuario
+      `)
+
     // Auto-atribuir template (erro não bloqueia a avaliação)
     try {
       await clonarParaAluno(tx, id_usuario, null, objetivo, nivel, sexo, idade)

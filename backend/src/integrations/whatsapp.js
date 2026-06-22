@@ -122,25 +122,7 @@ async function enviarOTP({ phone, codigo }) {
   const url = `https://graph.facebook.com/v22.0/${phoneId}/messages`
   const headers = { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }
 
-  // 1ª tentativa: template aprovado (funciona para qualquer número)
-  try {
-    const r = await axios.post(url, {
-      messaging_product: 'whatsapp',
-      to: fone,
-      type: 'template',
-      template: {
-        name: 'verificacao_otp',
-        language: { code: 'pt_BR' },
-        components: [{ type: 'body', parameters: [{ type: 'text', text: codigo }] }],
-      },
-    }, { headers })
-    const messageId = r.data?.messages?.[0]?.id || null
-    if (messageId) return { ok: true, messageId, telefone: fone }
-  } catch (err) {
-    console.warn('[WhatsApp OTP] Template falhou, tentando texto livre:', err.response?.data?.error?.message || err.message)
-  }
-
-  // 2ª tentativa: texto livre (funciona se o número já interagiu nas últimas 24h)
+  // Texto livre (reativa template aprovado quando disponível na Meta)
   try {
     const r = await axios.post(url, {
       messaging_product: 'whatsapp',

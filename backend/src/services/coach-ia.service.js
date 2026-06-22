@@ -68,7 +68,7 @@ async function construirContexto(idUsuario) {
           ) AS ultima_carga
         FROM dbo.treino_protocolo p
         JOIN dbo.treino_dia td
-          ON td.id_protocolo = p.id_protocolo AND td.descanso = 0
+          ON td.id_treino_protocolo = p.id_treino_protocolo AND td.descanso = 0
         JOIN dbo.treino_dia_exercicio tde
           ON tde.id_treino_dia = td.id_treino_dia
         JOIN dbo.exercicio e

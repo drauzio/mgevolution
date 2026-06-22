@@ -153,7 +153,7 @@ export default function Onboarding() {
       }
 
       await api.post('/avaliacao', { respostas: payload });
-      router.replace('/(app)/index');
+      router.replace('/(app)');
     } catch {
       setErro('Erro ao salvar. Tente novamente.');
     } finally {

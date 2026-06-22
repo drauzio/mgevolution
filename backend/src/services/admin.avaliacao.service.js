@@ -33,7 +33,7 @@ async function listar({ busca, status } = {}) {
     FROM dbo.avaliacao_fitness af
     JOIN dbo.usuario u ON u.id_usuario = af.id_usuario
     OUTER APPLY (
-      SELECT TOP 1 id_protocolo, nome
+      SELECT TOP 1 id_treino_protocolo AS id_protocolo, nome
       FROM dbo.treino_protocolo
       WHERE id_usuario = af.id_usuario AND ativo = 1
       ORDER BY data_criacao DESC
@@ -59,7 +59,7 @@ async function buscarCompleta(id) {
       FROM dbo.avaliacao_fitness af
       JOIN dbo.usuario u ON u.id_usuario = af.id_usuario
       OUTER APPLY (
-        SELECT TOP 1 id_protocolo, nome
+        SELECT TOP 1 id_treino_protocolo AS id_protocolo, nome
         FROM dbo.treino_protocolo
         WHERE id_usuario = af.id_usuario AND ativo = 1
         ORDER BY data_criacao DESC

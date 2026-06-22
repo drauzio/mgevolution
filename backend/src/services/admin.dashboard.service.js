@@ -72,7 +72,7 @@ async function alunosRecentes() {
       CONVERT(VARCHAR(10), u.data_criacao, 103) AS data_criacao,
       per.nome AS personal,
       CASE WHEN av.id_avaliacao_fitness IS NOT NULL THEN 1 ELSE 0 END AS avaliacao_concluida,
-      CASE WHEN tp.id_protocolo        IS NOT NULL THEN 1 ELSE 0 END AS tem_treino
+      CASE WHEN tp.id_treino_protocolo  IS NOT NULL THEN 1 ELSE 0 END AS tem_treino
     FROM dbo.usuario u
     JOIN dbo.usuario_perfil up ON up.id_usuario = u.id_usuario AND up.ativo = 1
     JOIN dbo.perfil p          ON p.id_perfil  = up.id_perfil  AND p.nome = 'aluno'

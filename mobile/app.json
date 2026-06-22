@@ -43,7 +43,8 @@
     "extra": {
       "eas": {
         "projectId": ""
-      }
+      },
+      "devIp": "192.168.3.61"
     },
     "plugins": [
       "expo-router",

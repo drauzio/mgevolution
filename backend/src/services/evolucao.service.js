@@ -119,7 +119,7 @@ async function exerciciosDoProtocolo(idUsuario) {
     .query(`
       SELECT DISTINCT e.id_exercicio, e.nome, e.grupo_muscular
       FROM dbo.treino_protocolo  p
-      JOIN dbo.treino_dia        td  ON td.id_protocolo  = p.id_protocolo
+      JOIN dbo.treino_dia        td  ON td.id_treino_protocolo  = p.id_treino_protocolo
       JOIN dbo.treino_dia_exercicio tde ON tde.id_treino_dia = td.id_treino_dia
       JOIN dbo.exercicio         e   ON e.id_exercicio   = tde.id_exercicio
       WHERE p.id_usuario = @id AND p.ativo = 1

@@ -29,7 +29,7 @@ async function buscarOuCriar(idUsuario, idTreinoDia, idProtocolo) {
       .input('idProtocolo', sql.Int, idProtocolo)
       .input('data',        sql.Date, hoje)
       .query(`
-        INSERT INTO dbo.treino_sessao (id_usuario, id_treino_dia, id_protocolo, data_sessao)
+        INSERT INTO dbo.treino_sessao (id_usuario, id_treino_dia, id_treino_protocolo, data_sessao)
         OUTPUT INSERTED.id_treino_sessao
         VALUES (@idUsuario, @idTreinoDia, @idProtocolo, @data)
       `)

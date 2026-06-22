@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { Tabs, useRouter } from 'expo-router';
+import { useState, useCallback, useRef } from 'react';
+import { Tabs, useRouter, useFocusEffect } from 'expo-router';
 import { View, StyleSheet } from 'react-native';
 import { Home, Dumbbell, Salad, TrendingUp, UserRound } from 'lucide-react-native';
 import { useAuth } from '../../src/contexts/AuthContext';
@@ -20,25 +20,29 @@ export default function AppLayout() {
   const { usuario, carregando } = useAuth();
   const router = useRouter();
   const [checkingOnboarding, setCheckingOnboarding] = useState(true);
+  const checked = useRef(false);
 
-  useEffect(() => {
-    if (carregando) return;
-    if (!usuario) { router.replace('/(auth)/login'); return; }
+  useFocusEffect(
+    useCallback(() => {
+      if (checked.current) return; // já passou, não re-executa
+      if (carregando) return;
+      if (!usuario) { router.replace('/(auth)/login'); return; }
 
-    // Só alunos precisam do onboarding
-    const isAluno = (usuario.perfis ?? []).includes('aluno') || usuario.perfil === 'aluno';
-    if (!isAluno) { setCheckingOnboarding(false); return; }
+      const isAluno = (usuario.perfis ?? []).includes('aluno') || usuario.perfil === 'aluno';
+      if (!isAluno) { checked.current = true; setCheckingOnboarding(false); return; }
 
-    api.get('/avaliacao/status')
-      .then(r => {
-        if (!r.data.concluida) {
-          router.replace('/onboarding');
-        } else {
-          setCheckingOnboarding(false);
-        }
-      })
-      .catch(() => setCheckingOnboarding(false));
-  }, [usuario, carregando]);
+      api.get('/avaliacao/status')
+        .then(r => {
+          if (!r.data.concluida) {
+            router.replace('/onboarding');
+          } else {
+            checked.current = true;
+            setCheckingOnboarding(false);
+          }
+        })
+        .catch(() => { checked.current = true; setCheckingOnboarding(false); });
+    }, [usuario, carregando])
+  );
 
   if (carregando || !usuario || checkingOnboarding) {
     return <Loading style={{ backgroundColor: '#F0EBE4' }} />;
