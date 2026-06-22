@@ -111,7 +111,21 @@ async function salvar(id_usuario, respostas) {
     const nivel    = nivResp?.valor_texto || null
     const sexoTexto = sexoResp?.valor_texto || null
     const sexo = sexoTexto === 'Masculino' ? 'M' : sexoTexto === 'Feminino' ? 'F' : sexoTexto || null
-    const idade    = idadeResp?.resposta_numero ? Number(idadeResp.resposta_numero) : null
+
+    // Calcula idade a partir da data de nascimento (DD/MM/YYYY ou YYYY-MM-DD)
+    let idade = null
+    const dataNasc = idadeResp?.resposta_texto || idadeResp?.resposta_numero
+    if (dataNasc) {
+      const d = new Date(String(dataNasc).includes('/')
+        ? String(dataNasc).split('/').reverse().join('-')
+        : dataNasc)
+      if (!isNaN(d)) {
+        const hoje = new Date()
+        idade = hoje.getFullYear() - d.getFullYear()
+        if (hoje.getMonth() < d.getMonth() || (hoje.getMonth() === d.getMonth() && hoje.getDate() < d.getDate()))
+          idade--
+      }
+    }
 
     await tx.request()
       .input('id',       sql.Int,        id_avaliacao)
@@ -156,7 +170,7 @@ async function getMinhaAvaliacao(id_usuario) {
         tp.nome         AS protocolo_nome
       FROM dbo.avaliacao_fitness af
       OUTER APPLY (
-        SELECT TOP 1 id_protocolo, nome
+        SELECT TOP 1 id_treino_protocolo AS id_protocolo, nome
         FROM dbo.treino_protocolo
         WHERE id_usuario = af.id_usuario AND ativo = 1
         ORDER BY data_criacao DESC

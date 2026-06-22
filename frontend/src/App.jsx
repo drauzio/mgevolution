@@ -43,6 +43,7 @@ import AdminIntegracoes from './pages/admin/AdminIntegracoes'
 import AdminLogs from './pages/admin/AdminLogs'
 import AdminDesafios from './pages/admin/AdminDesafios'
 import AdminConfiguracoes from './pages/admin/AdminConfiguracoes'
+import AdminNotificacoes from './pages/admin/AdminNotificacoes'
 import IaDiretrizes from './pages/admin/IaDiretrizes'
 import IaDiretrizForm from './pages/admin/IaDiretrizForm'
 import AdminPagamentos from './pages/admin/AdminPagamentos'
@@ -162,6 +163,7 @@ export default function App() {
                   <Route path="/admin/configuracoes" element={<AdminConfiguracoes />} />
                   <Route path="/admin/pagamentos" element={<AdminPagamentos />} />
                   <Route path="/admin/desafios" element={<AdminDesafios />} />
+                  <Route path="/admin/notificacoes" element={<AdminNotificacoes />} />
                   <Route path="/admin/ia-diretrizes" element={<IaDiretrizes />} />
                   <Route path="/admin/ia-diretrizes/nova" element={<IaDiretrizForm />} />
                   <Route path="/admin/ia-diretrizes/:id" element={<IaDiretrizForm />} />

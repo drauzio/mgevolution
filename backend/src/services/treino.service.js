@@ -8,7 +8,7 @@ async function listar({ idAluno } = {}) {
 
   const result = await req.query(`
     SELECT
-      p.id_protocolo,
+      p.id_treino_protocolo AS id_protocolo,
       p.id_template_origem,
       p.nome,
       p.objetivo,
@@ -20,10 +20,10 @@ async function listar({ idAluno } = {}) {
       a.email AS aluno_email,
       t.nome  AS template_nome,
       (SELECT COUNT(*) FROM dbo.treino_dia td
-       WHERE td.id_protocolo = p.id_protocolo AND td.descanso = 0) AS dias_treino
+       WHERE td.id_treino_protocolo = p.id_treino_protocolo AND td.descanso = 0) AS dias_treino
     FROM dbo.treino_protocolo p
     LEFT JOIN dbo.usuario a ON a.id_usuario = p.id_usuario
-    LEFT JOIN dbo.treino_protocolo_template t ON t.id_template = p.id_template_origem
+    LEFT JOIN dbo.protocolo_template t ON t.id_protocolo_template = p.id_template_origem
     ${where}
     ORDER BY p.ativo DESC, p.data_criacao DESC
   `)
@@ -36,11 +36,13 @@ async function buscar(id) {
   const proto = await pool.request()
     .input('id', sql.Int, id)
     .query(`
-      SELECT p.*, a.nome AS aluno_nome, a.email AS aluno_email, t.nome AS template_nome
+      SELECT p.id_treino_protocolo AS id_protocolo, p.id_usuario, p.id_personal, p.id_template_origem,
+             p.nome, p.objetivo, p.observacoes, p.data_inicio, p.data_fim, p.ativo, p.data_criacao, p.data_atualizacao,
+             a.nome AS aluno_nome, a.email AS aluno_email, t.nome AS template_nome
       FROM dbo.treino_protocolo p
       LEFT JOIN dbo.usuario a ON a.id_usuario = p.id_usuario
-      LEFT JOIN dbo.treino_protocolo_template t ON t.id_template = p.id_template_origem
-      WHERE p.id_protocolo = @id
+      LEFT JOIN dbo.protocolo_template t ON t.id_protocolo_template = p.id_template_origem
+      WHERE p.id_treino_protocolo = @id
     `)
 
   if (!proto.recordset.length) return null
@@ -49,7 +51,7 @@ async function buscar(id) {
     .input('id', sql.Int, id)
     .query(`
       SELECT id_treino_dia, dia_semana, nome, descanso, ordem
-      FROM dbo.treino_dia WHERE id_protocolo = @id ORDER BY dia_semana
+      FROM dbo.treino_dia WHERE id_treino_protocolo = @id ORDER BY dia_semana
     `)
 
   const exercicios = await pool.request()
@@ -59,7 +61,7 @@ async function buscar(id) {
       FROM dbo.treino_dia_exercicio tde
       JOIN dbo.treino_dia td ON td.id_treino_dia = tde.id_treino_dia
       JOIN dbo.exercicio  e  ON e.id_exercicio   = tde.id_exercicio
-      WHERE td.id_protocolo = @id
+      WHERE td.id_treino_protocolo = @id
       ORDER BY tde.id_treino_dia, tde.ordem
     `)
 
@@ -91,7 +93,7 @@ async function criar(dados, idPersonal) {
       .query(`
         INSERT INTO dbo.treino_protocolo
           (id_usuario, id_personal, id_template_origem, nome, objetivo, observacoes, data_inicio, data_fim)
-        OUTPUT INSERTED.id_protocolo
+        OUTPUT INSERTED.id_treino_protocolo AS id_protocolo
         VALUES
           (@id_usuario, @id_personal, @id_template_origem, @nome, @objetivo, @observacoes, @data_inicio, @data_fim)
       `)
@@ -123,18 +125,18 @@ async function atualizar(id, dados) {
           nome = @nome, objetivo = @objetivo, observacoes = @observacoes,
           data_inicio = @data_inicio, data_fim = @data_fim, ativo = @ativo,
           data_atualizacao = SYSUTCDATETIME()
-        WHERE id_protocolo = @id
+        WHERE id_treino_protocolo = @id
       `)
 
     if (dias) {
       const existing = await tx.request()
         .input('id', sql.Int, id)
-        .query(`SELECT id_treino_dia FROM dbo.treino_dia WHERE id_protocolo = @id`)
+        .query(`SELECT id_treino_dia FROM dbo.treino_dia WHERE id_treino_protocolo = @id`)
 
       const ids = existing.recordset.map(r => r.id_treino_dia)
       if (ids.length) {
         await tx.request().query(`DELETE FROM dbo.treino_dia_exercicio WHERE id_treino_dia IN (${ids.join(',')})`)
-        await tx.request().input('id', sql.Int, id).query(`DELETE FROM dbo.treino_dia WHERE id_protocolo = @id`)
+        await tx.request().input('id', sql.Int, id).query(`DELETE FROM dbo.treino_dia WHERE id_treino_protocolo = @id`)
       }
       await _inserirDias(tx, id, dias)
     }
@@ -148,7 +150,7 @@ async function buscarAtivo(idUsuario) {
   const r = await pool.request()
     .input('id_usuario', sql.Int, idUsuario)
     .query(`
-      SELECT TOP 1 id_protocolo FROM dbo.treino_protocolo
+      SELECT TOP 1 id_treino_protocolo AS id_protocolo FROM dbo.treino_protocolo
       WHERE id_usuario = @id_usuario AND ativo = 1
       ORDER BY data_criacao DESC
     `)
@@ -174,15 +176,15 @@ async function buscarExercicios(busca, grupo) {
 async function _inserirDias(tx, id, dias) {
   for (const dia of dias) {
     const r = await tx.request()
-      .input('id_protocolo', sql.Int,        id)
-      .input('dia_semana',   sql.TinyInt,    dia.dia_semana)
-      .input('nome',         sql.VarChar(80), dia.nome || '')
-      .input('descanso',     sql.Bit,         dia.descanso ? 1 : 0)
-      .input('ordem',        sql.TinyInt,    dia.dia_semana)
+      .input('id_treino_protocolo', sql.Int,        id)
+      .input('dia_semana',          sql.TinyInt,    dia.dia_semana)
+      .input('nome',                sql.VarChar(80), dia.nome || '')
+      .input('descanso',            sql.Bit,         dia.descanso ? 1 : 0)
+      .input('ordem',               sql.TinyInt,    dia.dia_semana)
       .query(`
-        INSERT INTO dbo.treino_dia (id_protocolo, dia_semana, nome, descanso, ordem)
+        INSERT INTO dbo.treino_dia (id_treino_protocolo, dia_semana, nome, descanso, ordem)
         OUTPUT INSERTED.id_treino_dia
-        VALUES (@id_protocolo, @dia_semana, @nome, @descanso, @ordem)
+        VALUES (@id_treino_protocolo, @dia_semana, @nome, @descanso, @ordem)
       `)
 
     const idDia = r.recordset[0].id_treino_dia

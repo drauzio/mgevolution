@@ -1,6 +1,10 @@
 # Dependencies
 node_modules/
 
+# Mobile (Expo) — gerenciado separadamente, não vai para Azure
+mobile/.expo/
+mobile/dist/
+
 # Build output
 dist/
 dist-ssr/

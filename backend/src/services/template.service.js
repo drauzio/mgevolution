@@ -4,7 +4,7 @@ async function listar() {
   const pool = await getPool()
   const result = await pool.request().query(`
     SELECT
-      t.id_template,
+      t.id_protocolo_template,
       t.nome,
       t.objetivo,
       t.observacoes,
@@ -15,9 +15,9 @@ async function listar() {
       t.criterio_idade_max,
       t.ativo,
       t.data_criacao,
-      (SELECT COUNT(*) FROM dbo.treino_template_dia ttd
-       WHERE ttd.id_template = t.id_template AND ttd.descanso = 0) AS dias_treino
-    FROM dbo.treino_protocolo_template t
+      (SELECT COUNT(*) FROM dbo.template_dia ttd
+       WHERE ttd.id_template = t.id_protocolo_template AND ttd.descanso = 0) AS dias_treino
+    FROM dbo.protocolo_template t
     ORDER BY t.ativo DESC, t.data_criacao DESC
   `)
   return result.recordset
@@ -28,7 +28,7 @@ async function buscar(id) {
 
   const tmpl = await pool.request()
     .input('id', sql.Int, id)
-    .query(`SELECT * FROM dbo.treino_protocolo_template WHERE id_template = @id`)
+    .query(`SELECT * FROM dbo.protocolo_template WHERE id_protocolo_template = @id`)
 
   if (!tmpl.recordset.length) return null
 
@@ -36,16 +36,16 @@ async function buscar(id) {
     .input('id', sql.Int, id)
     .query(`
       SELECT id_template_dia, dia_semana, nome, descanso, ordem
-      FROM dbo.treino_template_dia WHERE id_template = @id ORDER BY dia_semana
+      FROM dbo.template_dia WHERE id_template = @id ORDER BY dia_semana
     `)
 
   const exercicios = await pool.request()
     .input('id', sql.Int, id)
     .query(`
       SELECT ttde.*, e.nome AS exercicio_nome, e.grupo_muscular, e.equipamento, e.video_url
-      FROM dbo.treino_template_dia_exercicio ttde
-      JOIN dbo.treino_template_dia ttd ON ttd.id_template_dia = ttde.id_template_dia
-      JOIN dbo.exercicio           e   ON e.id_exercicio      = ttde.id_exercicio
+      FROM dbo.template_dia_exercicio ttde
+      JOIN dbo.template_dia ttd ON ttd.id_template_dia = ttde.id_template_dia
+      JOIN dbo.exercicio    e   ON e.id_exercicio      = ttde.id_exercicio
       WHERE ttd.id_template = @id
       ORDER BY ttde.id_template_dia, ttde.ordem
     `)
@@ -78,19 +78,19 @@ async function criar(dados, idPersonal) {
       .input('criterio_idade_min', sql.Int,          criterio_idade_min != null ? Number(criterio_idade_min) : null)
       .input('criterio_idade_max', sql.Int,          criterio_idade_max != null ? Number(criterio_idade_max) : null)
       .query(`
-        INSERT INTO dbo.treino_protocolo_template
+        INSERT INTO dbo.protocolo_template
           (id_personal, nome, objetivo, observacoes,
            criterio_objetivo, criterio_nivel, criterio_sexo, criterio_idade_min, criterio_idade_max)
-        OUTPUT INSERTED.id_template
+        OUTPUT INSERTED.id_protocolo_template
         VALUES
           (@id_personal, @nome, @objetivo, @observacoes,
            @criterio_objetivo, @criterio_nivel, @criterio_sexo, @criterio_idade_min, @criterio_idade_max)
       `)
 
-    const id = r1.recordset[0].id_template
+    const id = r1.recordset[0].id_protocolo_template
     await _inserirDias(tx, id, dias || [])
     await tx.commit()
-    return { id_template: id }
+    return { id_protocolo_template: id }
   } catch (err) { await tx.rollback(); throw err }
 }
 
@@ -114,24 +114,24 @@ async function atualizar(id, dados) {
       .input('criterio_idade_max', sql.Int,          criterio_idade_max != null ? Number(criterio_idade_max) : null)
       .input('ativo',              sql.Bit,          ativo !== undefined ? ativo : 1)
       .query(`
-        UPDATE dbo.treino_protocolo_template SET
+        UPDATE dbo.protocolo_template SET
           nome = @nome, objetivo = @objetivo, observacoes = @observacoes,
           criterio_objetivo = @criterio_objetivo, criterio_nivel = @criterio_nivel,
           criterio_sexo = @criterio_sexo, criterio_idade_min = @criterio_idade_min,
           criterio_idade_max = @criterio_idade_max, ativo = @ativo,
           data_atualizacao = SYSUTCDATETIME()
-        WHERE id_template = @id
+        WHERE id_protocolo_template = @id
       `)
 
     if (dias) {
       const existing = await tx.request()
         .input('id', sql.Int, id)
-        .query(`SELECT id_template_dia FROM dbo.treino_template_dia WHERE id_template = @id`)
+        .query(`SELECT id_template_dia FROM dbo.template_dia WHERE id_template = @id`)
 
       const ids = existing.recordset.map(r => r.id_template_dia)
       if (ids.length) {
-        await tx.request().query(`DELETE FROM dbo.treino_template_dia_exercicio WHERE id_template_dia IN (${ids.join(',')})`)
-        await tx.request().input('id', sql.Int, id).query(`DELETE FROM dbo.treino_template_dia WHERE id_template = @id`)
+        await tx.request().query(`DELETE FROM dbo.template_dia_exercicio WHERE id_template_dia IN (${ids.join(',')})`)
+        await tx.request().input('id', sql.Int, id).query(`DELETE FROM dbo.template_dia WHERE id_template = @id`)
       }
       await _inserirDias(tx, id, dias)
     }
@@ -149,8 +149,8 @@ async function clonarParaAluno(tx, idUsuario, idPersonal, objetivo, nivel, sexo,
     .input('idade', sql.Int,          idade    || null)
 
   const tmpl = await req.query(`
-    SELECT TOP 1 id_template, nome, objetivo AS obj_template, observacoes
-    FROM dbo.treino_protocolo_template
+    SELECT TOP 1 id_protocolo_template, nome, objetivo AS obj_template, observacoes
+    FROM dbo.protocolo_template
     WHERE ativo = 1
       AND (criterio_objetivo  = @obj  OR criterio_objetivo  IS NULL)
       AND (criterio_nivel     = @niv  OR criterio_nivel     IS NULL)
@@ -171,7 +171,7 @@ async function clonarParaAluno(tx, idUsuario, idPersonal, objetivo, nivel, sexo,
   if (!tmpl.recordset[0]) return null
 
   const t = tmpl.recordset[0]
-  return _clonarTemplate(tx, idUsuario, idPersonal || null, t.id_template, t.nome, t.obj_template, t.observacoes)
+  return _clonarTemplate(tx, idUsuario, idPersonal || null, t.id_protocolo_template, t.nome, t.obj_template, t.observacoes)
 }
 
 // Clona um template específico para um aluno (chamado manualmente pelo personal)
@@ -179,7 +179,7 @@ async function clonarTemplateEspecifico(idTemplate, idUsuario, idPersonal) {
   const pool = await getPool()
   const tmpl = await pool.request()
     .input('id', sql.Int, idTemplate)
-    .query(`SELECT id_template, nome, objetivo, observacoes FROM dbo.treino_protocolo_template WHERE id_template = @id AND ativo = 1`)
+    .query(`SELECT id_protocolo_template, nome, objetivo, observacoes FROM dbo.protocolo_template WHERE id_protocolo_template = @id AND ativo = 1`)
 
   if (!tmpl.recordset[0]) {
     const err = new Error('Template não encontrado')
@@ -191,7 +191,7 @@ async function clonarTemplateEspecifico(idTemplate, idUsuario, idPersonal) {
   const tx = pool.transaction()
   await tx.begin()
   try {
-    const idProtocolo = await _clonarTemplate(tx, idUsuario, idPersonal || null, t.id_template, t.nome, t.objetivo, t.observacoes)
+    const idProtocolo = await _clonarTemplate(tx, idUsuario, idPersonal || null, t.id_protocolo_template, t.nome, t.objetivo, t.observacoes)
     await tx.commit()
     return { id_protocolo: idProtocolo }
   } catch (err) { await tx.rollback(); throw err }
@@ -211,7 +211,7 @@ async function _clonarTemplate(tx, idUsuario, idPersonal, idTemplate, nome, obje
     .query(`
       INSERT INTO dbo.treino_protocolo
         (id_usuario, id_personal, nome, objetivo, observacoes, data_inicio, id_template_origem)
-      OUTPUT INSERTED.id_protocolo
+      OUTPUT INSERTED.id_treino_protocolo AS id_protocolo
       VALUES (@id_usuario, @id_personal, @nome, @objetivo, @observacoes, @data_inicio, @id_template_origem)
     `)
 
@@ -219,26 +219,26 @@ async function _clonarTemplate(tx, idUsuario, idPersonal, idTemplate, nome, obje
 
   const dias = await tx.request()
     .input('id', sql.Int, idTemplate)
-    .query(`SELECT * FROM dbo.treino_template_dia WHERE id_template = @id ORDER BY dia_semana`)
+    .query(`SELECT * FROM dbo.template_dia WHERE id_template = @id ORDER BY dia_semana`)
 
   for (const dia of dias.recordset) {
     const novoDia = await tx.request()
-      .input('id_protocolo', sql.Int,         idProtocolo)
-      .input('dia_semana',   sql.TinyInt,     dia.dia_semana)
-      .input('nome',         sql.VarChar(80),  dia.nome)
-      .input('descanso',     sql.Bit,          dia.descanso)
-      .input('ordem',        sql.TinyInt,     dia.ordem)
+      .input('id_treino_protocolo', sql.Int,        idProtocolo)
+      .input('dia_semana',          sql.TinyInt,    dia.dia_semana)
+      .input('nome',                sql.VarChar(80), dia.nome)
+      .input('descanso',            sql.Bit,         dia.descanso)
+      .input('ordem',               sql.TinyInt,    dia.ordem)
       .query(`
-        INSERT INTO dbo.treino_dia (id_protocolo, dia_semana, nome, descanso, ordem)
+        INSERT INTO dbo.treino_dia (id_treino_protocolo, dia_semana, nome, descanso, ordem)
         OUTPUT INSERTED.id_treino_dia
-        VALUES (@id_protocolo, @dia_semana, @nome, @descanso, @ordem)
+        VALUES (@id_treino_protocolo, @dia_semana, @nome, @descanso, @ordem)
       `)
 
     const idDia = novoDia.recordset[0].id_treino_dia
 
     const exs = await tx.request()
       .input('id_dia', sql.Int, dia.id_template_dia)
-      .query(`SELECT * FROM dbo.treino_template_dia_exercicio WHERE id_template_dia = @id_dia ORDER BY ordem`)
+      .query(`SELECT * FROM dbo.template_dia_exercicio WHERE id_template_dia = @id_dia ORDER BY ordem`)
 
     for (const ex of exs.recordset) {
       await tx.request()
@@ -271,7 +271,7 @@ async function _inserirDias(tx, idTemplate, dias) {
       .input('descanso',    sql.Bit,         dia.descanso ? 1 : 0)
       .input('ordem',       sql.TinyInt,    dia.dia_semana)
       .query(`
-        INSERT INTO dbo.treino_template_dia (id_template, dia_semana, nome, descanso, ordem)
+        INSERT INTO dbo.template_dia (id_template, dia_semana, nome, descanso, ordem)
         OUTPUT INSERTED.id_template_dia
         VALUES (@id_template, @dia_semana, @nome, @descanso, @ordem)
       `)
@@ -290,7 +290,7 @@ async function _inserirDias(tx, idTemplate, dias) {
         .input('observacao',      sql.VarChar(300), ex.observacao || null)
         .input('ordem',           sql.TinyInt,     i + 1)
         .query(`
-          INSERT INTO dbo.treino_template_dia_exercicio
+          INSERT INTO dbo.template_dia_exercicio
             (id_template_dia, id_exercicio, series, repeticoes, carga_sugerida, descanso_seg, observacao, ordem)
           VALUES
             (@id_template_dia, @id_exercicio, @series, @repeticoes, @carga_sugerida, @descanso_seg, @observacao, @ordem)

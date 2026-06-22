@@ -5,14 +5,16 @@
 
 -- Perguntas
 INSERT INTO dbo.avaliacao_fitness_pergunta (codigo, pergunta, tipo, exibir_detalhe_sim, descricao_detalhe_sim, ordem) VALUES
-  ('objetivo',      'Qual é seu principal objetivo?',             'opcao',  0, NULL,               1),
-  ('nivel',         'Qual é seu nível de treino?',                'opcao',  0, NULL,               2),
-  ('dias_semana',   'Quantos dias por semana você pode treinar?', 'numero', 0, NULL,               3),
-  ('tempo_treino',  'Quanto tempo você tem por treino?',          'opcao',  0, NULL,               4),
-  ('local_treino',  'Onde você prefere treinar?',                 'opcao',  0, NULL,               5),
-  ('lesao',         'Você possui alguma lesão ou limitação?',     'bool',   1, 'Descreva sua lesão.', 6),
-  ('peso',          'Qual seu peso atual (kg)?',                  'numero', 0, NULL,               7),
-  ('altura',        'Qual sua altura (cm)?',                      'numero', 0, NULL,               8);
+  ('objetivo',          'Qual é seu principal objetivo?',             'opcao',  0, NULL,                  1),
+  ('nivel',             'Qual é seu nível de treino?',                'opcao',  0, NULL,                  2),
+  ('sexo',              'Qual é o seu sexo?',                         'opcao',  0, NULL,                  3),
+  ('idade',             'Qual é a sua data de nascimento?',           'texto',  0, NULL,                  4),
+  ('dias_semana',       'Quantos dias por semana você pode treinar?', 'numero', 0, NULL,                  5),
+  ('tempo_treino',      'Quanto tempo você tem por treino?',          'opcao',  0, NULL,                  6),
+  ('local_treino',      'Onde você prefere treinar?',                 'opcao',  0, NULL,                  7),
+  ('lesao',             'Você possui alguma lesão ou limitação?',     'bool',   1, 'Descreva sua lesão.', 8),
+  ('peso',              'Qual seu peso atual (kg)?',                  'numero', 0, NULL,                  9),
+  ('altura',            'Qual sua altura (cm)?',                      'numero', 0, NULL,                  10);
 
 -- ------------------------------------------------------------
 -- Opções: objetivo
@@ -23,6 +25,14 @@ INSERT INTO dbo.avaliacao_fitness_pergunta_opcao (id_avaliacao_fitness_pergunta,
   (@objetivo, 'Emagrecer',                   2),
   (@objetivo, 'Melhorar condicionamento',    3),
   (@objetivo, 'Saúde e qualidade de vida',   4);
+
+-- ------------------------------------------------------------
+-- Opções: sexo
+-- ------------------------------------------------------------
+DECLARE @sexo INT = (SELECT TOP 1 id_avaliacao_fitness_pergunta FROM dbo.avaliacao_fitness_pergunta WHERE codigo = 'sexo');
+INSERT INTO dbo.avaliacao_fitness_pergunta_opcao (id_avaliacao_fitness_pergunta, valor, ordem) VALUES
+  (@sexo, 'Masculino', 1),
+  (@sexo, 'Feminino',  2);
 
 -- ------------------------------------------------------------
 -- Opções: nivel

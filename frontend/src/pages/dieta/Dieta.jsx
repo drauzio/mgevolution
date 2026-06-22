@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import useSWR, { mutate } from 'swr'
 import { useNavigate } from 'react-router-dom'
-import { Salad, Flame, ChevronDown, ClipboardList, Clock, Utensils, Home } from 'lucide-react'
+import { Salad, Flame, ChevronDown, ClipboardList, Clock, Utensils, Home, RefreshCw } from 'lucide-react'
 import { useAuthContext } from '../../context/AuthContext'
 import { buscarMeuPlano, buscarMeuPlanoAndamento, buscarMinhaSolicitacao, solicitarDieta } from '../../services/dieta'
 
@@ -275,10 +275,11 @@ export default function Dieta() {
     buscarMeuPlanoAndamento
   )
 
-  const { data: solicitacao, isLoading: loadingSol } = useSWR(
-    token && !plano && !planoAndamento ? 'minha-solicitacao-dieta' : null,
+  const { data: solicitacao } = useSWR(
+    token ? 'minha-solicitacao-dieta' : null,
     buscarMinhaSolicitacao
   )
+  const [modalMudanca, setModalMudanca] = useState(false)
 
   function toggleRefeicao(id) {
     setAbertas(a => ({ ...a, [id]: !a[id] }))
@@ -413,6 +414,49 @@ export default function Dieta() {
         </div>
         {BTN_HOME(navigate)}
       </div>
+
+      {/* Solicitação de mudança */}
+      {solicitacao && solicitacao.status !== 'concluida' ? (
+        <div style={{ background: '#FFFBEB', border: '1px solid #FDE68A', borderRadius: 14, padding: '14px 18px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <div style={{ width: 34, height: 34, borderRadius: 9, background: '#FEF3C7', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <RefreshCw size={15} color="#CA8A04" />
+            </div>
+            <div>
+              <p style={{ fontSize: 13, fontWeight: 700, color: '#CA8A04', marginBottom: 1 }}>Mudança solicitada</p>
+              <p style={{ fontSize: 12, color: '#8A7F76' }}>
+                {solicitacao.status === 'pendente' ? 'Aguardando análise do nutricionista' : 'Em preparação'}
+              </p>
+            </div>
+          </div>
+          <button onClick={() => setModalMudanca(true)} style={{ fontSize: 12, fontWeight: 700, color: '#CA8A04', background: 'none', border: '1px solid #FDE68A', borderRadius: 8, padding: '5px 12px', cursor: 'pointer' }}>
+            Editar
+          </button>
+        </div>
+      ) : (
+        <button
+          onClick={() => setModalMudanca(true)}
+          style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '14px 18px', background: '#FFFFFF', border: '1.5px dashed #E0D6CA', borderRadius: 14, cursor: 'pointer', width: '100%', transition: 'border-color 0.15s' }}
+          onMouseEnter={e => e.currentTarget.style.borderColor = '#CC1A1A'}
+          onMouseLeave={e => e.currentTarget.style.borderColor = '#E0D6CA'}
+        >
+          <div style={{ width: 34, height: 34, borderRadius: 9, background: '#FEF2F2', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <RefreshCw size={15} color="#CC1A1A" />
+          </div>
+          <div style={{ textAlign: 'left' }}>
+            <p style={{ fontSize: 13, fontWeight: 700, color: '#CC1A1A' }}>Solicitar mudança de dieta</p>
+            <p style={{ fontSize: 12, color: '#8A7F76' }}>Não está satisfeito? Peça uma alteração ao nutricionista</p>
+          </div>
+        </button>
+      )}
+
+      {modalMudanca && (
+        <FormSolicitacao
+          solAtual={solicitacao?.status !== 'concluida' ? solicitacao : null}
+          onCancelar={() => setModalMudanca(false)}
+          onSalvo={() => { setModalMudanca(false); mutate('minha-solicitacao-dieta') }}
+        />
+      )}
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
         <div style={{ background: '#FFFFFF', border: '1px solid #E0D6CA', borderRadius: 20, padding: '20px 22px', boxShadow: '0 2px 12px rgba(0,0,0,0.05)' }}>

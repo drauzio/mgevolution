@@ -12,6 +12,7 @@ async function registro(req, res) {
     res.status(201).json({ id_usuario: id })
   } catch (e) {
     console.error('[registro]', e)
+    if (e.number === 2627 && e.campo === 'telefone') return res.status(409).json({ erro: 'Telefone já cadastrado' })
     if (e.number === 2627) return res.status(409).json({ erro: 'E-mail já cadastrado' })
     res.status(500).json({ erro: 'Erro ao criar conta', detalhe: e.message })
   }
@@ -85,4 +86,18 @@ async function redefinirSenha(req, res) {
   }
 }
 
-module.exports = { login, registro, cadastrar, esqueciSenha, redefinirSenha, otpEnviar, otpVerificar }
+async function redefinirSenhaOtp(req, res) {
+  try {
+    const { telefone, token_otp, nova_senha } = req.body
+    if (!telefone || !token_otp || !nova_senha) return res.status(400).json({ erro: 'Campos obrigatórios ausentes' })
+    if (nova_senha.length < 6) return res.status(400).json({ erro: 'Senha deve ter mínimo 6 caracteres' })
+    const valido = await otpService.checarToken(telefone, token_otp)
+    if (!valido) return res.status(400).json({ erro: 'Código inválido ou expirado' })
+    await authService.redefinirSenhaPorTelefone(telefone, nova_senha)
+    res.json({ ok: true })
+  } catch (e) {
+    res.status(e.status || 500).json({ erro: e.mensagem || e.message || 'Erro ao redefinir senha' })
+  }
+}
+
+module.exports = { login, registro, cadastrar, esqueciSenha, redefinirSenha, otpEnviar, otpVerificar, redefinirSenhaOtp }

@@ -7,7 +7,8 @@ router.post('/registro',           ctrl.registro)
 router.post('/cadastrar',          authMiddleware, adminMiddleware, ctrl.cadastrar)
 router.post('/esqueci-senha',      ctrl.esqueciSenha)
 router.post('/redefinir-senha',    ctrl.redefinirSenha)
-router.post('/otp/enviar',         ctrl.otpEnviar)
-router.post('/otp/verificar',      ctrl.otpVerificar)
+router.post('/otp/enviar',           ctrl.otpEnviar)
+router.post('/otp/verificar',        ctrl.otpVerificar)
+router.post('/redefinir-senha-otp',  ctrl.redefinirSenhaOtp)
 
 module.exports = router

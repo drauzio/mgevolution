@@ -31,7 +31,7 @@ function CardFeed({ item, onReagir }) {
   async function curtir() {
     if (loading) return
     setLoading(true)
-    try { await onReagir(item.id_feed) } finally { setLoading(false) }
+    try { await onReagir(item.id_feed_item) } finally { setLoading(false) }
   }
 
   return (
@@ -79,7 +79,7 @@ export default function Feed() {
           <p style={{ fontSize: 13, color: '#8A7F76' }}>Nenhuma atividade ainda. Complete um treino para começar!</p>
         </div>
       ) : (
-        itens.map(item => <CardFeed key={item.id_feed} item={item} onReagir={reagir} />)
+        itens.map(item => <CardFeed key={item.id_feed_item} item={item} onReagir={reagir} />)
       )}
 
       {(itens.length === 20 || pagina > 1) && (

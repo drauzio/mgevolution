@@ -513,7 +513,7 @@ export default function TreinoForm() {
           <div style={{ display: 'flex', gap: 10 }}>
             <button
               onClick={() => { setModoBase('vazio'); limparBase() }}
-              style={{ flex: 1, padding: '14px 16px', borderRadius: 12, border: `2px solid ${modoBase === 'vazio' ? '#CC1A1A' : '#E0D6CA'}`, background: modoBase === 'vazio' ? 'rgba(204,26,26,0.04)' : '#FFFFFF', cursor: 'pointer', textAlign: 'left' }}
+              style={{ flex: 1, padding: '14px 16px', borderRadius: 12, border: '2px solid ' + (modoBase === 'vazio' ? '#CC1A1A' : '#E0D6CA'), background: modoBase === 'vazio' ? 'rgba(204,26,26,0.04)' : '#FFFFFF', cursor: 'pointer', textAlign: 'left' }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
                 <Pencil size={14} color={modoBase === 'vazio' ? '#CC1A1A' : '#8A7F76'} />
@@ -524,7 +524,7 @@ export default function TreinoForm() {
 
             <button
               onClick={() => setModoBase('template')}
-              style={{ flex: 1, padding: '14px 16px', borderRadius: 12, border: `2px solid ${modoBase === 'template' ? '#CC1A1A' : '#E0D6CA'}`, background: modoBase === 'template' ? 'rgba(204,26,26,0.04)' : '#FFFFFF', cursor: 'pointer', textAlign: 'left' }}
+              style={{ flex: 1, padding: '14px 16px', borderRadius: 12, border: '2px solid ' + (modoBase === 'template' ? '#CC1A1A' : '#E0D6CA'), background: modoBase === 'template' ? 'rgba(204,26,26,0.04)' : '#FFFFFF', cursor: 'pointer', textAlign: 'left' }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
                 <LayoutTemplate size={14} color={modoBase === 'template' ? '#CC1A1A' : '#8A7F76'} />
@@ -540,7 +540,7 @@ export default function TreinoForm() {
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                   <Zap size={14} color="#15803d" />
                   <span style={{ fontSize: 13, color: '#1A1A1A' }}>
-                    Base: <strong>{templatesList.find(t => String(t.id_template) === String(templateBaseId))?.nome}</strong> — dias e exercícios carregados
+                    Base: <strong>{templatesList.find(t => String(t.id_protocolo_template) === String(templateBaseId))?.nome}</strong> — dias e exercícios carregados
                   </span>
                 </div>
                 <button
@@ -559,15 +559,15 @@ export default function TreinoForm() {
                 >
                   <option value="">Selecione um protocolo como ponto de partida...</option>
                   {templatesList.map(t => (
-                    <option key={t.id_template} value={t.id_template}>
-                      {t.nome}{t.criterio_objetivo ? ` — ${t.criterio_objetivo}` : ''}
+                    <option key={t.id_protocolo_template} value={t.id_protocolo_template}>
+                      {t.nome}{t.criterio_objetivo ? ' — ' + t.criterio_objetivo : ''}
                     </option>
                   ))}
                 </select>
                 <button
                   onClick={carregarTemplate}
                   disabled={!templateBaseId || carregandoBase}
-                  style={{ height: 38, paddingInline: 16, borderRadius: 10, border: `1px solid ${templateBaseId ? '#CC1A1A' : '#E0D6CA'}`, background: templateBaseId ? 'rgba(204,26,26,0.06)' : '#F0EBE4', color: templateBaseId ? '#CC1A1A' : '#C4B9A8', fontSize: 12, fontWeight: 700, cursor: templateBaseId ? 'pointer' : 'not-allowed', flexShrink: 0, whiteSpace: 'nowrap' }}
+                  style={{ height: 38, paddingInline: 16, borderRadius: 10, border: '1px solid ' + (templateBaseId ? '#CC1A1A' : '#E0D6CA'), background: templateBaseId ? 'rgba(204,26,26,0.06)' : '#F0EBE4', color: templateBaseId ? '#CC1A1A' : '#C4B9A8', fontSize: 12, fontWeight: 700, cursor: templateBaseId ? 'pointer' : 'not-allowed', flexShrink: 0, whiteSpace: 'nowrap' }}
                 >
                   {carregandoBase ? 'Carregando...' : 'Carregar'}
                 </button>
@@ -678,7 +678,7 @@ export default function TreinoForm() {
               <select
                 value={idPersonalIA}
                 onChange={e => setIdPersonalIA(e.target.value)}
-                style={{ height: 36, padding: '0 10px', border: `1px solid ${!idPersonalIA ? '#FCA5A5' : '#E0D6CA'}`, borderRadius: 10, fontSize: 12, color: '#1A1A1A', background: '#FFFFFF', cursor: 'pointer', outline: 'none' }}
+                style={{ height: 36, padding: '0 10px', border: '1px solid ' + (!idPersonalIA ? '#FCA5A5' : '#E0D6CA'), borderRadius: 10, fontSize: 12, color: '#1A1A1A', background: '#FFFFFF', cursor: 'pointer', outline: 'none' }}
               >
                 <option value="">Selecione o personal</option>
                 {personais.map(p => <option key={p.id_usuario} value={p.id_usuario}>{p.nome}</option>)}

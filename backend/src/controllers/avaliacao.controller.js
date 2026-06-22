@@ -15,7 +15,10 @@ async function perguntas(req, res, next) {
 
 async function salvar(req, res, next) {
   try {
-    const id = await svc.salvar(req.usuario.id, req.body.respostas)
+    // aceita { respostas: [...] } ou array direto
+    const respostas = Array.isArray(req.body) ? req.body : (req.body.respostas ?? [])
+    if (!Array.isArray(respostas)) return res.status(400).json({ erro: 'respostas inválidas' })
+    const id = await svc.salvar(req.usuario.id, respostas)
     res.status(201).json({ id_avaliacao: id })
   } catch (err) { next(err) }
 }

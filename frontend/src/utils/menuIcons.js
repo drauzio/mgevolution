@@ -2,8 +2,8 @@ import {
   Home, Flame, Sparkles, Bot, Dumbbell, Salad, TrendingUp,
   LayoutDashboard, Users, Calendar, UserCheck, MoreHorizontal, Activity,
   ClipboardList, FileQuestion, Settings2, Settings, BookOpen,
-  MessagesSquare, Trophy, Target, Medal, CreditCard, Receipt, Plug, FileText,
-  Road,
+  MessagesSquare, MessageSquare, Trophy, Target, Medal, CreditCard, Receipt, Plug, FileText,
+  Road, Bell, Send,
 } from 'lucide-react'
 
 const ICON_MAP = {
@@ -26,6 +26,7 @@ const ICON_MAP = {
   Settings,
   BookOpen,
   MessagesSquare,
+  MessageSquare,
   Trophy,
   Target,
   Medal,
@@ -34,6 +35,8 @@ const ICON_MAP = {
   Plug,
   FileText,
   Road,
+  Bell,
+  Send,
 }
 
 export function getIcon(name) {

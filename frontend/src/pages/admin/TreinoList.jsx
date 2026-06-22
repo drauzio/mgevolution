@@ -40,7 +40,7 @@ export default function TreinoList() {
     )
   }, [itens, query])
 
-  const idKey = isProtocolos ? 'id_template' : 'id_protocolo'
+  const idKey = isProtocolos ? 'id_protocolo_template' : 'id_protocolo'
 
   const colProtocolos = useMemo(() => [
     {
@@ -103,7 +103,7 @@ export default function TreinoList() {
     },
     {
       id: 'acoes', header: '', size: 48, enableSorting: false,
-      cell: ({ row: { original: p } }) => <BtnEditar iconOnly onClick={() => navigate(`${base}/${p.id_template}`)} />,
+      cell: ({ row: { original: p } }) => <BtnEditar iconOnly onClick={() => navigate(`${base}/${p.id_protocolo_template}`)} />,
     },
   ], [base])
 

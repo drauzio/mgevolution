@@ -216,8 +216,8 @@ CREATE TABLE dbo.exercicio (
 );
 
 -- Templates reutilizáveis criados pelo personal/admin
-CREATE TABLE dbo.treino_protocolo_template (
-  id_template        INT          IDENTITY(1,1) NOT NULL,
+CREATE TABLE dbo.protocolo_template (
+  id_protocolo_template INT IDENTITY(1,1) NOT NULL,
   id_personal        INT          NULL,
   nome               VARCHAR(120) NOT NULL,
   objetivo           VARCHAR(200) NULL,
@@ -230,27 +230,27 @@ CREATE TABLE dbo.treino_protocolo_template (
   ativo              BIT          NOT NULL DEFAULT 1,
   data_criacao       DATETIME     NOT NULL DEFAULT SYSUTCDATETIME(),
   data_atualizacao   DATETIME     NULL,
-  CONSTRAINT PK_treino_protocolo_template PRIMARY KEY (id_template),
-  CONSTRAINT FK_tpt_personal              FOREIGN KEY (id_personal) REFERENCES dbo.usuario(id_usuario)
+  CONSTRAINT PK_protocolo_template PRIMARY KEY (id_protocolo_template),
+  CONSTRAINT FK_tpt_personal       FOREIGN KEY (id_personal) REFERENCES dbo.usuario(id_usuario)
 );
 
-CREATE INDEX IX_tpt_criterio ON dbo.treino_protocolo_template (criterio_objetivo, criterio_nivel, criterio_sexo, ativo);
+CREATE INDEX IX_tpt_criterio ON dbo.protocolo_template (criterio_objetivo, criterio_nivel, criterio_sexo, ativo);
 
-CREATE TABLE dbo.treino_template_dia (
+CREATE TABLE dbo.template_dia (
   id_template_dia INT         IDENTITY(1,1) NOT NULL,
   id_template     INT         NOT NULL,
   dia_semana      TINYINT     NOT NULL,   -- 1=Seg 2=Ter 3=Qua 4=Qui 5=Sex 6=Sab 7=Dom
   nome            VARCHAR(80) NOT NULL,
   descanso        BIT         NOT NULL DEFAULT 0,
   ordem           TINYINT     NOT NULL DEFAULT 1,
-  CONSTRAINT PK_treino_template_dia        PRIMARY KEY (id_template_dia),
-  CONSTRAINT FK_ttd_template               FOREIGN KEY (id_template) REFERENCES dbo.treino_protocolo_template(id_template),
-  CONSTRAINT UQ_treino_template_dia_semana UNIQUE (id_template, dia_semana)
+  CONSTRAINT PK_template_dia        PRIMARY KEY (id_template_dia),
+  CONSTRAINT FK_ttd_template         FOREIGN KEY (id_template) REFERENCES dbo.protocolo_template(id_protocolo_template),
+  CONSTRAINT UQ_template_dia_semana  UNIQUE (id_template, dia_semana)
 );
 
-CREATE INDEX IX_ttd_template ON dbo.treino_template_dia (id_template, dia_semana);
+CREATE INDEX IX_ttd_template ON dbo.template_dia (id_template, dia_semana);
 
-CREATE TABLE dbo.treino_template_dia_exercicio (
+CREATE TABLE dbo.template_dia_exercicio (
   id_template_dia_exercicio INT          IDENTITY(1,1) NOT NULL,
   id_template_dia           INT          NOT NULL,
   id_exercicio              INT          NOT NULL,
@@ -261,15 +261,15 @@ CREATE TABLE dbo.treino_template_dia_exercicio (
   observacao                VARCHAR(300) NULL,
   ordem                     TINYINT      NOT NULL DEFAULT 1,
   CONSTRAINT PK_treino_template_dia_exercicio PRIMARY KEY (id_template_dia_exercicio),
-  CONSTRAINT FK_ttde_dia                      FOREIGN KEY (id_template_dia) REFERENCES dbo.treino_template_dia(id_template_dia),
+  CONSTRAINT FK_ttde_dia                      FOREIGN KEY (id_template_dia) REFERENCES dbo.template_dia(id_template_dia),
   CONSTRAINT FK_ttde_exercicio                FOREIGN KEY (id_exercicio)    REFERENCES dbo.exercicio(id_exercicio)
 );
 
-CREATE INDEX IX_ttde_dia ON dbo.treino_template_dia_exercicio (id_template_dia, ordem);
+CREATE INDEX IX_ttde_dia ON dbo.template_dia_exercicio (id_template_dia, ordem);
 
 -- Protocolo individual do aluno (sempre vinculado a um aluno)
 CREATE TABLE dbo.treino_protocolo (
-  id_protocolo        INT          IDENTITY(1,1) NOT NULL,
+  id_treino_protocolo INT          IDENTITY(1,1) NOT NULL,
   id_usuario          INT          NOT NULL,   -- aluno (NOT NULL — protocolo sempre tem dono)
   id_personal         INT          NULL,
   id_template_origem  INT          NULL,   -- FK para template (NULL se criado do zero)
@@ -281,10 +281,10 @@ CREATE TABLE dbo.treino_protocolo (
   ativo               BIT          NOT NULL DEFAULT 1,
   data_criacao        DATETIME     NOT NULL DEFAULT SYSUTCDATETIME(),
   data_atualizacao    DATETIME     NULL,
-  CONSTRAINT PK_treino_protocolo          PRIMARY KEY (id_protocolo),
+  CONSTRAINT PK_treino_protocolo          PRIMARY KEY (id_treino_protocolo),
   CONSTRAINT FK_protocolo_aluno           FOREIGN KEY (id_usuario)         REFERENCES dbo.usuario(id_usuario),
   CONSTRAINT FK_protocolo_personal        FOREIGN KEY (id_personal)        REFERENCES dbo.usuario(id_usuario),
-  CONSTRAINT FK_protocolo_template_origem FOREIGN KEY (id_template_origem) REFERENCES dbo.treino_protocolo_template(id_template)
+  CONSTRAINT FK_protocolo_template_origem FOREIGN KEY (id_template_origem) REFERENCES dbo.protocolo_template(id_protocolo_template)
 );
 
 CREATE INDEX IX_protocolo_usuario         ON dbo.treino_protocolo (id_usuario, ativo);
@@ -293,17 +293,17 @@ CREATE INDEX IX_protocolo_template_origem ON dbo.treino_protocolo (id_template_o
 
 CREATE TABLE dbo.treino_dia (
   id_treino_dia  INT         IDENTITY(1,1) NOT NULL,
-  id_protocolo   INT         NOT NULL,
+  id_treino_protocolo INT    NOT NULL,
   dia_semana     TINYINT     NOT NULL,   -- 1=Seg 2=Ter 3=Qua 4=Qui 5=Sex 6=Sab 7=Dom
   nome           VARCHAR(80) NOT NULL,   -- "Peito e Tríceps", "Descanso"
   descanso       BIT         NOT NULL DEFAULT 0,
   ordem          TINYINT     NOT NULL DEFAULT 1,
   CONSTRAINT PK_treino_dia          PRIMARY KEY (id_treino_dia),
-  CONSTRAINT FK_treino_dia_protocolo FOREIGN KEY (id_protocolo) REFERENCES dbo.treino_protocolo(id_protocolo),
-  CONSTRAINT UQ_treino_dia_semana   UNIQUE (id_protocolo, dia_semana)
+  CONSTRAINT FK_treino_dia_protocolo FOREIGN KEY (id_treino_protocolo) REFERENCES dbo.treino_protocolo(id_treino_protocolo),
+  CONSTRAINT UQ_treino_dia_semana   UNIQUE (id_treino_protocolo, dia_semana)
 );
 
-CREATE INDEX IX_treino_dia_protocolo ON dbo.treino_dia (id_protocolo, dia_semana);
+CREATE INDEX IX_treino_dia_protocolo ON dbo.treino_dia (id_treino_protocolo, dia_semana);
 
 CREATE TABLE dbo.treino_dia_exercicio (
   id_treino_dia_exercicio INT          IDENTITY(1,1) NOT NULL,
@@ -324,7 +324,7 @@ CREATE INDEX IX_tde_dia ON dbo.treino_dia_exercicio (id_treino_dia, ordem);
 
 CREATE TABLE dbo.treino_sessao (
   id_treino_sessao INT      IDENTITY(1,1) NOT NULL,
-  id_protocolo     INT      NOT NULL,
+  id_treino_protocolo INT   NOT NULL,
   id_usuario       INT      NOT NULL,
   id_treino_dia    INT      NOT NULL,
   data_inicio      DATETIME NULL,
@@ -334,7 +334,7 @@ CREATE TABLE dbo.treino_sessao (
   data_criacao     DATETIME NOT NULL DEFAULT SYSUTCDATETIME(),
   CONSTRAINT PK_treino_sessao PRIMARY KEY (id_treino_sessao),
   CONSTRAINT UQ_treino_sessao UNIQUE (id_usuario, id_treino_dia, data_sessao),
-  CONSTRAINT FK_ts_protocolo  FOREIGN KEY (id_protocolo)  REFERENCES dbo.treino_protocolo(id_protocolo),
+  CONSTRAINT FK_ts_protocolo  FOREIGN KEY (id_treino_protocolo)  REFERENCES dbo.treino_protocolo(id_treino_protocolo),
   CONSTRAINT FK_ts_usuario    FOREIGN KEY (id_usuario)    REFERENCES dbo.usuario(id_usuario),
   CONSTRAINT FK_ts_dia        FOREIGN KEY (id_treino_dia) REFERENCES dbo.treino_dia(id_treino_dia)
 );
@@ -484,4 +484,147 @@ CREATE TABLE dbo.evolucao_analise_cache (
   data_geracao DATETIME      NOT NULL DEFAULT SYSUTCDATETIME(),
   CONSTRAINT PK_evolucao_analise_cache         PRIMARY KEY (id_usuario),
   CONSTRAINT FK_evolucao_analise_cache_usuario FOREIGN KEY (id_usuario) REFERENCES dbo.usuario(id_usuario)
+);
+
+
+-- Planos oferecidos pela academia
+CREATE TABLE dbo.plano (
+  id_plano       INT           IDENTITY(1,1) NOT NULL,
+  nome           VARCHAR(100)  NOT NULL,
+  descricao      VARCHAR(500)  NULL,
+  preco          DECIMAL(10,2) NOT NULL DEFAULT 0,
+  duracao_dias   INT           NOT NULL DEFAULT 30,
+  ativo          BIT           NOT NULL DEFAULT 1,
+  data_criacao   DATETIME2     NOT NULL DEFAULT SYSUTCDATETIME(),
+  CONSTRAINT PK_plano PRIMARY KEY (id_plano)
+);
+GO
+
+-- Assinaturas dos alunos
+CREATE TABLE dbo.assinatura (
+  id_assinatura    INT           IDENTITY(1,1) NOT NULL,
+  id_usuario       INT           NOT NULL,
+  id_plano         INT           NOT NULL,
+  data_inicio      DATE          NOT NULL,
+  data_fim         DATE          NOT NULL,
+  status           VARCHAR(20)   NOT NULL DEFAULT 'ativa',  -- ativa | suspensa | cancelada | expirada
+  valor_pago       DECIMAL(10,2) NULL,
+  observacao       VARCHAR(500)  NULL,
+  data_criacao     DATETIME2     NOT NULL DEFAULT SYSUTCDATETIME(),
+  data_atualizacao DATETIME2     NOT NULL DEFAULT SYSUTCDATETIME(),
+  CONSTRAINT PK_assinatura            PRIMARY KEY (id_assinatura),
+  CONSTRAINT FK_assinatura_usuario    FOREIGN KEY (id_usuario) REFERENCES dbo.usuario(id_usuario),
+  CONSTRAINT FK_assinatura_plano      FOREIGN KEY (id_plano)   REFERENCES dbo.plano(id_plano),
+  CONSTRAINT CK_assinatura_status     CHECK (status IN ('ativa','suspensa','cancelada','expirada')),
+  CONSTRAINT CK_assinatura_datas      CHECK (data_fim >= data_inicio)
+);
+GO
+
+CREATE INDEX IX_assinatura_usuario ON dbo.assinatura (id_usuario, status);
+CREATE INDEX IX_assinatura_status  ON dbo.assinatura (status, data_fim);
+GO
+
+
+-- Tabela de log de mensagens WhatsApp
+  CREATE TABLE dbo.whatsapp_log (
+    id_log       INT IDENTITY(1,1) NOT NULL,
+    tipo         VARCHAR(50)   NOT NULL,
+    id_usuario   INT           NULL,
+    telefone     VARCHAR(20)   NULL,
+    status       VARCHAR(10)   NOT NULL DEFAULT 'enviado',
+    message_id   VARCHAR(100)  NULL,
+    motivo_erro  VARCHAR(500)  NULL,
+    data_envio   DATETIME2     NOT NULL DEFAULT SYSUTCDATETIME(),
+    CONSTRAINT PK_whatsapp_log PRIMARY KEY (id_log),
+    CONSTRAINT CK_whatsapp_log_status CHECK (status IN ('enviado','erro')),
+    CONSTRAINT FK_whatsapp_log_usuario FOREIGN KEY (id_usuario) REFERENCES dbo.usuario(id_usuario)
+  );
+
+  CREATE INDEX IX_whatsapp_log_usuario   ON dbo.whatsapp_log(id_usuario);
+  CREATE INDEX IX_whatsapp_log_tipo_data ON dbo.whatsapp_log(tipo, data_envio);
+
+  CREATE TABLE dbo.auditoria_log (
+    id_log       INT IDENTITY(1,1) NOT NULL,
+    id_usuario   INT           NOT NULL,
+    nome_usuario VARCHAR(100)  NULL,
+    acao         VARCHAR(50)   NOT NULL,
+    entidade     VARCHAR(50)   NULL,
+    id_entidade  INT           NULL,
+    descricao    VARCHAR(500)  NULL,
+    dados_antes  NVARCHAR(MAX) NULL,
+    dados_depois NVARCHAR(MAX) NULL,
+    ip           VARCHAR(45)   NULL,
+    data_acao    DATETIME2     NOT NULL DEFAULT SYSUTCDATETIME(),
+    CONSTRAINT PK_auditoria_log PRIMARY KEY (id_log),
+    CONSTRAINT FK_auditoria_log_usuario FOREIGN KEY (id_usuario) REFERENCES dbo.usuario(id_usuario)
+  );
+
+  CREATE INDEX IX_auditoria_log_usuario  ON dbo.auditoria_log(id_usuario);
+  CREATE INDEX IX_auditoria_log_acao     ON dbo.auditoria_log(acao);
+  CREATE INDEX IX_auditoria_log_data     ON dbo.auditoria_log(data_acao);
+  CREATE INDEX IX_auditoria_log_entidade ON dbo.auditoria_log(entidade, id_entidade);
+
+
+
+
+CREATE TABLE dbo.otp_verificacao (
+  id_otp_verificacao INT IDENTITY(1,1) PRIMARY KEY,
+  telefone    VARCHAR(20)  NOT NULL,
+  codigo      CHAR(6)      NOT NULL,
+  token       VARCHAR(36)  NULL,           -- gerado após verificação bem-sucedida
+  expira_em   DATETIME2    NOT NULL,
+  tentativas  TINYINT      DEFAULT 0,
+  verificado  BIT          DEFAULT 0,
+  criado_em   DATETIME2    DEFAULT SYSUTCDATETIME()
+)
+
+CREATE INDEX IX_otp_telefone ON dbo.otp_verificacao (telefone, criado_em DESC)
+
+
+
+CREATE TABLE dbo.pagamento (
+  id_pagamento    INT            IDENTITY(1,1) NOT NULL,
+  id_assinatura   INT            NOT NULL,
+  id_usuario      INT            NOT NULL,
+  valor           DECIMAL(10,2)  NOT NULL,
+  forma_pagamento VARCHAR(30)    NULL,   -- pix | dinheiro | cartao | boleto | transferencia
+  status          VARCHAR(20)    NOT NULL DEFAULT 'pendente', -- pendente | pago | cancelado
+  data_vencimento DATE           NOT NULL,
+  data_pagamento  DATE           NULL,
+  observacao      VARCHAR(500)   NULL,
+  registrado_por  INT            NULL,
+  data_criacao    DATETIME2      NOT NULL DEFAULT SYSUTCDATETIME(),
+  CONSTRAINT PK_pagamento               PRIMARY KEY (id_pagamento),
+  CONSTRAINT FK_pagamento_assinatura    FOREIGN KEY (id_assinatura) REFERENCES dbo.assinatura(id_assinatura),
+  CONSTRAINT FK_pagamento_usuario       FOREIGN KEY (id_usuario)    REFERENCES dbo.usuario(id_usuario),
+  CONSTRAINT CK_pagamento_status        CHECK (status IN ('pendente','pago','cancelado')),
+  CONSTRAINT CK_pagamento_forma         CHECK (forma_pagamento IN ('pix','dinheiro','cartao','boleto','transferencia') OR forma_pagamento IS NULL)
+)
+
+CREATE INDEX IX_pagamento_usuario  ON dbo.pagamento (id_usuario, status)
+CREATE INDEX IX_pagamento_status   ON dbo.pagamento (status, data_vencimento)
+
+
+CREATE TABLE dbo.ia_diretriz (
+  id_diretriz      INT            IDENTITY(1,1) NOT NULL,
+  id_usuario       INT            NOT NULL,        -- nutricionista OU personal
+  nome             VARCHAR(100)   NOT NULL,
+  tipo             VARCHAR(20)    NOT NULL DEFAULT 'dieta',  -- 'dieta' | 'treino'
+  conteudo         NVARCHAR(3000) NOT NULL,
+  ativo            BIT            NOT NULL DEFAULT 1,
+  data_criacao     DATETIME       NOT NULL DEFAULT SYSUTCDATETIME(),
+  data_atualizacao DATETIME       NULL,
+  CONSTRAINT PK_ia_diretriz        PRIMARY KEY (id_diretriz),
+  CONSTRAINT FK_ia_diretriz_usuario FOREIGN KEY (id_usuario) REFERENCES dbo.usuario(id_usuario)
+);
+
+CREATE INDEX IX_ia_diretriz_usuario ON dbo.ia_diretriz (id_usuario, tipo, ativo);
+
+CREATE TABLE dbo.ia_diretriz_criterio (
+  id_ia_diretriz_criterio  INT  IDENTITY(1,1) NOT NULL,
+  id_diretriz  INT          NOT NULL,
+  criterio     VARCHAR(30)  NOT NULL,   -- 'objetivo' | 'sexo' | 'nivel'
+  valor        VARCHAR(50)  NOT NULL,
+  CONSTRAINT PK_ia_diretriz_criterio PRIMARY KEY (id_ia_diretriz_criterio),
+  CONSTRAINT FK_idc_diretriz         FOREIGN KEY (id_diretriz) REFERENCES dbo.ia_diretriz(id_diretriz) ON DELETE CASCADE
 );

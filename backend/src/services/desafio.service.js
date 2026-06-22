@@ -8,7 +8,7 @@ async function listarAtivos(id_usuario) {
       CONVERT(VARCHAR(10), d.data_inicio, 120) AS data_inicio,
       CONVERT(VARCHAR(10), d.data_fim,    120) AS data_fim,
       dp.progresso, dp.concluido,
-      CASE WHEN dp.id_participante IS NOT NULL THEN 1 ELSE 0 END AS participando,
+      CASE WHEN dp.id_desafio_participante IS NOT NULL THEN 1 ELSE 0 END AS participando,
       (SELECT COUNT(*) FROM dbo.desafio_participante WHERE id_desafio = d.id_desafio) AS total_participantes,
       DATEDIFF(day, CAST(SYSUTCDATETIME() AS DATE), d.data_fim) AS dias_restantes
     FROM dbo.desafio d
@@ -35,7 +35,7 @@ async function atualizarProgressoTreinos(id_usuario) {
   try {
     const pool = await getPool()
     const desafios = await pool.request().input('uid', sql.Int, id_usuario).query(`
-      SELECT dp.id_participante, dp.id_desafio, d.tipo_meta, d.valor_meta, d.data_inicio, d.data_fim, dp.concluido
+      SELECT dp.id_desafio_participante, dp.id_desafio, d.tipo_meta, d.valor_meta, d.data_inicio, d.data_fim, dp.concluido
       FROM dbo.desafio_participante dp
       INNER JOIN dbo.desafio d ON d.id_desafio = dp.id_desafio
       WHERE dp.id_usuario = @uid AND dp.concluido = 0
@@ -57,14 +57,14 @@ async function atualizarProgressoTreinos(id_usuario) {
       const progresso = r.recordset[0].total
       const concluido = progresso >= d.valor_meta ? 1 : 0
       await pool.request()
-        .input('id',  sql.Int, d.id_participante)
+        .input('id',  sql.Int, d.id_desafio_participante)
         .input('p',   sql.Int, progresso)
         .input('c',   sql.Bit, concluido)
         .input('now', sql.DateTime2, concluido ? new Date() : null)
         .query(`
           UPDATE dbo.desafio_participante
           SET progresso = @p, concluido = @c, data_conclusao = CASE WHEN @c = 1 THEN @now ELSE data_conclusao END
-          WHERE id_participante = @id
+          WHERE id_desafio_participante = @id
         `)
       if (concluido && !d.concluido) novosConcluidos.push(d)
     }

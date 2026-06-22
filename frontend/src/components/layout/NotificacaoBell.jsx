@@ -1,8 +1,8 @@
 import { useState, useRef, useEffect } from 'react'
-import { Bell, Dumbbell, Salad, ClipboardList, Calendar, AlertCircle } from 'lucide-react'
+import { Bell, Dumbbell, Salad, ClipboardList, Calendar, AlertCircle, MessageSquare, X } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
-import useSWR from 'swr'
-import { buscarNotificacoes } from '../../services/notificacoes'
+import useSWR, { mutate as swrMutate } from 'swr'
+import { buscarNotificacoes, marcarLida } from '../../services/notificacoes'
 
 const TIPO_CONFIG = {
   checkin:    { Icon: Calendar,      cor: '#CC1A1A' },
@@ -10,6 +10,7 @@ const TIPO_CONFIG = {
   dieta:      { Icon: Salad,         cor: '#16A34A' },
   solicitacao: { Icon: ClipboardList, cor: '#CC8800' },
   avaliacao:  { Icon: ClipboardList, cor: '#7C3AED' },
+  admin:      { Icon: MessageSquare, cor: '#CC1A1A' },
 }
 
 export default function NotificacaoBell() {
@@ -33,9 +34,12 @@ export default function NotificacaoBell() {
     return () => document.removeEventListener('mousedown', fechar)
   }, [])
 
-  function irPara(link) {
+  function irPara(item) {
+    if (item.id_notificacao_aluno && !item.lida) {
+      marcarLida(item.id_notificacao_aluno).catch(() => {})
+    }
     setAberto(false)
-    navigate(link)
+    if (item.link) navigate(item.link)
   }
 
   return (
@@ -76,10 +80,24 @@ export default function NotificacaoBell() {
           boxShadow: '0 8px 32px rgba(0,0,0,0.12)',
           zIndex: 1000, overflow: 'hidden',
         }}>
-          <div style={{ padding: '14px 16px 12px', borderBottom: '1px solid #F0EBE4' }}>
+          <div style={{ padding: '14px 16px 12px', borderBottom: '1px solid #F0EBE4', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <p style={{ fontSize: 13, fontWeight: 800, color: '#1A1A1A', margin: 0 }}>
               Notificações {total > 0 && <span style={{ fontWeight: 400, color: '#8A7F76' }}>({total})</span>}
             </p>
+            <button
+              onClick={async () => {
+                const naoLidas = itens.filter(n => n.tipo === 'admin' && n.id_notificacao_aluno && !n.lida)
+                await Promise.all(naoLidas.map(n => marcarLida(n.id_notificacao_aluno).catch(() => {})))
+                if (naoLidas.length > 0) {
+                  swrMutate('notificacoes')
+                  swrMutate('notif-enviadas')
+                }
+                setAberto(false)
+              }}
+              style={{ width: 24, height: 24, borderRadius: 6, border: 'none', background: '#F0EBE4', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+            >
+              <X size={13} color="#8A7F76" />
+            </button>
           </div>
 
           {itens.length === 0 ? (
@@ -95,7 +113,7 @@ export default function NotificacaoBell() {
                 return (
                   <button
                     key={i}
-                    onClick={() => irPara(item.link)}
+                    onClick={() => irPara(item)}
                     style={{
                       width: '100%', display: 'flex', alignItems: 'flex-start',
                       gap: 12, padding: '12px 16px',

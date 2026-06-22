@@ -45,7 +45,7 @@ async function stats() {
 
       -- Treinos e dietas
       (SELECT COUNT(*) FROM dbo.treino_protocolo WHERE ativo = 1) AS treinos_ativos,
-      (SELECT COUNT(*) FROM dbo.treino_protocolo_template WHERE ativo = 1) AS treinos_template,
+      (SELECT COUNT(*) FROM dbo.protocolo_template WHERE ativo = 1) AS treinos_template,
 
       (SELECT COUNT(*) FROM dbo.dieta_plano WHERE ativo = 1 AND status_plano = 'liberado') AS dietas_liberadas,
       (SELECT COUNT(*) FROM dbo.dieta_plano WHERE ativo = 1 AND status_plano = 'rascunho') AS dietas_rascunho,

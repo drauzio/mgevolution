@@ -24,28 +24,22 @@ function fmtNum(v, suffix = '') {
 }
 
 // ─── Tab Fotos ───────────────────────────────────────────────────────────────
-const TIPOS_FOTO = [
-  { key: 'antes',     label: 'Antes'     },
-  { key: 'depois',    label: 'Depois'    },
-  { key: 'progresso', label: 'Progresso' },
+const POSICOES = [
+  { key: 'frente',  label: 'Frente'  },
+  { key: 'costas',  label: 'Costas'  },
+  { key: 'lateral', label: 'Lateral' },
 ]
 
 function TabFotos() {
   const { data: fotos = [], mutate, isLoading } = useSWR('evolucao-fotos', buscarFotos, { revalidateOnFocus: false })
-  const [enviando, setEnviando] = useState(false)
-  const [tipo, setTipo] = useState('progresso')
+  const [enviando, setEnviando] = useState(null) // tipo sendo enviado
   const [data, setData] = useState(new Date().toISOString().slice(0, 10))
   const [deletando, setDeletando] = useState(null)
-  const inputRef = useState(null)
 
-  const antes   = fotos.find(f => f.tipo === 'antes')
-  const depois  = fotos.find(f => f.tipo === 'depois')
-  const progresso = fotos.filter(f => f.tipo === 'progresso')
-
-  async function handleUpload(e) {
+  async function handleUpload(e, tipo) {
     const file = e.target.files?.[0]
     if (!file) return
-    setEnviando(true)
+    setEnviando(tipo)
     try {
       const fd = new FormData()
       fd.append('foto', file)
@@ -54,7 +48,7 @@ function TabFotos() {
       const nova = await uploadFoto(fd)
       mutate([nova, ...fotos], false)
     } finally {
-      setEnviando(false)
+      setEnviando(null)
       e.target.value = ''
     }
   }
@@ -70,129 +64,65 @@ function TabFotos() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
 
-      {/* Banner IA */}
-      <div style={{ borderRadius: 20, padding: '20px 22px', background: 'linear-gradient(135deg, #1A1A1A 0%, #2d1a1a 100%)', boxShadow: '0 4px 24px rgba(0,0,0,0.18)', position: 'relative', overflow: 'hidden' }}>
-        {/* Decoração de fundo */}
-        <div style={{ position: 'absolute', top: -30, right: -30, width: 120, height: 120, borderRadius: '50%', background: 'rgba(204,26,26,0.15)' }} />
-        <div style={{ position: 'absolute', bottom: -20, right: 40, width: 70, height: 70, borderRadius: '50%', background: 'rgba(204,26,26,0.1)' }} />
-
-        <div style={{ position: 'relative' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
-            <div style={{ width: 28, height: 28, borderRadius: 8, background: 'rgba(204,26,26,0.3)', border: '1px solid rgba(204,26,26,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <Sparkles size={14} color="#FF6B6B" />
-            </div>
-            <span style={{ fontSize: 10, fontWeight: 800, color: '#FF6B6B', textTransform: 'uppercase', letterSpacing: '0.18em' }}>Exclusivo MG Evolution</span>
-          </div>
-
-          <p style={{ fontSize: 16, fontWeight: 900, color: '#FFFFFF', marginBottom: 6, lineHeight: 1.3 }}>
-            Suas fotos analisadas por Inteligência Artificial
-          </p>
-          <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.65)', lineHeight: 1.6, marginBottom: 14 }}>
-            O GPT-4o analisa visualmente suas fotos de antes e depois junto com seus dados de treino e medidas — e gera um relatório personalizado da sua transformação.
-          </p>
-
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-            {['📸 Análise visual das fotos', '📊 Dados de treino', '📏 Medidas corporais'].map(item => (
-              <span key={item} style={{ fontSize: 11, fontWeight: 600, color: 'rgba(255,255,255,0.8)', background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 20, padding: '4px 10px' }}>
-                {item}
-              </span>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* Upload */}
-      <div style={{ background: '#FFFFFF', border: '1px solid #E0D6CA', borderRadius: 20, padding: '20px', boxShadow: '0 2px 16px rgba(0,0,0,0.04)' }}>
-        <p style={{ fontSize: 13, fontWeight: 800, color: '#1A1A1A', marginBottom: 14 }}>Adicionar foto</p>
-
-        <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
-          {TIPOS_FOTO.map(t => (
-            <button
-              key={t.key}
-              onClick={() => setTipo(t.key)}
-              style={{ flex: 1, height: 34, borderRadius: 8, border: `1px solid ${tipo === t.key ? '#CC1A1A' : '#E0D6CA'}`, background: tipo === t.key ? 'rgba(204,26,26,0.07)' : '#FFFFFF', color: tipo === t.key ? '#CC1A1A' : '#8A7F76', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
-            >
-              {t.label}
-            </button>
-          ))}
-        </div>
-
+      {/* Data seletor */}
+      <div style={{ background: '#FFFFFF', border: '1px solid #E0D6CA', borderRadius: 16, padding: '14px 16px', display: 'flex', alignItems: 'center', gap: 12, boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
+        <Calendar size={16} color="#8A7F76" />
+        <span style={{ fontSize: 13, color: '#8A7F76', fontWeight: 600 }}>Data da foto:</span>
         <input
           type="date"
           value={data}
           onChange={e => setData(e.target.value)}
-          style={{ width: '100%', height: 40, padding: '0 12px', border: '1px solid #E0D6CA', borderRadius: 10, fontSize: 13, color: '#1A1A1A', outline: 'none', background: '#FAFAF9', marginBottom: 12, boxSizing: 'border-box' }}
+          style={{ flex: 1, height: 36, padding: '0 10px', border: '1px solid #E0D6CA', borderRadius: 8, fontSize: 13, color: '#1A1A1A', outline: 'none', background: '#FAFAF9' }}
         />
-
-        <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, height: 44, borderRadius: 12, border: '1.5px dashed #E0D6CA', background: '#FAFAF9', color: '#8A7F76', fontSize: 13, fontWeight: 600, cursor: enviando ? 'not-allowed' : 'pointer', opacity: enviando ? 0.6 : 1 }}>
-          <Camera size={16} />
-          {enviando ? 'Enviando...' : 'Escolher foto'}
-          <input type="file" accept="image/*" onChange={handleUpload} disabled={enviando} style={{ display: 'none' }} />
-        </label>
       </div>
 
-      {/* Antes / Depois */}
-      {(antes || depois) && (
-        <div style={{ background: '#FFFFFF', border: '1px solid #E0D6CA', borderRadius: 20, padding: '20px', boxShadow: '0 2px 16px rgba(0,0,0,0.04)' }}>
-          <p style={{ fontSize: 13, fontWeight: 800, color: '#1A1A1A', marginBottom: 14 }}>Antes &amp; Depois</p>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-            {[{ tipo: 'antes', foto: antes }, { tipo: 'depois', foto: depois }].map(({ tipo: t, foto }) => (
-              <div key={t}>
-                {foto ? (
-                  <div style={{ position: 'relative' }}>
-                    <img
-                      src={foto.url}
-                      alt={t}
-                      style={{ width: '100%', aspectRatio: '3/4', objectFit: 'cover', borderRadius: 12, display: 'block' }}
-                    />
+      {/* 3 colunas: Frente / Costas / Lateral */}
+      <div style={{ background: '#FFFFFF', border: '1px solid #E0D6CA', borderRadius: 20, padding: '20px', boxShadow: '0 2px 16px rgba(0,0,0,0.04)' }}>
+        <p style={{ fontSize: 13, fontWeight: 800, color: '#1A1A1A', marginBottom: 16 }}>Fotos corporais</p>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
+          {POSICOES.map(({ key, label }) => {
+            const lista = fotos.filter(f => f.tipo === key)
+            return (
+              <div key={key} style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {/* Header da coluna */}
+                <div style={{ textAlign: 'center' }}>
+                  <span style={{ fontSize: 11, fontWeight: 800, color: '#1A1A1A', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{label}</span>
+                </div>
+
+                {/* Foto vazia */}
+                {lista.length === 0 && (
+                  <label style={{ aspectRatio: '3/4', background: '#F7F3EE', border: '1.5px dashed #E0D6CA', borderRadius: 10, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 6, cursor: 'pointer' }}>
+                    <Camera size={20} color="#C4B9A8" />
+                    <span style={{ fontSize: 10, color: '#C4B9A8', fontWeight: 600 }}>Adicionar</span>
+                    <input type="file" accept="image/*" onChange={e => handleUpload(e, key)} disabled={!!enviando} style={{ display: 'none' }} />
+                  </label>
+                )}
+
+                {/* Fotos da coluna */}
+                {lista.map(f => (
+                  <div key={f.id_evolucao_foto} style={{ position: 'relative' }}>
+                    <img src={f.url} alt={key} style={{ width: '100%', aspectRatio: '3/4', objectFit: 'cover', borderRadius: 10, display: 'block' }} />
                     <button
-                      onClick={() => handleDeletar(foto.id_evolucao_foto)}
-                      disabled={deletando === foto.id_evolucao_foto}
-                      style={{ position: 'absolute', top: 8, right: 8, width: 28, height: 28, borderRadius: 8, border: 'none', background: 'rgba(0,0,0,0.5)', color: '#FFFFFF', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+                      onClick={() => handleDeletar(f.id_evolucao_foto)}
+                      disabled={deletando === f.id_evolucao_foto}
+                      style={{ position: 'absolute', top: 5, right: 5, width: 24, height: 24, borderRadius: 6, border: 'none', background: 'rgba(0,0,0,0.5)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
                     >
-                      <Trash2 size={13} />
+                      <Trash2 size={11} />
                     </button>
-                    <p style={{ fontSize: 10, fontWeight: 800, color: '#8A7F76', textTransform: 'uppercase', letterSpacing: '0.1em', marginTop: 6, textAlign: 'center' }}>
-                      {t} · {fmt(foto.data)}
-                    </p>
+                    <p style={{ fontSize: 10, color: '#8A7F76', marginTop: 4, textAlign: 'center', fontWeight: 600 }}>{fmt(f.data)}</p>
                   </div>
-                ) : (
-                  <div style={{ aspectRatio: '3/4', background: '#F7F3EE', border: '1px dashed #E0D6CA', borderRadius: 12, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
-                    <Camera size={24} color="#C4B9A8" />
-                    <p style={{ fontSize: 11, color: '#C4B9A8', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.1em' }}>{t}</p>
-                  </div>
+                ))}
+                {lista.length > 0 && (
+                  <label style={{ height: 36, border: '1.5px dashed #E0D6CA', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: enviando === key ? 'not-allowed' : 'pointer', opacity: enviando === key ? 0.5 : 1, background: '#FAFAF9' }}>
+                    {enviando === key ? <span style={{ fontSize: 11, color: '#8A7F76' }}>...</span> : <Plus size={16} color="#C4B9A8" />}
+                    <input type="file" accept="image/*" onChange={e => handleUpload(e, key)} disabled={!!enviando} style={{ display: 'none' }} />
+                  </label>
                 )}
               </div>
-            ))}
-          </div>
+            )
+          })}
         </div>
-      )}
-
-      {/* Grid de progresso */}
-      {progresso.length > 0 && (
-        <div style={{ background: '#FFFFFF', border: '1px solid #E0D6CA', borderRadius: 20, padding: '20px', boxShadow: '0 2px 16px rgba(0,0,0,0.04)' }}>
-          <p style={{ fontSize: 13, fontWeight: 800, color: '#1A1A1A', marginBottom: 14 }}>Progresso</p>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
-            {progresso.map(f => (
-              <div key={f.id_evolucao_foto} style={{ position: 'relative' }}>
-                <img
-                  src={f.url}
-                  alt="progresso"
-                  style={{ width: '100%', aspectRatio: '1', objectFit: 'cover', borderRadius: 10, display: 'block' }}
-                />
-                <button
-                  onClick={() => handleDeletar(f.id_evolucao_foto)}
-                  disabled={deletando === f.id_evolucao_foto}
-                  style={{ position: 'absolute', top: 5, right: 5, width: 24, height: 24, borderRadius: 6, border: 'none', background: 'rgba(0,0,0,0.5)', color: '#FFFFFF', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
-                >
-                  <Trash2 size={11} />
-                </button>
-                <p style={{ fontSize: 10, color: '#8A7F76', marginTop: 4, textAlign: 'center' }}>{fmt(f.data)}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
+      </div>
 
       {fotos.length === 0 && !isLoading && (
         <div style={{ background: '#FFFFFF', border: '1px solid #E0D6CA', borderRadius: 20, padding: '40px 24px', textAlign: 'center', boxShadow: '0 2px 16px rgba(0,0,0,0.04)' }}>

@@ -137,6 +137,14 @@ async function criar(dados, idCriador) {
 
     const idPlano = r1.recordset[0].id_dieta_plano
     await _inserirRefeicoes(tx, idPlano, refeicoes)
+
+    // Fecha solicitações pendentes do aluno
+    if (id_usuario) {
+      await tx.request()
+        .input('id_usuario', sql.Int, id_usuario)
+        .query(`UPDATE dbo.dieta_solicitacao SET status='concluida', data_atualizacao=SYSUTCDATETIME() WHERE id_usuario=@id_usuario AND status<>'concluida'`)
+    }
+
     await tx.commit()
     return { id_dieta_plano: idPlano }
   } catch (err) { await tx.rollback(); throw err }

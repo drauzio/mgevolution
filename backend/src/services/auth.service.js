@@ -49,6 +49,21 @@ async function login(email, senha) {
 
 async function registro({ nome, email, senha, telefone }) {
   const pool = await getPool()
+  const tel  = telefone ? telefone.replace(/\D/g, '') : null
+
+  // Bloqueia telefone duplicado
+  if (tel) {
+    const dupTel = await pool.request()
+      .input('tel', sql.VarChar(20), tel)
+      .query(`
+        SELECT 1 FROM dbo.usuario
+        WHERE REPLACE(REPLACE(REPLACE(REPLACE(ISNULL(telefone,''),'(',''),')',''),'-',''),' ','') = @tel
+          AND ativo = 1
+      `)
+    if (dupTel.recordset.length > 0)
+      throw Object.assign(new Error('Telefone já cadastrado'), { number: 2627, campo: 'telefone' })
+  }
+
   const hash = await bcrypt.hash(senha, 10)
 
   const result = await pool.request()
@@ -56,7 +71,7 @@ async function registro({ nome, email, senha, telefone }) {
     .input('email',    sql.VarChar(120),   email)
     .input('cpf',      sql.VarChar(11),    '00000000000')
     .input('hash',     sql.VarBinary(256), Buffer.from(hash))
-    .input('telefone', sql.VarChar(20),    telefone ? telefone.replace(/\D/g, '') : null)
+    .input('telefone', sql.VarChar(20),    tel)
     .query(`
       INSERT INTO dbo.usuario (nome, cpf, email, senha_hash, telefone, administrador, senha_provisoria)
       OUTPUT INSERTED.id_usuario
@@ -148,4 +163,28 @@ async function redefinirSenha(token, novaSenha) {
   if (result.rowsAffected[0] === 0) throw { status: 404, mensagem: 'Usuário não encontrado' }
 }
 
-module.exports = { login, registro, criarUsuario, esqueciSenha, redefinirSenha }
+async function redefinirSenhaPorTelefone(telefone, novaSenha) {
+  const pool = await getPool()
+  const tel = String(telefone).replace(/\D+/g, '')
+
+  const result = await pool.request()
+    .input('tel', sql.VarChar(20), tel)
+    .query(`
+      SELECT id_usuario FROM dbo.usuario
+      WHERE REPLACE(REPLACE(REPLACE(REPLACE(ISNULL(telefone,''),'(',''),')',''),'-',''),' ','') = @tel
+        AND ativo = 1
+    `)
+
+  if (result.recordset.length === 0)
+    throw { status: 404, mensagem: 'Telefone não encontrado' }
+
+  const { id_usuario } = result.recordset[0]
+  const hash = await bcrypt.hash(novaSenha, 10)
+
+  await pool.request()
+    .input('id',   sql.Int,            id_usuario)
+    .input('hash', sql.VarBinary(256), Buffer.from(hash))
+    .query(`UPDATE dbo.usuario SET senha_hash = @hash, senha_provisoria = 0 WHERE id_usuario = @id`)
+}
+
+module.exports = { login, registro, criarUsuario, esqueciSenha, redefinirSenha, redefinirSenhaPorTelefone }
