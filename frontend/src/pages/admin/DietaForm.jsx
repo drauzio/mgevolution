@@ -28,7 +28,7 @@ const UNIDADES = ['g', 'ml', 'unid', 'colher', 'xícara', 'fatia', 'porção']
 
 function ItemRow({ item, onChange, onRemove }) {
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: '1fr 72px 72px 62px 62px 62px 62px 32px', gap: 6, alignItems: 'center', padding: '8px 0', borderBottom: '1px solid #F7F3EE' }}>
+    <div style={{ display: 'grid', gridTemplateColumns: '1fr 72px 72px 62px 62px 62px 62px 32px', gap: 6, alignItems: 'center', padding: '8px 0', borderBottom: '1px solid #F7F3EE', minWidth: 580 }}>
       <input
         value={item.descricao}
         onChange={e => onChange('descricao', e.target.value)}
@@ -306,14 +306,14 @@ export default function DietaForm() {
     <div style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
 
       {/* Cabeçalho */}
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16 }}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
         <div>
-          <h1 style={{ fontSize: 26, fontWeight: 900, color: '#1A1A1A', textTransform: 'uppercase', letterSpacing: '0.03em', marginBottom: 6 }}>
+          <h1 style={{ fontSize: 22, fontWeight: 900, color: '#1A1A1A', textTransform: 'uppercase', letterSpacing: '0.03em', marginBottom: 6 }}>
             {isEdicao ? 'Editar Plano de Dieta' : 'Novo Plano de Dieta'}
           </h1>
           <p style={{ fontSize: 14, color: '#8A7F76' }}>Monte as refeições e macros do aluno.</p>
         </div>
-        <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
+        <div style={{ display: 'flex', gap: 6 }}>
           <BtnCancelar onClick={() => navigate(voltarDieta)} />
           <BtnSalvar onClick={salvar} loading={salvando} />
         </div>
@@ -340,7 +340,7 @@ export default function DietaForm() {
       <div style={{ background: '#FFFFFF', border: '1px solid #E0D6CA', borderRadius: 20, padding: 28, display: 'flex', flexDirection: 'column', gap: 18, boxShadow: '0 2px 16px rgba(0,0,0,0.04)' }}>
         <p style={{ fontSize: 12, fontWeight: 700, color: '#8A7F76', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Informações do Plano</p>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+        <div className="dieta-grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
           <Campo label="Aluno">
             {idSolicitacao ? (
               <div style={{ ...inputStyle, display: 'flex', alignItems: 'center', background: '#F7F3EE', color: '#1A1A1A', cursor: 'not-allowed' }}>
@@ -369,7 +369,7 @@ export default function DietaForm() {
             <input style={inputStyle} placeholder="Ex: Perda de gordura" value={form.objetivo} onChange={setF('objetivo')} />
           </Campo>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+          <div className="dieta-grid-2-inner" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
             <Campo label="Meta kcal/dia">
               <input style={inputStyle} type="number" placeholder="Ex: 2000" value={form.calorias_meta} onChange={setF('calorias_meta')} />
             </Campo>
@@ -395,7 +395,7 @@ export default function DietaForm() {
         {/* Status de publicação */}
         <div>
           <p style={{ fontSize: 11, fontWeight: 700, color: '#8A7F76', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 10 }}>Status do plano</p>
-          <div style={{ display: 'flex', gap: 8 }}>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
             {[
               { value: 'rascunho', label: 'Rascunho',   desc: 'Ainda em elaboração, aluno não vê',  color: '#8A7F76', bg: '#F0EBE4' },
               { value: 'revisao',  label: 'Em revisão', desc: 'Pronto, aguardando revisão final',    color: '#B45309', bg: 'rgba(234,179,8,0.12)' },
@@ -500,11 +500,11 @@ export default function DietaForm() {
 
       {/* Refeições */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10 }}>
           <p style={{ fontSize: 12, fontWeight: 700, color: '#8A7F76', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
             Refeições ({refeicoes.length})
           </p>
-          <div style={{ display: 'flex', gap: 8 }}>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
             {isEdicao && (
               <button
                 onClick={handleGerarSubstituicoes}
@@ -578,9 +578,10 @@ export default function DietaForm() {
                     />
                   </div>
 
-                  {/* Cabeçalho itens */}
+                  {/* Cabeçalho itens + itens com scroll horizontal */}
+                  <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
                   {ref.itens.length > 0 && (
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 72px 72px 62px 62px 62px 62px 32px', gap: 6 }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 72px 72px 62px 62px 62px 62px 32px', gap: 6, minWidth: 580 }}>
                       {['Alimento', 'Qtd', 'Unid', 'kcal', 'Prot g', 'Carb g', 'Gord g', ''].map((h, j) => (
                         <p key={j} style={{ fontSize: 10, fontWeight: 700, color: '#8A7F76', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{h}</p>
                       ))}
@@ -598,7 +599,7 @@ export default function DietaForm() {
 
                       {/* Substituições deste item */}
                       {(it.substituicoes || []).map((sub, k) => (
-                        <div key={sub._uid} style={{ display: 'grid', gridTemplateColumns: '16px 1fr 72px 72px 62px 62px 62px 62px 32px', gap: 6, alignItems: 'center', paddingLeft: 4, paddingBottom: 6 }}>
+                        <div key={sub._uid} style={{ display: 'grid', gridTemplateColumns: '16px 1fr 72px 72px 62px 62px 62px 62px 32px', gap: 6, alignItems: 'center', paddingLeft: 4, paddingBottom: 6, minWidth: 580 }}>
                           <p style={{ fontSize: 9, fontWeight: 900, color: '#CC1A1A', textTransform: 'uppercase', letterSpacing: '0.08em', textAlign: 'center' }}>ou</p>
                           <input
                             value={sub.descricao}
@@ -666,6 +667,8 @@ export default function DietaForm() {
                     </div>
                   ))}
 
+                  </div>{/* fim overflow-x */}
+
                   <button
                     onClick={() => adicionarItem(i)}
                     style={{ display: 'flex', alignItems: 'center', gap: 6, height: 32, paddingInline: 12, borderRadius: 8, border: '1px dashed #E0D6CA', background: 'transparent', color: '#8A7F76', fontSize: 12, fontWeight: 600, cursor: 'pointer', width: 'fit-content' }}
@@ -686,6 +689,13 @@ export default function DietaForm() {
           {erro}
         </div>
       )}
+
+      <style>{`
+        @media (max-width: 600px) {
+          .dieta-grid-2 { grid-template-columns: 1fr !important; }
+          .dieta-grid-2-inner { grid-template-columns: 1fr !important; }
+        }
+      `}</style>
     </div>
   )
 }

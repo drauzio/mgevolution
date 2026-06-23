@@ -101,14 +101,14 @@ export default function AdminIntegracoes() {
     <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
 
       {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16 }}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
         <div>
-          <h1 style={{ fontSize: 26, fontWeight: 900, color: '#1A1A1A', textTransform: 'uppercase', letterSpacing: '0.03em', marginBottom: 6 }}>Integrações</h1>
+          <h1 style={{ fontSize: 22, fontWeight: 900, color: '#1A1A1A', textTransform: 'uppercase', letterSpacing: '0.03em', marginBottom: 6 }}>Integrações</h1>
           <p style={{ fontSize: 14, color: '#8A7F76' }}>WhatsApp Business API (Meta)</p>
         </div>
         <button
           onClick={() => navigate('/admin')}
-          style={{ height: 36, paddingInline: 14, display: 'flex', alignItems: 'center', gap: 6, border: '1px solid #E0D6CA', borderRadius: 8, background: '#FFFFFF', cursor: 'pointer', fontSize: 12, fontWeight: 700, color: '#6B6560', flexShrink: 0 }}
+          style={{ height: 36, paddingInline: 14, display: 'flex', alignItems: 'center', gap: 6, border: '1px solid #E0D6CA', borderRadius: 8, background: '#FFFFFF', cursor: 'pointer', fontSize: 12, fontWeight: 700, color: '#6B6560' }}
         >
           <Home size={14} /> Home
         </button>
@@ -148,7 +148,7 @@ export default function AdminIntegracoes() {
             </div>
 
             {configurado && statusData && (
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+              <div className="integ-grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                 <div style={{ padding: '12px 16px', background: '#FAFAF9', borderRadius: 10, border: '1px solid #F0EBE4' }}>
                   <p style={{ fontSize: 11, color: '#8A7F76', marginBottom: 3 }}>Alerta inatividade</p>
                   <p style={{ fontSize: 15, fontWeight: 800, color: '#1A1A1A' }}>{statusData.dias_inativo} dias sem treinar</p>
@@ -190,25 +190,25 @@ export default function AdminIntegracoes() {
           { tipo: 'assinatura_vencendo', label: 'Assinatura vencendo',   desc: `Avisa o aluno quando a assinatura vence em ${statusData?.dias_vencimento || 7} dias`, quando: 'Cron · 9h' },
           { tipo: 'aluno_inativo',       label: 'Aluno inativo',         desc: `Avisa quando o aluno não treina há ${statusData?.dias_inativo || 7} dias`, quando: 'Cron · 10h' },
         ].map((item, i, arr) => (
-          <div key={item.tipo} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, padding: '16px 28px', borderBottom: i < arr.length - 1 ? '1px solid #F7F3EE' : 'none' }}>
-            <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+          <div key={item.tipo} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '14px 20px', borderBottom: i < arr.length - 1 ? '1px solid #F7F3EE' : 'none', flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', gap: 12, alignItems: 'center', flex: 1, minWidth: 0 }}>
               <div style={{ width: 36, height: 36, borderRadius: 10, background: (TIPO_COR[item.tipo] || '#6B6560') + '14', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                 <MessageCircle size={16} color={TIPO_COR[item.tipo] || '#6B6560'} />
               </div>
-              <div>
+              <div style={{ minWidth: 0 }}>
                 <p style={{ fontSize: 13, fontWeight: 700, color: '#1A1A1A', marginBottom: 2 }}>{item.label}</p>
                 <p style={{ fontSize: 12, color: '#8A7F76' }}>{item.desc}</p>
               </div>
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
-              <span style={{ fontSize: 11, fontWeight: 600, color: '#A09890', background: '#F7F3EE', borderRadius: 6, padding: '3px 8px' }}>{item.quando}</span>
-              <div style={{ width: 10, height: 10, borderRadius: '50%', background: configurado ? '#25D366' : '#E0D6CA' }} />
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span style={{ fontSize: 11, fontWeight: 600, color: '#A09890', background: '#F7F3EE', borderRadius: 6, padding: '3px 8px', whiteSpace: 'nowrap' }}>{item.quando}</span>
+              <div style={{ width: 10, height: 10, borderRadius: '50%', background: configurado ? '#25D366' : '#E0D6CA', flexShrink: 0 }} />
             </div>
           </div>
         ))}
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
+      <div className="integ-grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
         {/* Enviar mensagem de teste */}
         <div style={{ background: '#FFFFFF', border: '1px solid #E0D6CA', borderRadius: 20, padding: 24, boxShadow: '0 2px 16px rgba(0,0,0,0.04)' }}>
           <p style={{ fontSize: 14, fontWeight: 800, color: '#1A1A1A', marginBottom: 16 }}>Enviar mensagem de teste</p>
@@ -274,7 +274,7 @@ export default function AdminIntegracoes() {
       <div style={{ background: '#FFFFFF', border: '1px solid #E0D6CA', borderRadius: 20, overflow: 'hidden', boxShadow: '0 2px 16px rgba(0,0,0,0.04)' }}>
         <div style={{ padding: '18px 24px', borderBottom: '1px solid #F0EBE4', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
           <p style={{ fontSize: 14, fontWeight: 800, color: '#1A1A1A' }}>Log de mensagens</p>
-          <div style={{ display: 'flex', gap: 8 }}>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
             <select value={filtroTipo} onChange={e => setFiltroTipo(e.target.value)} style={{ height: 34, padding: '0 10px', border: '1px solid #E0D6CA', borderRadius: 8, fontSize: 12, color: '#6B6560', background: '#FFFFFF', cursor: 'pointer', outline: 'none' }}>
               <option value="">Todos os tipos</option>
               {Object.entries(TIPO_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
@@ -302,22 +302,27 @@ export default function AdminIntegracoes() {
         ) : (
           <div>
             {logs.map((log, i) => (
-              <div key={log.id_log} style={{ display: 'grid', gridTemplateColumns: '140px 1fr 80px 100px', alignItems: 'center', gap: 12, padding: '12px 24px', borderTop: i > 0 ? '1px solid #F7F3EE' : 'none' }}>
+              <div key={log.id_log} className="integ-log-row" style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 20px', borderTop: i > 0 ? '1px solid #F7F3EE' : 'none', flexWrap: 'wrap' }}>
                 <Badge tipo={log.tipo} />
-                <div>
+                <div style={{ flex: 1, minWidth: 120 }}>
                   {log.nome_usuario && <p style={{ fontSize: 13, fontWeight: 600, color: '#1A1A1A', marginBottom: 1 }}>{log.nome_usuario}</p>}
                   <p style={{ fontSize: 11, color: '#8A7F76' }}>{log.telefone || '—'}</p>
                   {log.motivo_erro && <p style={{ fontSize: 11, color: '#CC1A1A' }}>{log.motivo_erro}</p>}
                 </div>
                 <StatusBadge status={log.status} />
-                <p style={{ fontSize: 11, color: '#A09890' }}>{log.data_envio}</p>
+                <p style={{ fontSize: 11, color: '#A09890', whiteSpace: 'nowrap' }}>{log.data_envio}</p>
               </div>
             ))}
           </div>
         )}
       </div>
 
-      <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
+      <style>{`
+        @keyframes spin { to { transform: rotate(360deg) } }
+        @media (max-width: 640px) {
+          .integ-grid-2 { grid-template-columns: 1fr !important; }
+        }
+      `}</style>
     </div>
   )
 }

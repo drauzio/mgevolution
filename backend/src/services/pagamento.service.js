@@ -80,6 +80,29 @@ async function cancelar(id_pagamento) {
     .query(`UPDATE dbo.pagamento SET status = 'cancelado' WHERE id_pagamento = @id`)
 }
 
+async function criar({ id_assinatura, id_usuario, valor, data_vencimento, observacao, forma_pagamento, data_pagamento, status, registrado_por }) {
+  const pool = await getPool()
+  const statusFinal = status || 'pendente'
+  const r = await pool.request()
+    .input('id_assinatura',   sql.Int,           id_assinatura)
+    .input('id_usuario',      sql.Int,           id_usuario)
+    .input('valor',           sql.Decimal(10,2), valor)
+    .input('data_vencimento', sql.Date,          data_vencimento)
+    .input('observacao',      sql.VarChar(500),  observacao || null)
+    .input('forma',           sql.VarChar(30),   forma_pagamento || null)
+    .input('data_pagamento',  sql.Date,          data_pagamento || null)
+    .input('status',          sql.VarChar(20),   statusFinal)
+    .input('registrado_por',  sql.Int,           registrado_por || null)
+    .query(`
+      INSERT INTO dbo.pagamento
+        (id_assinatura, id_usuario, valor, data_vencimento, observacao, forma_pagamento, data_pagamento, status, registrado_por)
+      VALUES
+        (@id_assinatura, @id_usuario, @valor, @data_vencimento, @observacao, @forma, @data_pagamento, @status, @registrado_por);
+      SELECT SCOPE_IDENTITY() AS id_pagamento
+    `)
+  return r.recordset[0]
+}
+
 async function gerarCobranca(id_assinatura) {
   const pool = await getPool()
 

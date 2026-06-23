@@ -110,7 +110,7 @@ function ExercicioSelector({ onAdd }) {
   }
 
   return (
-    <div ref={wrapRef} style={{ position: 'relative', display: 'flex', gap: 8 }}>
+    <div ref={wrapRef} style={{ position: 'relative', display: 'flex', gap: 8, flexWrap: 'wrap' }}>
       <div style={{ flex: 1, display: 'flex', alignItems: 'center', background: '#FFFFFF', border: '1px solid #E0D6CA', borderRadius: 10, overflow: 'hidden', height: 38 }}>
         <div style={{ padding: '0 12px', display: 'flex', alignItems: 'center', flexShrink: 0 }}>
           {loading
@@ -166,7 +166,7 @@ function ExercicioRow({ id, ex, onChange, onRemove }) {
       ref={setNodeRef}
       style={{
         display: 'grid', gridTemplateColumns: '20px 1fr 64px 80px 80px 80px 32px', gap: 8,
-        alignItems: 'center', padding: '10px 0', borderBottom: '1px solid #F7F3EE',
+        alignItems: 'center', padding: '10px 0', borderBottom: '1px solid #F7F3EE', minWidth: 520,
         transform: CSS.Transform.toString(transform), transition,
         opacity: isDragging ? 0.4 : 1, background: isDragging ? '#FDF5F5' : 'transparent',
       }}
@@ -482,14 +482,14 @@ export default function TreinoForm() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
 
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16 }}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
         <div>
-          <h1 style={{ fontSize: 26, fontWeight: 900, color: '#1A1A1A', textTransform: 'uppercase', letterSpacing: '0.03em', marginBottom: 6 }}>
+          <h1 style={{ fontSize: 22, fontWeight: 900, color: '#1A1A1A', textTransform: 'uppercase', letterSpacing: '0.03em', marginBottom: 6 }}>
             {titulo}
           </h1>
           <p style={{ fontSize: 14, color: '#8A7F76' }}>{subtitulo}</p>
         </div>
-        <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
+        <div style={{ display: 'flex', gap: 6 }}>
           <BtnCancelar onClick={handleCancel} />
           <BtnSalvar onClick={salvar} loading={salvando} />
         </div>
@@ -510,7 +510,7 @@ export default function TreinoForm() {
             Como deseja criar este treino?
           </p>
 
-          <div style={{ display: 'flex', gap: 10 }}>
+          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
             <button
               onClick={() => { setModoBase('vazio'); limparBase() }}
               style={{ flex: 1, padding: '14px 16px', borderRadius: 12, border: '2px solid ' + (modoBase === 'vazio' ? '#CC1A1A' : '#E0D6CA'), background: modoBase === 'vazio' ? 'rgba(204,26,26,0.04)' : '#FFFFFF', cursor: 'pointer', textAlign: 'left' }}
@@ -598,7 +598,7 @@ export default function TreinoForm() {
           </div>
         )}
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+        <div className="treino-grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
           {!isProtocolos ? (
             <Campo label="Aluno">
               <select value={form.id_usuario} onChange={setF('id_usuario')} style={selectStyle}>
@@ -644,7 +644,7 @@ export default function TreinoForm() {
           )}
 
           {isProtocolos && (
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+            <div className="treino-grid-inner" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
               <Campo label="Critério — Idade mínima">
                 <input style={inputStyle} type="number" min="0" max="120" placeholder="Ex: 18" value={form.criterio_idade_min} onChange={setF('criterio_idade_min')} />
               </Campo>
@@ -749,8 +749,8 @@ export default function TreinoForm() {
           {!diaCorrente?.descanso && (
             <>
               {diaCorrente?.exercicios?.length > 0 && (
-                <div>
-                  <div style={{ display: 'grid', gridTemplateColumns: '20px 1fr 64px 80px 80px 80px 32px', gap: 8, padding: '0 0 8px', borderBottom: '1px solid #E0D6CA' }}>
+                <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '20px 1fr 64px 80px 80px 80px 32px', gap: 8, padding: '0 0 8px', borderBottom: '1px solid #E0D6CA', minWidth: 520 }}>
                     {['', 'Exercício', 'Séries', 'Reps', 'Carga', 'Desc(s)', ''].map((h, i) => (
                       <p key={i} style={{ fontSize: 10, fontWeight: 700, color: '#8A7F76', textTransform: 'uppercase', letterSpacing: '0.1em' }}>{h}</p>
                     ))}
@@ -791,6 +791,13 @@ export default function TreinoForm() {
           {erro}
         </div>
       )}
+
+      <style>{`
+        @media (max-width: 600px) {
+          .treino-grid-2 { grid-template-columns: 1fr !important; }
+          .treino-grid-inner { grid-template-columns: 1fr !important; }
+        }
+      `}</style>
 
       {showLeaveModal && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>

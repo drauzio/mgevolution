@@ -9,7 +9,7 @@ import { data } from '../../utils/formatters'
 function Linha({ label, valor }) {
   return (
     <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, padding: '10px 0', borderBottom: '1px solid #F7F3EE' }}>
-      <span style={{ width: 160, flexShrink: 0, fontSize: 11, fontWeight: 700, color: '#8A7F76', textTransform: 'uppercase', letterSpacing: '0.08em', paddingTop: 2 }}>{label}</span>
+      <span style={{ minWidth: 110, flexShrink: 0, fontSize: 11, fontWeight: 700, color: '#8A7F76', textTransform: 'uppercase', letterSpacing: '0.08em', paddingTop: 2 }}>{label}</span>
       <span style={{ fontSize: 14, color: '#1A1A1A', flex: 1 }}>{valor || '—'}</span>
     </div>
   )
@@ -67,14 +67,14 @@ export default function AvaliacaoView() {
     <div style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
 
       {/* Cabeçalho */}
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16 }}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
         <div>
-          <h1 style={{ fontSize: 26, fontWeight: 900, color: '#1A1A1A', textTransform: 'uppercase', letterSpacing: '0.03em', marginBottom: 6 }}>
+          <h1 style={{ fontSize: 22, fontWeight: 900, color: '#1A1A1A', textTransform: 'uppercase', letterSpacing: '0.03em', marginBottom: 6 }}>
             Avaliação — {av.aluno_nome}
           </h1>
           <p style={{ fontSize: 14, color: '#8A7F76' }}>{av.aluno_email}</p>
         </div>
-        <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
+        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
           {concluida && (
             <button
               onClick={reatribuir}
@@ -93,7 +93,7 @@ export default function AvaliacaoView() {
       <div style={{ background: '#FFFFFF', border: '1px solid #E0D6CA', borderRadius: 20, padding: 28, boxShadow: '0 2px 16px rgba(0,0,0,0.04)' }}>
         <p style={{ fontSize: 11, fontWeight: 700, color: '#8A7F76', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 16 }}>Resultado</p>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 0 }}>
+        <div className="av-resultado-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 0 }}>
           <div>
             <Linha label="Status"
               valor={
@@ -162,6 +162,12 @@ export default function AvaliacaoView() {
           </div>
         </div>
       )}
+
+      <style>{`
+        @media (max-width: 600px) {
+          .av-resultado-grid { grid-template-columns: 1fr !important; }
+        }
+      `}</style>
 
     </div>
   )

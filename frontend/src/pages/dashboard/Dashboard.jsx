@@ -100,18 +100,16 @@ export default function Dashboard() {
     <div style={{ maxWidth: 680, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 20 }}>
 
       {/* Saudação */}
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
-        <div>
-          <h1 style={{ fontSize: 26, fontWeight: 900, color: '#1A1A1A', letterSpacing: '0.01em', marginBottom: 4 }}>
-            {saudacao()}, {nome}!
-          </h1>
-          <p style={{ fontSize: 13, color: '#8A7F76' }}>Método Márcio Gonçalves</p>
-        </div>
-        <p style={{ fontSize: 12, color: '#B0A89E', textAlign: 'right', paddingTop: 4 }}>{dataFormatada()}</p>
+      <div>
+        <p style={{ fontSize: 12, color: '#B0A89E', marginBottom: 4 }}>{dataFormatada()}</p>
+        <h1 style={{ fontSize: 24, fontWeight: 900, color: '#1A1A1A', letterSpacing: '0.01em', marginBottom: 4 }}>
+          {saudacao()}, {nome}!
+        </h1>
+        <p style={{ fontSize: 13, color: '#8A7F76' }}>Método Márcio Gonçalves</p>
       </div>
 
       {/* Shape Score */}
-      <div style={{ background: '#FFFFFF', border: '1px solid #E0D6CA', borderRadius: 20, padding: '28px 28px', display: 'flex', alignItems: 'center', gap: 28, boxShadow: '0 2px 12px rgba(0,0,0,0.05)' }}>
+      <div className="dash-score-card" style={{ background: '#FFFFFF', border: '1px solid #E0D6CA', borderRadius: 20, padding: '24px', display: 'flex', alignItems: 'center', gap: 24, boxShadow: '0 2px 12px rgba(0,0,0,0.05)' }}>
         <div style={{ position: 'relative', flexShrink: 0 }}>
           <svg width="120" height="120" viewBox="0 0 128 128">
             <circle cx="64" cy="64" r="54" fill="none" stroke="#E0D6CA" strokeWidth="10" />
@@ -142,7 +140,7 @@ export default function Dashboard() {
           <p style={{ fontSize: 13, color: '#8A7F76', marginBottom: 16 }}>
             {score ? 'Shape Score de hoje' : 'Registre seu dia para ganhar pontos'}
           </p>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 16 }}>
+          <div className="dash-score-checks" style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 16 }}>
             {CHECKS.map(({ key, icon: Icon, label }) => {
               const feito = valorCheck(key)
               return (
@@ -155,6 +153,7 @@ export default function Dashboard() {
           </div>
           <button
             onClick={() => navigate('/shape-score')}
+            className="dash-score-btn"
             style={{ height: 34, paddingInline: 16, borderRadius: 10, border: 'none', background: score ? '#F7F3EE' : 'linear-gradient(135deg, #A81515 0%, #CC1A1A 100%)', color: score ? '#6B6560' : '#FFFFFF', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
           >
             {score ? 'Ver / Atualizar check-in' : 'Fazer check-in agora'}
@@ -268,7 +267,14 @@ export default function Dashboard() {
         )
       })()}
 
-      <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
+      <style>{`
+        @keyframes spin { to { transform: rotate(360deg) } }
+        @media (max-width: 480px) {
+          .dash-score-card { flex-direction: column !important; align-items: center !important; text-align: center; }
+          .dash-score-checks { justify-content: center !important; }
+          .dash-score-btn { width: 100% !important; }
+        }
+      `}</style>
     </div>
   )
 }

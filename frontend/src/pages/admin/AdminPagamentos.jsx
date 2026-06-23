@@ -135,16 +135,16 @@ export default function AdminPagamentos() {
   const meses = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez']
 
   return (
-    <div style={{ padding: '24px 28px', display: 'flex', flexDirection: 'column', gap: 24 }}>
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
         <div>
-          <h1 style={{ fontSize: 26, fontWeight: 900, color: '#1A1A1A', textTransform: 'uppercase', letterSpacing: '0.03em', marginBottom: 6 }}>Pagamentos</h1>
+          <h1 style={{ fontSize: 22, fontWeight: 900, color: '#1A1A1A', textTransform: 'uppercase', letterSpacing: '0.03em', marginBottom: 6 }}>Pagamentos</h1>
           <p style={{ fontSize: 14, color: '#8A7F76' }}>{res?.qtd_pendente ?? 0} pendentes · {res?.qtd_vencido ?? 0} vencidos</p>
         </div>
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
           <button
             onClick={() => navigate('/admin')}
-            style={{ height: 36, paddingInline: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, border: '1px solid #E0D6CA', borderRadius: 8, background: '#FFFFFF', cursor: 'pointer', flexShrink: 0, fontSize: 12, fontWeight: 700, color: '#6B6560' }}
+            style={{ height: 36, paddingInline: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, border: '1px solid #E0D6CA', borderRadius: 8, background: '#FFFFFF', cursor: 'pointer', fontSize: 12, fontWeight: 700, color: '#6B6560' }}
             onMouseEnter={e => { e.currentTarget.style.borderColor = '#C4B9A8'; e.currentTarget.style.color = '#1A1A1A' }}
             onMouseLeave={e => { e.currentTarget.style.borderColor = '#E0D6CA'; e.currentTarget.style.color = '#6B6560' }}
           >
@@ -156,7 +156,7 @@ export default function AdminPagamentos() {
       </div>
 
       {/* Resumo */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
+      <div className="pag-resumo-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
         <CardResumo icon={DollarSign} label="Recebido este mês" valor={res?.recebido_mes}  cor="#15803d" />
         <CardResumo icon={Clock}      label="Pendentes"          valor={res?.pendente}      cor="#1d4ed8" sub={res?.qtd_pendente} />
         <CardResumo icon={AlertTriangle} label="Vencidos"        valor={res?.vencido}       cor="#CC1A1A" sub={res?.qtd_vencido} />
@@ -204,24 +204,26 @@ export default function AdminPagamentos() {
               </div>
             )}
             {pends?.map((p, i) => (
-              <div key={p.id_pagamento} style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '14px 20px', borderTop: i > 0 ? '1px solid #F0EBE4' : 'none' }}
+              <div key={p.id_pagamento} className="pag-row" style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 20px', borderTop: i > 0 ? '1px solid #F0EBE4' : 'none', flexWrap: 'wrap' }}
                 onMouseEnter={e => e.currentTarget.style.background = '#FDFAF7'}
                 onMouseLeave={e => e.currentTarget.style.background = ''}>
-                <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ flex: 1, minWidth: 180 }}>
                   <p style={{ fontSize: 14, fontWeight: 700, color: '#1A1A1A', marginBottom: 2 }}>{p.nome_aluno}</p>
                   <p style={{ fontSize: 12, color: '#8A7F76' }}>{p.nome_plano} · Venc. {fmtData(p.data_vencimento)}</p>
                 </div>
-                <BadgeStatus status="pendente" diasParaVencer={p.dias_para_vencer} />
-                <p style={{ fontSize: 15, fontWeight: 800, color: '#1A1A1A', flexShrink: 0 }}>{fmtValor(p.valor)}</p>
-                <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
-                  <button onClick={() => setModal(p)} style={{ height: 32, paddingInline: 12, borderRadius: 8, border: 'none', background: '#CC1A1A', color: '#FFF', fontSize: 12, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5 }}>
-                    <Check size={13} /> Pago
-                  </button>
-                  <button onClick={() => handleCancelar(p.id_pagamento)} style={{ width: 32, height: 32, borderRadius: 8, border: '1px solid #E0D6CA', background: '#FFF', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                    onMouseEnter={e => { e.currentTarget.style.borderColor = '#FCA5A5'; e.currentTarget.style.background = '#FEF2F2' }}
-                    onMouseLeave={e => { e.currentTarget.style.borderColor = '#E0D6CA'; e.currentTarget.style.background = '#FFF' }}>
-                    <X size={13} color="#CC1A1A" />
-                  </button>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+                  <BadgeStatus status="pendente" diasParaVencer={p.dias_para_vencer} />
+                  <p style={{ fontSize: 15, fontWeight: 800, color: '#1A1A1A' }}>{fmtValor(p.valor)}</p>
+                  <div style={{ display: 'flex', gap: 6 }}>
+                    <button onClick={() => setModal(p)} style={{ height: 32, paddingInline: 12, borderRadius: 8, border: 'none', background: '#CC1A1A', color: '#FFF', fontSize: 12, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5 }}>
+                      <Check size={13} /> Pago
+                    </button>
+                    <button onClick={() => handleCancelar(p.id_pagamento)} style={{ width: 32, height: 32, borderRadius: 8, border: '1px solid #E0D6CA', background: '#FFF', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                      onMouseEnter={e => { e.currentTarget.style.borderColor = '#FCA5A5'; e.currentTarget.style.background = '#FEF2F2' }}
+                      onMouseLeave={e => { e.currentTarget.style.borderColor = '#E0D6CA'; e.currentTarget.style.background = '#FFF' }}>
+                      <X size={13} color="#CC1A1A" />
+                    </button>
+                  </div>
                 </div>
               </div>
             ))}
@@ -237,10 +239,10 @@ export default function AdminPagamentos() {
               </div>
             )}
             {hist?.map((p, i) => (
-              <div key={p.id_pagamento} style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '14px 20px', borderTop: i > 0 ? '1px solid #F0EBE4' : 'none' }}
+              <div key={p.id_pagamento} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 20px', borderTop: i > 0 ? '1px solid #F0EBE4' : 'none', flexWrap: 'wrap' }}
                 onMouseEnter={e => e.currentTarget.style.background = '#FDFAF7'}
                 onMouseLeave={e => e.currentTarget.style.background = ''}>
-                <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ flex: 1, minWidth: 180 }}>
                   <p style={{ fontSize: 14, fontWeight: 700, color: '#1A1A1A', marginBottom: 2 }}>{p.nome_aluno}</p>
                   <p style={{ fontSize: 12, color: '#8A7F76' }}>
                     {p.nome_plano}
@@ -248,8 +250,10 @@ export default function AdminPagamentos() {
                     {p.data_pagamento && ` · Pago em ${fmtData(p.data_pagamento)}`}
                   </p>
                 </div>
-                <BadgeStatus status={p.status} diasParaVencer={0} />
-                <p style={{ fontSize: 15, fontWeight: 800, color: '#1A1A1A', flexShrink: 0 }}>{fmtValor(p.valor)}</p>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <BadgeStatus status={p.status} diasParaVencer={0} />
+                  <p style={{ fontSize: 15, fontWeight: 800, color: '#1A1A1A' }}>{fmtValor(p.valor)}</p>
+                </div>
               </div>
             ))}
           </div>
@@ -257,6 +261,15 @@ export default function AdminPagamentos() {
       </div>
 
       {modal && <ModalPagar pagamento={modal} onClose={() => setModal(null)} onSalvo={recarregar} />}
+
+      <style>{`
+        @media (max-width: 640px) {
+          .pag-resumo-grid { grid-template-columns: 1fr !important; }
+        }
+        @media (max-width: 480px) {
+          .pag-resumo-grid { grid-template-columns: 1fr 1fr !important; gap: 10px !important; }
+        }
+      `}</style>
     </div>
   )
 }

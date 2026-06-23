@@ -98,12 +98,12 @@ export default function QuestionarioList() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
 
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16 }}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
         <div>
-          <h1 style={{ fontSize: 26, fontWeight: 900, color: '#1A1A1A', textTransform: 'uppercase', letterSpacing: '0.03em', marginBottom: 6 }}>Questionário</h1>
+          <h1 style={{ fontSize: 22, fontWeight: 900, color: '#1A1A1A', textTransform: 'uppercase', letterSpacing: '0.03em', marginBottom: 6 }}>Questionário</h1>
           <p style={{ fontSize: 14, color: '#8A7F76' }}>{perguntas.filter(p => p.ativo).length} perguntas ativas</p>
         </div>
-        <div style={{ display: 'flex', gap: 8 }}>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
           <button
             onClick={() => navigate('/admin')}
             style={{ height: 36, paddingInline: 14, display: 'flex', alignItems: 'center', gap: 6, border: '1px solid #E0D6CA', borderRadius: 8, background: '#FFFFFF', cursor: 'pointer', fontSize: 12, fontWeight: 700, color: '#6B6560' }}
@@ -124,6 +124,25 @@ export default function QuestionarioList() {
           emptyIcon={<ClipboardList size={32} color="#C4B9A8" />}
           emptyText="Nenhuma pergunta cadastrada"
           pageSize={30}
+          renderCard={p => (
+            <div key={p.id} style={{ padding: '14px 20px', borderTop: '1px solid #F0EBE4' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                    <span style={{ width: 24, height: 24, borderRadius: 7, background: '#F0EBE4', fontSize: 11, fontWeight: 800, color: '#8A7F76', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{p.ordem}</span>
+                    <span style={{ display: 'inline-flex', padding: '2px 8px', borderRadius: 6, fontSize: 10, fontWeight: 700, background: `${TIPO_COLOR[p.tipo]}18`, color: TIPO_COLOR[p.tipo] }}>{TIPO_LABEL[p.tipo] || p.tipo}</span>
+                    <span style={{ display: 'inline-flex', padding: '2px 8px', borderRadius: 6, fontSize: 10, fontWeight: 700, background: p.ativo ? 'rgba(34,197,94,0.1)' : '#F0EBE4', color: p.ativo ? '#15803d' : '#8A7F76' }}>{p.ativo ? 'ATIVO' : 'INATIVO'}</span>
+                  </div>
+                  <p style={{ fontSize: 14, fontWeight: 600, color: '#1A1A1A', marginBottom: 2 }}>{p.pergunta}</p>
+                  <p style={{ fontSize: 11, color: '#A09890' }}>código: {p.codigo}</p>
+                  {p.tipo === 'opcao' && p.opcoes?.length > 0 && (
+                    <p style={{ fontSize: 11, color: '#6B6560', marginTop: 4 }}>{p.opcoes.map(o => o.valor).join(' · ')}</p>
+                  )}
+                </div>
+                <BtnEditar iconOnly onClick={() => navigate(`/admin/questionario/${p.id}`)} />
+              </div>
+            </div>
+          )}
         />
       </div>
 

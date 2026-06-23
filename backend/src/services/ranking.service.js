@@ -4,9 +4,9 @@ async function mensal(id_usuario_logado) {
   const pool = await getPool()
   const r = await pool.request().input('uid', sql.Int, id_usuario_logado).query(`
     SELECT
-      ROW_NUMBER() OVER (ORDER BY COUNT(ts.id_sessao) DESC) AS posicao,
+      ROW_NUMBER() OVER (ORDER BY COUNT(ts.id_treino_sessao) DESC) AS posicao,
       u.id_usuario, u.nome,
-      COUNT(ts.id_sessao) AS treinos_mes,
+      COUNT(ts.id_treino_sessao) AS treinos_mes,
       CASE WHEN u.id_usuario = @uid THEN 1 ELSE 0 END AS sou_eu
     FROM dbo.usuario u
     INNER JOIN dbo.usuario_perfil up ON up.id_usuario = u.id_usuario AND up.ativo = 1

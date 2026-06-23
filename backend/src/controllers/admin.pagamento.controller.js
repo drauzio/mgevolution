@@ -12,6 +12,16 @@ async function historico(req, res, next) {
   try { res.json(await svc.historico(req.query)) } catch (e) { next(e) }
 }
 
+async function criar(req, res, next) {
+  try {
+    const { id_assinatura, id_usuario, valor, data_vencimento } = req.body
+    if (!id_assinatura || !id_usuario || !valor || !data_vencimento)
+      return res.status(400).json({ erro: 'Assinatura, aluno, valor e data de vencimento são obrigatórios' })
+    const novo = await svc.criar({ ...req.body, registrado_por: req.usuario.id })
+    res.json(novo)
+  } catch (e) { next(e) }
+}
+
 async function pagar(req, res, next) {
   try {
     await svc.registrarPagamento(Number(req.params.id), { ...req.body, registrado_por: req.usuario.id })
@@ -27,4 +37,4 @@ async function gerarCobranca(req, res, next) {
   try { await svc.gerarCobranca(Number(req.params.id)); res.json({ ok: true }) } catch (e) { next(e) }
 }
 
-module.exports = { resumo, pendentes, historico, pagar, cancelar, gerarCobranca }
+module.exports = { resumo, pendentes, historico, criar, pagar, cancelar, gerarCobranca }

@@ -348,15 +348,15 @@ export default function AdminMenuConfig() {
       )}
 
       {/* Cabeçalho */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
         <div>
           <h1 style={{ fontSize: 20, fontWeight: 800, color: '#1A1A1A', marginBottom: 4 }}>Configuração de Menu</h1>
           <p style={{ fontSize: 13, color: '#8A7F76' }}>Arraste para reordenar · Marque quais perfis têm acesso.</p>
         </div>
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
           <button
             onClick={() => navigate('/admin')}
-            style={{ height: 36, paddingInline: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, border: '1px solid #E0D6CA', borderRadius: 8, background: '#FFFFFF', cursor: 'pointer', flexShrink: 0, fontSize: 12, fontWeight: 700, color: '#6B6560' }}
+            style={{ height: 36, paddingInline: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, border: '1px solid #E0D6CA', borderRadius: 8, background: '#FFFFFF', cursor: 'pointer', fontSize: 12, fontWeight: 700, color: '#6B6560' }}
             onMouseEnter={e => { e.currentTarget.style.borderColor = '#C4B9A8'; e.currentTarget.style.color = '#1A1A1A' }}
             onMouseLeave={e => { e.currentTarget.style.borderColor = '#E0D6CA'; e.currentTarget.style.color = '#6B6560' }}
           >
@@ -365,7 +365,7 @@ export default function AdminMenuConfig() {
           </button>
           <button
             onClick={() => setModalAberto(true)}
-            style={{ display: 'flex', alignItems: 'center', gap: 6, height: 36, paddingInline: 14, borderRadius: 8, border: 'none', background: '#CC1A1A', color: '#FFFFFF', fontSize: 13, fontWeight: 700, cursor: 'pointer', flexShrink: 0 }}
+            style={{ display: 'flex', alignItems: 'center', gap: 6, height: 36, paddingInline: 14, borderRadius: 8, border: 'none', background: '#CC1A1A', color: '#FFFFFF', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}
           >
             <Plus size={14} /> Novo item
           </button>
@@ -386,47 +386,50 @@ export default function AdminMenuConfig() {
 
       {/* Grupos com drag-and-drop por grupo */}
       {grupos_itens.map(grupo => (
-        <div key={grupo.id_menu} style={{ background: '#FFFFFF', border: '1px solid #E0D6CA', borderRadius: 16, boxShadow: '0 2px 12px rgba(0,0,0,0.04)' }}>
+        <div key={grupo.id_menu} style={{ background: '#FFFFFF', border: '1px solid #E0D6CA', borderRadius: 16, boxShadow: '0 2px 12px rgba(0,0,0,0.04)', overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+          <div style={{ minWidth: 480 }}>
 
-          {/* Header do grupo */}
-          <div style={{ display: 'flex', alignItems: 'center', padding: '10px 20px', background: '#F7F3EE', borderBottom: '1px solid #E0D6CA', gap: 10, borderRadius: '16px 16px 0 0' }}>
-            <div style={{ width: 16, flexShrink: 0 }} />
-            <div style={{ width: 32, flexShrink: 0 }} />
-            <p style={{ flex: 1, fontSize: 11, fontWeight: 800, color: '#8A7F76', textTransform: 'uppercase', letterSpacing: '0.15em' }}>
-              {grupo.grupo}
-            </p>
-            <div style={{ display: 'flex', alignItems: 'center', flexShrink: 0 }}>
-              {perfis.map(p => (
-                <div key={p.id_perfil} style={{ width: COL_PERFIL_W, textAlign: 'center' }}>
-                  <span style={{ fontSize: 9, fontWeight: 800, color: COR_PERFIL[p.nome]?.text || '#8A7F76', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                    {p.nome.slice(0, 5)}
-                  </span>
-                </div>
-              ))}
-              <div style={{ width: COL_ACOES_W }} />
+            {/* Header do grupo */}
+            <div style={{ display: 'flex', alignItems: 'center', padding: '10px 20px', background: '#F7F3EE', borderBottom: '1px solid #E0D6CA', gap: 10, borderRadius: '16px 16px 0 0' }}>
+              <div style={{ width: 16, flexShrink: 0 }} />
+              <div style={{ width: 32, flexShrink: 0 }} />
+              <p style={{ flex: 1, fontSize: 11, fontWeight: 800, color: '#8A7F76', textTransform: 'uppercase', letterSpacing: '0.15em' }}>
+                {grupo.grupo}
+              </p>
+              <div style={{ display: 'flex', alignItems: 'center', flexShrink: 0 }}>
+                {perfis.map(p => (
+                  <div key={p.id_perfil} style={{ width: COL_PERFIL_W, textAlign: 'center' }}>
+                    <span style={{ fontSize: 9, fontWeight: 800, color: COR_PERFIL[p.nome]?.text || '#8A7F76', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                      {p.nome.slice(0, 5)}
+                    </span>
+                  </div>
+                ))}
+                <div style={{ width: COL_ACOES_W }} />
+              </div>
             </div>
-          </div>
 
-          <DndContext
-            sensors={sensors}
-            collisionDetection={closestCenter}
-            onDragEnd={e => handleDragEnd(e, grupo.itens)}
-          >
-            <SortableContext items={grupo.itens.map(i => i.id_menu_item)} strategy={verticalListSortingStrategy}>
-              {grupo.itens.map(item => (
-                <SortableItemRow
-                  key={item.id_menu_item}
-                  item={item}
-                  perfis={perfis}
-                  grupos={grupos}
-                  onToggle={handleToggle}
-                  onDeletar={handleDeletar}
-                  onEditar={() => { mutate(); globalMutate(['menu', undefined]) }}
-                  salvandoSet={salvando}
-                />
-              ))}
-            </SortableContext>
-          </DndContext>
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragEnd={e => handleDragEnd(e, grupo.itens)}
+            >
+              <SortableContext items={grupo.itens.map(i => i.id_menu_item)} strategy={verticalListSortingStrategy}>
+                {grupo.itens.map(item => (
+                  <SortableItemRow
+                    key={item.id_menu_item}
+                    item={item}
+                    perfis={perfis}
+                    grupos={grupos}
+                    onToggle={handleToggle}
+                    onDeletar={handleDeletar}
+                    onEditar={() => { mutate(); globalMutate(['menu', undefined]) }}
+                    salvandoSet={salvando}
+                  />
+                ))}
+              </SortableContext>
+            </DndContext>
+
+          </div>
         </div>
       ))}
 

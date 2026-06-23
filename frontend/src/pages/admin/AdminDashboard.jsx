@@ -205,7 +205,7 @@ export default function AdminDashboard() {
       </div>
 
       {/* KPIs — 4 em cima e 4 embaixo */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14 }}>
+      <div className="adm-kpi-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14 }}>
         {isLoading
           ? Array.from({ length: 8 }).map((_, i) => (
               <div key={i} style={{ background: '#FFFFFF', border: '1px solid #E0D6CA', borderRadius: 16, padding: 20, display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -222,7 +222,7 @@ export default function AdminDashboard() {
       </div>
 
       {/* Alunos recentes + Itens que precisam de atenção */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, alignItems: 'start' }}>
+      <div className="adm-bottom-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, alignItems: 'start' }}>
 
         {/* Alunos recentes */}
         <div style={{ background: '#FFFFFF', border: '1px solid #E0D6CA', borderRadius: 20, overflow: 'hidden', boxShadow: '0 2px 16px rgba(0,0,0,0.05)' }}>
@@ -312,6 +312,18 @@ export default function AdminDashboard() {
         </div>
 
       </div>
+
+      <style>{`
+        @media (max-width: 900px) {
+          .adm-kpi-grid { grid-template-columns: repeat(2, 1fr) !important; }
+        }
+        @media (max-width: 480px) {
+          .adm-kpi-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 10px !important; }
+        }
+        @media (max-width: 700px) {
+          .adm-bottom-grid { grid-template-columns: 1fr !important; }
+        }
+      `}</style>
 
     </div>
   )

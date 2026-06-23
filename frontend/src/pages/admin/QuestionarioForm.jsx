@@ -91,9 +91,9 @@ export default function QuestionarioForm() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 32 }}>
 
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16 }}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
         <div>
-          <h1 style={{ fontSize: 26, fontWeight: 900, color: '#1A1A1A', textTransform: 'uppercase', letterSpacing: '0.03em', marginBottom: 6 }}>
+          <h1 style={{ fontSize: 22, fontWeight: 900, color: '#1A1A1A', textTransform: 'uppercase', letterSpacing: '0.03em', marginBottom: 6 }}>
             {isEdicao ? 'Editar Pergunta' : 'Nova Pergunta'}
           </h1>
           <p style={{ fontSize: 14, color: '#8A7F76' }}>Configure o texto, tipo e opções de resposta.</p>
@@ -108,7 +108,7 @@ export default function QuestionarioForm() {
 
         <p style={{ fontSize: 12, fontWeight: 700, color: '#8A7F76', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Dados da Pergunta</p>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+        <div className="quest-grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
           <Campo label="Código (identificador único)">
             <input
               style={{ ...inputStyle, background: isEdicao ? '#F7F3EE' : '#FFFFFF', color: isEdicao ? '#8A7F76' : '#1A1A1A' }}
@@ -144,7 +144,7 @@ export default function QuestionarioForm() {
           <input style={inputStyle} value={form.pergunta} onChange={setF('pergunta')} placeholder="Ex: Qual é seu principal objetivo?" />
         </Campo>
 
-        <div style={{ display: 'flex', gap: 24 }}>
+        <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
           <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: 13, color: '#6B6560' }}>
             <input type="checkbox" checked={form.obrigatorio} onChange={setFBool('obrigatorio')} style={{ width: 16, height: 16, accentColor: '#CC1A1A', cursor: 'pointer' }} />
             Resposta obrigatória
@@ -226,6 +226,12 @@ export default function QuestionarioForm() {
           {erro}
         </div>
       )}
+
+      <style>{`
+        @media (max-width: 600px) {
+          .quest-grid-2 { grid-template-columns: 1fr !important; }
+        }
+      `}</style>
     </div>
   )
 }

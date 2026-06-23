@@ -157,36 +157,36 @@ export default function AvaliacaoList() {
         </button>
       </div>
 
-      <div style={{ display: 'flex', gap: 8 }}>
-        <div style={{ flex: 1, display: 'flex', alignItems: 'center', background: '#FFFFFF', border: '1px solid #E0D6CA', borderRadius: 12, overflow: 'hidden', height: 40 }}>
+      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+        <div style={{ flex: 1, minWidth: 220, display: 'flex', alignItems: 'center', background: '#FFFFFF', border: '1px solid #E0D6CA', borderRadius: 12, overflow: 'hidden', height: 40 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '0 14px', flex: 1 }}>
             <Search size={15} color="#8A7F76" />
             <input
               value={busca}
               onChange={e => setBusca(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && consultar()}
-              placeholder="Buscar por aluno ou e-mail..."
-              style={{ flex: 1, border: 'none', outline: 'none', fontSize: 14, color: '#1A1A1A', background: 'transparent' }}
+              placeholder="Buscar aluno..."
+              style={{ flex: 1, border: 'none', outline: 'none', fontSize: 14, color: '#1A1A1A', background: 'transparent', minWidth: 0 }}
             />
           </div>
-          <select
-            value={status}
-            onChange={e => { setStatus(e.target.value) }}
-            style={{ height: '100%', padding: '0 10px', border: 'none', borderLeft: '1px solid #E0D6CA', fontSize: 13, color: '#6B6560', background: '#F7F3EE', cursor: 'pointer', outline: 'none', flexShrink: 0 }}
-          >
-            <option value="">Todos os status</option>
-            <option value="concluida">Concluídas</option>
-            <option value="em_andamento">Em andamento</option>
-          </select>
-          <button
-            onClick={consultar}
-            style={{ height: '100%', paddingInline: 16, border: 'none', borderLeft: '1px solid #E0D6CA', cursor: 'pointer', fontSize: 13, fontWeight: 700, color: '#6B6560', background: '#F7F3EE', flexShrink: 0 }}
-            onMouseEnter={e => { e.currentTarget.style.background = '#EEE8E0'; e.currentTarget.style.color = '#1A1A1A' }}
-            onMouseLeave={e => { e.currentTarget.style.background = '#F7F3EE'; e.currentTarget.style.color = '#6B6560' }}
-          >
-            Consultar
-          </button>
         </div>
+        <select
+          value={status}
+          onChange={e => { setStatus(e.target.value) }}
+          style={{ height: 40, padding: '0 10px', border: '1px solid #E0D6CA', borderRadius: 12, fontSize: 13, color: '#6B6560', background: '#F7F3EE', cursor: 'pointer', outline: 'none' }}
+        >
+          <option value="">Todos os status</option>
+          <option value="concluida">Concluídas</option>
+          <option value="em_andamento">Em andamento</option>
+        </select>
+        <button
+          onClick={consultar}
+          style={{ height: 40, paddingInline: 16, border: '1px solid #E0D6CA', borderRadius: 12, cursor: 'pointer', fontSize: 13, fontWeight: 700, color: '#6B6560', background: '#F7F3EE' }}
+          onMouseEnter={e => { e.currentTarget.style.background = '#EEE8E0'; e.currentTarget.style.color = '#1A1A1A' }}
+          onMouseLeave={e => { e.currentTarget.style.background = '#F7F3EE'; e.currentTarget.style.color = '#6B6560' }}
+        >
+          Consultar
+        </button>
       </div>
 
       <div style={{ background: '#FFFFFF', border: '1px solid #E0D6CA', borderRadius: 20, overflow: 'hidden', boxShadow: '0 2px 16px rgba(0,0,0,0.05)' }}>

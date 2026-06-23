@@ -136,16 +136,16 @@ export default function ExercicioForm() {
     <div style={{ display: 'flex', flexDirection: 'column', gap: 32 }}>
 
       {/* Cabeçalho */}
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16 }}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
         <div>
-          <h1 style={{ fontSize: 26, fontWeight: 900, color: '#1A1A1A', textTransform: 'uppercase', letterSpacing: '0.03em', marginBottom: 6 }}>
+          <h1 style={{ fontSize: 22, fontWeight: 900, color: '#1A1A1A', textTransform: 'uppercase', letterSpacing: '0.03em', marginBottom: 6 }}>
             {isEdicao ? 'Editar Exercício' : 'Novo Exercício'}
           </h1>
           <p style={{ fontSize: 14, color: '#8A7F76' }}>
             {isEdicao ? 'Atualize os dados do exercício.' : 'Preencha os dados para adicionar ao catálogo.'}
           </p>
         </div>
-        <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
+        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
           {isEdicao && <BtnExcluir onClick={toggle} loading={toggleando} label={ativo ? 'Inativar' : 'Reativar'} />}
           <BtnCancelar onClick={() => navigate('/admin/exercicios')} />
           <BtnSalvar onClick={salvar} loading={salvando} />
@@ -159,7 +159,7 @@ export default function ExercicioForm() {
           <input style={inputStyle} placeholder="Ex: Supino Reto com Barra" value={form.nome} onChange={set('nome')} />
         </Campo>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+        <div className="ex-grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
           <Campo label="Grupo muscular">
             <select value={form.grupo_muscular} onChange={set('grupo_muscular')} style={{ ...inputStyle, cursor: 'pointer' }}>
               <option value="">Selecione</option>
@@ -283,6 +283,12 @@ export default function ExercicioForm() {
           </div>
         )}
       </div>
+
+      <style>{`
+        @media (max-width: 600px) {
+          .ex-grid-2 { grid-template-columns: 1fr !important; }
+        }
+      `}</style>
     </div>
   )
 }

@@ -135,14 +135,14 @@ export default function IaDiretrizForm() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 28, maxWidth: 760 }}>
 
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16 }}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
         <div>
-          <h1 style={{ fontSize: 26, fontWeight: 900, color: '#1A1A1A', textTransform: 'uppercase', letterSpacing: '0.03em', marginBottom: 6 }}>
+          <h1 style={{ fontSize: 22, fontWeight: 900, color: '#1A1A1A', textTransform: 'uppercase', letterSpacing: '0.03em', marginBottom: 6 }}>
             {isEdicao ? 'Editar Diretriz' : 'Nova Diretriz de IA'}
           </h1>
           <p style={{ fontSize: 14, color: '#8A7F76' }}>Define como a IA gera dietas para este perfil de aluno.</p>
         </div>
-        <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
+        <div style={{ display: 'flex', gap: 6 }}>
           <BtnCancelar onClick={() => navigate(voltarBase)} />
           <BtnSalvar onClick={salvar} loading={salvando} />
         </div>
@@ -152,7 +152,7 @@ export default function IaDiretrizForm() {
       <div style={{ background: '#FFFFFF', border: '1px solid #E0D6CA', borderRadius: 20, padding: 28, display: 'flex', flexDirection: 'column', gap: 18, boxShadow: '0 2px 16px rgba(0,0,0,0.04)' }}>
         <p style={{ fontSize: 12, fontWeight: 700, color: '#8A7F76', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Identificação</p>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+        <div className="ia-grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
           <Campo label="Tipo">
             <select value={form.tipo} onChange={setF('tipo')} style={{ ...inputStyle, cursor: 'pointer' }}>
               <option value="dieta">Dieta</option>
@@ -184,14 +184,14 @@ export default function IaDiretrizForm() {
 
       {/* Critérios de perfil */}
       <div style={{ background: '#FFFFFF', border: '1px solid #E0D6CA', borderRadius: 20, padding: 28, display: 'flex', flexDirection: 'column', gap: 16, boxShadow: '0 2px 16px rgba(0,0,0,0.04)' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
           <div>
             <p style={{ fontSize: 12, fontWeight: 700, color: '#8A7F76', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 2 }}>Critérios de perfil</p>
             <p style={{ fontSize: 12, color: '#C4B9A8' }}>Sem critérios = diretriz genérica aplicada a qualquer aluno</p>
           </div>
           <button
             onClick={adicionarCriterio}
-            style={{ display: 'flex', alignItems: 'center', gap: 6, height: 34, paddingInline: 14, borderRadius: 8, border: '1px dashed #CC1A1A', background: 'rgba(204,26,26,0.04)', color: '#CC1A1A', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
+            style={{ display: 'flex', alignItems: 'center', gap: 6, height: 34, paddingInline: 14, borderRadius: 8, border: '1px dashed #CC1A1A', background: 'rgba(204,26,26,0.04)', color: '#CC1A1A', fontSize: 12, fontWeight: 700, cursor: 'pointer', flexShrink: 0 }}
           >
             <Plus size={13} /> Adicionar critério
           </button>
@@ -204,7 +204,7 @@ export default function IaDiretrizForm() {
         )}
 
         {criterios.map((c, i) => (
-          <div key={i} style={{ display: 'grid', gridTemplateColumns: '160px 1fr 32px', gap: 10, alignItems: 'center' }}>
+          <div key={i} className="ia-criterio-row" style={{ display: 'grid', gridTemplateColumns: '160px 1fr 32px', gap: 10, alignItems: 'center' }}>
             <select
               value={c.criterio}
               onChange={e => setCriterioField(i, 'criterio', e.target.value)}
@@ -261,7 +261,13 @@ export default function IaDiretrizForm() {
         </div>
       )}
 
-      <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
+      <style>{`
+        @keyframes spin { to { transform: rotate(360deg) } }
+        @media (max-width: 600px) {
+          .ia-grid-2 { grid-template-columns: 1fr !important; }
+          .ia-criterio-row { grid-template-columns: 1fr 1fr 32px !important; }
+        }
+      `}</style>
     </div>
   )
 }
