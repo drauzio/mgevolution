@@ -64,8 +64,8 @@ function GrupoMenu({ grupo, onClose, primeiro }) {
       {!primeiro && <div style={{ height: 1, background: '#F0EBE4', margin: '6px 4px 10px' }} />}
 
       <div style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '0 8px', marginBottom: 4 }}>
-        <GrupoIcon size={11} strokeWidth={1.8} style={{ color: '#B0A89E', flexShrink: 0 }} />
-        <span style={{ fontSize: 10, fontWeight: 800, color: '#B0A89E', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+        <GrupoIcon size={13} strokeWidth={1.8} color="#CC1A1A" style={{ flexShrink: 0 }} />
+        <span style={{ fontSize: 10, fontWeight: 800, color: '#1A1A1A', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
           {grupo.grupo}
         </span>
       </div>

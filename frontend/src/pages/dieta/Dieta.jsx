@@ -296,7 +296,7 @@ export default function Dieta() {
   if (!plano && planoAndamento) {
     const emRevisao = planoAndamento.status_plano === 'revisao'
     return (
-      <div style={{ maxWidth: 560, display: 'flex', flexDirection: 'column', gap: 24 }}>
+      <div style={{ maxWidth: 560, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 24 }}>
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
           <div>
             <h1 style={{ fontSize: 26, fontWeight: 900, color: '#1A1A1A', textTransform: 'uppercase', letterSpacing: '0.03em', marginBottom: 8 }}>Dieta</h1>
@@ -340,7 +340,7 @@ export default function Dieta() {
     const mostrarForm = !solicitacao || editando
 
     return (
-      <div style={{ maxWidth: 560, display: 'flex', flexDirection: 'column', gap: 24 }}>
+      <div style={{ maxWidth: 560, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 24 }}>
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
           <div>
             <h1 style={{ fontSize: 26, fontWeight: 900, color: '#1A1A1A', textTransform: 'uppercase', letterSpacing: '0.03em', marginBottom: 8 }}>Dieta</h1>
@@ -396,7 +396,7 @@ export default function Dieta() {
   const pctProt   = Math.min(100, Math.round((totalProt / metaProt) * 100))
 
   return (
-    <div style={{ maxWidth: 560, display: 'flex', flexDirection: 'column', gap: 24 }}>
+    <div style={{ maxWidth: 560, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 24 }}>
 
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
         <div>

@@ -47,7 +47,7 @@ export default function MinhaAvaliacao() {
   )
 
   if (!avaliacao) return (
-    <div style={{ maxWidth: 480, display: 'flex', flexDirection: 'column', gap: 20 }}>
+    <div style={{ maxWidth: 480, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 20 }}>
       <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
         <button onClick={() => navigate('/dashboard')} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, height: 36, paddingInline: 14, borderRadius: 10, border: '1px solid #E0D6CA', background: '#FFFFFF', cursor: 'pointer', fontSize: 12, fontWeight: 700, color: '#6B6560' }}>
           <Home size={14} />Home
@@ -68,7 +68,7 @@ export default function MinhaAvaliacao() {
   )
 
   return (
-    <div style={{ maxWidth: 540, display: 'flex', flexDirection: 'column', gap: 20 }}>
+    <div style={{ maxWidth: 540, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 20 }}>
 
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>

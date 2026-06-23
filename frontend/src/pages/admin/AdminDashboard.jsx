@@ -3,14 +3,12 @@ import useSWR from 'swr'
 import {
   Users, UserCheck, Dumbbell, Salad, ArrowUpRight,
   CheckCircle, Clock, AlertTriangle, Sparkles, ChefHat,
-  Activity,
+  Activity, TrendingUp, ClipboardList,
 } from 'lucide-react'
 import { useAuthContext } from '../../context/AuthContext'
 import api from '../../services/api'
 
 const fetcher = () => api.get('/admin/dashboard').then(r => r.data)
-
-const MESES_CURTO = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez']
 
 function Skeleton({ h = 20, w = '100%', radius = 8 }) {
   return (
@@ -79,26 +77,6 @@ function Avatar({ nome }) {
   )
 }
 
-function MiniBarChart({ dados }) {
-  if (!dados?.length) return null
-  const max = Math.max(...dados.map(d => d.total), 1)
-  return (
-    <div style={{ display: 'flex', alignItems: 'flex-end', gap: 6, height: 64 }}>
-      {dados.map(({ mes, total }) => {
-        const mesNum = parseInt(mes.split('-')[1]) - 1
-        const pct = (total / max) * 100
-        return (
-          <div key={mes} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, height: '100%', justifyContent: 'flex-end' }}>
-            <span style={{ fontSize: 9, color: '#B0A89E', fontWeight: 700 }}>{total}</span>
-            <div style={{ width: '100%', height: `${Math.max(pct, 8)}%`, background: 'rgba(204,26,26,0.75)', borderRadius: '4px 4px 0 0', transition: 'height 0.4s' }} />
-            <span style={{ fontSize: 9, color: '#C4B9A8' }}>{MESES_CURTO[mesNum]}</span>
-          </div>
-        )
-      })}
-    </div>
-  )
-}
-
 export default function AdminDashboard() {
   const { token, usuario } = useAuthContext()
   const navigate = useNavigate()
@@ -112,6 +90,8 @@ export default function AdminDashboard() {
   const st = data?.estatisticas
   const recentes = data?.recentes || []
   const porMes = data?.cadastrosPorMes || []
+
+  const totalNovos6m = porMes.reduce((s, d) => s + d.total, 0)
 
   const alertas = st ? [
     st.solicitacoes_dieta_pendentes > 0 && {
@@ -144,6 +124,65 @@ export default function AdminDashboard() {
     ? Math.round((st.avaliacoes_concluidas / st.alunos_ativos) * 100)
     : 0
 
+  const kpis = [
+    {
+      icon: Users, label: 'Alunos ativos',
+      valor: st?.alunos_ativos,
+      sub: st?.alunos_novos_30d > 0 ? `+${st.alunos_novos_30d} nos últimos 30 dias` : 'Nenhum novo este mês',
+      subCor: st?.alunos_novos_30d > 0 ? '#16A34A' : '#B0A89E',
+      cor: { icon: '#2563EB', bg: 'rgba(37,99,235,0.08)', border: 'rgba(37,99,235,0.18)' },
+      rota: '/admin/alunos',
+    },
+    {
+      icon: CheckCircle, label: 'Avaliados',
+      valor: `${pctAvaliados}%`,
+      sub: `${st?.avaliacoes_concluidas ?? '—'} de ${st?.alunos_ativos ?? '—'} alunos`,
+      cor: { icon: '#16A34A', bg: 'rgba(22,163,74,0.08)', border: 'rgba(22,163,74,0.18)' },
+      rota: '/admin/avaliacoes',
+    },
+    {
+      icon: UserCheck, label: 'Personais ativos',
+      valor: st?.personais_ativos,
+      cor: { icon: '#CC1A1A', bg: 'rgba(204,26,26,0.08)', border: 'rgba(204,26,26,0.18)' },
+      rota: '/admin/personais',
+    },
+    {
+      icon: ChefHat, label: 'Nutricionistas ativas',
+      valor: st?.nutricionistas_ativas,
+      cor: { icon: '#0891B2', bg: 'rgba(8,145,178,0.08)', border: 'rgba(8,145,178,0.18)' },
+      rota: '/admin/nutricionistas',
+    },
+    {
+      icon: Salad, label: 'Planos liberados',
+      valor: st?.dietas_liberadas,
+      sub: st?.dietas_rascunho > 0 ? `${st.dietas_rascunho} em rascunho` : 'Nenhum em rascunho',
+      subCor: st?.dietas_rascunho > 0 ? '#CC8800' : undefined,
+      cor: { icon: '#7C3AED', bg: 'rgba(124,58,237,0.08)', border: 'rgba(124,58,237,0.18)' },
+      rota: '/admin/dieta',
+    },
+    {
+      icon: Dumbbell, label: 'Treinos ativos',
+      valor: st?.treinos_ativos,
+      sub: `${st?.treinos_template ?? 0} templates`,
+      cor: { icon: '#16A34A', bg: 'rgba(22,163,74,0.08)', border: 'rgba(22,163,74,0.18)' },
+      rota: '/admin/treinos',
+    },
+    {
+      icon: Sparkles, label: 'Templates',
+      valor: st?.treinos_template,
+      sub: 'protocolos base',
+      cor: { icon: '#CC8800', bg: 'rgba(204,136,0,0.08)', border: 'rgba(204,136,0,0.18)' },
+      rota: '/admin/treinos',
+    },
+    {
+      icon: TrendingUp, label: 'Novos alunos — 6 meses',
+      valor: isLoading ? undefined : totalNovos6m,
+      sub: 'últimos 6 meses',
+      cor: { icon: '#0D9488', bg: 'rgba(13,148,136,0.08)', border: 'rgba(13,148,136,0.18)' },
+      rota: '/admin/alunos',
+    },
+  ]
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
 
@@ -165,10 +204,10 @@ export default function AdminDashboard() {
         )}
       </div>
 
-      {/* KPIs principais — linha 1 */}
+      {/* KPIs — 4 em cima e 4 embaixo */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14 }}>
         {isLoading
-          ? Array.from({ length: 4 }).map((_, i) => (
+          ? Array.from({ length: 8 }).map((_, i) => (
               <div key={i} style={{ background: '#FFFFFF', border: '1px solid #E0D6CA', borderRadius: 16, padding: 20, display: 'flex', flexDirection: 'column', gap: 10 }}>
                 <Skeleton h={34} w={34} radius={9} />
                 <Skeleton h={32} w="55%" />
@@ -176,162 +215,102 @@ export default function AdminDashboard() {
                 <Skeleton h={11} w="50%" />
               </div>
             ))
-          : [
-              {
-                icon: Users, label: 'Alunos ativos',
-                valor: st?.alunos_ativos,
-                sub: st?.alunos_novos_30d > 0 ? `+${st.alunos_novos_30d} nos últimos 30 dias` : 'Nenhum novo este mês',
-                subCor: st?.alunos_novos_30d > 0 ? '#16A34A' : '#B0A89E',
-                cor: { icon: '#2563EB', bg: 'rgba(37,99,235,0.08)', border: 'rgba(37,99,235,0.18)' },
-                rota: '/admin/alunos',
-              },
-              {
-                icon: CheckCircle, label: 'Avaliados',
-                valor: `${pctAvaliados}%`,
-                sub: `${st?.avaliacoes_concluidas ?? '—'} de ${st?.alunos_ativos ?? '—'} alunos`,
-                cor: { icon: '#16A34A', bg: 'rgba(22,163,74,0.08)', border: 'rgba(22,163,74,0.18)' },
-                rota: '/admin/avaliacoes',
-              },
-              {
-                icon: UserCheck, label: 'Personais ativos',
-                valor: st?.personais_ativos,
-                sub: st?.nutricionistas_ativas > 0 ? `${st.nutricionistas_ativas} nutricionista${st.nutricionistas_ativas > 1 ? 's' : ''}` : undefined,
-                cor: { icon: '#CC1A1A', bg: 'rgba(204,26,26,0.08)', border: 'rgba(204,26,26,0.18)' },
-                rota: '/admin/personais',
-              },
-              {
-                icon: Salad, label: 'Planos liberados',
-                valor: st?.dietas_liberadas,
-                sub: st?.dietas_rascunho > 0 ? `${st.dietas_rascunho} em rascunho` : 'Nenhum em rascunho',
-                subCor: st?.dietas_rascunho > 0 ? '#CC8800' : undefined,
-                cor: { icon: '#7C3AED', bg: 'rgba(124,58,237,0.08)', border: 'rgba(124,58,237,0.18)' },
-                rota: '/admin/dieta',
-              },
-            ].map(c => (
+          : kpis.map(c => (
               <KpiCard key={c.label} {...c} onClick={() => navigate(c.rota)} />
             ))
         }
       </div>
 
-      {/* Linha central: alertas+recentes + gráfico */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 280px', gap: 20, alignItems: 'start' }}>
+      {/* Alunos recentes + Itens que precisam de atenção */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, alignItems: 'start' }}>
 
-        {/* Coluna esquerda: alertas + alunos recentes */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-
-          {/* Alertas de ação */}
-          <div style={{ background: '#FFFFFF', border: '1px solid #E0D6CA', borderRadius: 20, overflow: 'hidden', boxShadow: '0 2px 16px rgba(0,0,0,0.05)' }}>
-            <div style={{ padding: '16px 22px', borderBottom: '1px solid #F0EBE4', display: 'flex', alignItems: 'center', gap: 8 }}>
-              <AlertTriangle size={14} color="#CC8800" />
-              <p style={{ fontSize: 12, fontWeight: 700, color: '#1A1A1A', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Itens que precisam de atenção</p>
-            </div>
-            <div style={{ padding: '16px 18px', display: 'flex', flexDirection: 'column', gap: 10 }}>
-              {isLoading
-                ? Array.from({ length: 3 }).map((_, i) => (
-                    <div key={i} style={{ display: 'flex', gap: 14, alignItems: 'center', padding: '10px 14px', borderRadius: 12, background: '#F7F3EE' }}>
-                      <Skeleton h={34} w={34} radius={9} />
-                      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 6 }}>
-                        <Skeleton h={13} w="70%" />
-                        <Skeleton h={11} w="85%" />
-                      </div>
-                    </div>
-                  ))
-                : alertas.length === 0
-                  ? (
-                    <div style={{ padding: '28px 0', textAlign: 'center' }}>
-                      <CheckCircle size={28} color="#16A34A" style={{ marginBottom: 10 }} />
-                      <p style={{ fontSize: 14, fontWeight: 700, color: '#1A1A1A', marginBottom: 4 }}>Tudo em ordem!</p>
-                      <p style={{ fontSize: 12, color: '#8A7F76' }}>Nenhum item pendente no momento.</p>
-                    </div>
-                  )
-                  : alertas.map(a => (
-                    <AlertaItem
-                      key={a.rota + a.titulo}
-                      icon={a.icon} cor={a.cor}
-                      titulo={a.titulo} desc={a.desc}
-                      onClick={() => navigate(a.rota)}
-                    />
-                  ))
-              }
-            </div>
+        {/* Alunos recentes */}
+        <div style={{ background: '#FFFFFF', border: '1px solid #E0D6CA', borderRadius: 20, overflow: 'hidden', boxShadow: '0 2px 16px rgba(0,0,0,0.05)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 22px', borderBottom: '1px solid #F0EBE4' }}>
+            <p style={{ fontSize: 12, fontWeight: 700, color: '#1A1A1A', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Alunos recentes</p>
+            <button
+              onClick={() => navigate('/admin/alunos')}
+              style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, color: '#CC1A1A', fontWeight: 600, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+            >
+              Ver todos <ArrowUpRight size={13} />
+            </button>
           </div>
 
-          {/* Alunos recentes */}
-          <div style={{ background: '#FFFFFF', border: '1px solid #E0D6CA', borderRadius: 20, overflow: 'hidden', boxShadow: '0 2px 16px rgba(0,0,0,0.05)' }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 22px', borderBottom: '1px solid #F0EBE4' }}>
-              <p style={{ fontSize: 12, fontWeight: 700, color: '#1A1A1A', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Alunos recentes</p>
-              <button
-                onClick={() => navigate('/admin/alunos')}
-                style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, color: '#CC1A1A', fontWeight: 600, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
-              >
-                Ver todos <ArrowUpRight size={13} />
-              </button>
-            </div>
-
-            {isLoading
-              ? Array.from({ length: 5 }).map((_, i) => (
-                  <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '13px 22px', borderTop: i > 0 ? '1px solid #F0EBE4' : 'none' }}>
-                    <Skeleton h={36} w={36} radius={10} />
-                    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 6 }}><Skeleton h={13} w="50%" /><Skeleton h={11} w="65%" /></div>
-                    <Skeleton h={18} w={60} radius={6} />
+          {isLoading
+            ? Array.from({ length: 5 }).map((_, i) => (
+                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '13px 22px', borderTop: i > 0 ? '1px solid #F0EBE4' : 'none' }}>
+                  <Skeleton h={36} w={36} radius={10} />
+                  <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 6 }}><Skeleton h={13} w="50%" /><Skeleton h={11} w="65%" /></div>
+                  <Skeleton h={18} w={60} radius={6} />
+                </div>
+              ))
+            : recentes.length === 0
+              ? <div style={{ padding: '40px 24px', textAlign: 'center', color: '#B0A89E', fontSize: 14 }}>Nenhum aluno cadastrado ainda.</div>
+              : recentes.map((a, i) => (
+                <div
+                  key={a.id_usuario}
+                  onClick={() => navigate(`/admin/alunos/${a.id_usuario}`)}
+                  style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 22px', borderTop: i > 0 ? '1px solid #F0EBE4' : 'none', cursor: 'pointer', transition: 'background 0.15s' }}
+                  onMouseEnter={e => e.currentTarget.style.background = '#FDFAF7'}
+                  onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                >
+                  <Avatar nome={a.nome} />
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <p style={{ fontSize: 13, fontWeight: 600, color: '#1A1A1A', marginBottom: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{a.nome}</p>
+                    <p style={{ fontSize: 11, color: '#8A7F76', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{a.email}</p>
                   </div>
-                ))
-              : recentes.length === 0
-                ? <div style={{ padding: '40px 24px', textAlign: 'center', color: '#B0A89E', fontSize: 14 }}>Nenhum aluno cadastrado ainda.</div>
-                : recentes.map((a, i) => (
-                  <div
-                    key={a.id_usuario}
-                    onClick={() => navigate(`/admin/alunos/${a.id_usuario}`)}
-                    style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 22px', borderTop: i > 0 ? '1px solid #F0EBE4' : 'none', cursor: 'pointer', transition: 'background 0.15s' }}
-                    onMouseEnter={e => e.currentTarget.style.background = '#FDFAF7'}
-                    onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-                  >
-                    <Avatar nome={a.nome} />
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <p style={{ fontSize: 13, fontWeight: 600, color: '#1A1A1A', marginBottom: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{a.nome}</p>
-                      <p style={{ fontSize: 11, color: '#8A7F76', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{a.email}</p>
-                    </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4, flexShrink: 0 }}>
-                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, fontSize: 10, fontWeight: 600, color: a.avaliacao_concluida ? '#15803d' : '#B0A89E' }}>
-                        {a.avaliacao_concluida ? <CheckCircle size={9} /> : <Clock size={9} />}
-                        {a.avaliacao_concluida ? 'Avaliado' : 'Pendente'}
-                      </span>
-                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, fontSize: 10, fontWeight: 600, color: a.tem_treino ? '#2563EB' : '#C4B9A8' }}>
-                        <Dumbbell size={9} />
-                        {a.tem_treino ? 'Com treino' : 'Sem treino'}
-                      </span>
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4, flexShrink: 0 }}>
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, fontSize: 10, fontWeight: 600, color: a.avaliacao_concluida ? '#15803d' : '#B0A89E' }}>
+                      {a.avaliacao_concluida ? <CheckCircle size={9} /> : <Clock size={9} />}
+                      {a.avaliacao_concluida ? 'Avaliado' : 'Pendente'}
+                    </span>
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, fontSize: 10, fontWeight: 600, color: a.tem_treino ? '#2563EB' : '#C4B9A8' }}>
+                      <Dumbbell size={9} />
+                      {a.tem_treino ? 'Com treino' : 'Sem treino'}
+                    </span>
+                  </div>
+                </div>
+              ))
+          }
+        </div>
+
+        {/* Itens que precisam de atenção */}
+        <div style={{ background: '#FFFFFF', border: '1px solid #E0D6CA', borderRadius: 20, overflow: 'hidden', boxShadow: '0 2px 16px rgba(0,0,0,0.05)' }}>
+          <div style={{ padding: '16px 22px', borderBottom: '1px solid #F0EBE4', display: 'flex', alignItems: 'center', gap: 8 }}>
+            <AlertTriangle size={14} color="#CC8800" />
+            <p style={{ fontSize: 12, fontWeight: 700, color: '#1A1A1A', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Itens que precisam de atenção</p>
+          </div>
+          <div style={{ padding: '16px 18px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {isLoading
+              ? Array.from({ length: 3 }).map((_, i) => (
+                  <div key={i} style={{ display: 'flex', gap: 14, alignItems: 'center', padding: '10px 14px', borderRadius: 12, background: '#F7F3EE' }}>
+                    <Skeleton h={34} w={34} radius={9} />
+                    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 6 }}>
+                      <Skeleton h={13} w="70%" />
+                      <Skeleton h={11} w="85%" />
                     </div>
                   </div>
                 ))
+              : alertas.length === 0
+                ? (
+                  <div style={{ padding: '28px 0', textAlign: 'center' }}>
+                    <CheckCircle size={28} color="#16A34A" style={{ marginBottom: 10 }} />
+                    <p style={{ fontSize: 14, fontWeight: 700, color: '#1A1A1A', marginBottom: 4 }}>Tudo em ordem!</p>
+                    <p style={{ fontSize: 12, color: '#8A7F76' }}>Nenhum item pendente no momento.</p>
+                  </div>
+                )
+                : alertas.map(a => (
+                  <AlertaItem
+                    key={a.rota + a.titulo}
+                    icon={a.icon} cor={a.cor}
+                    titulo={a.titulo} desc={a.desc}
+                    onClick={() => navigate(a.rota)}
+                  />
+                ))
             }
           </div>
-
         </div>
 
-        {/* Gráfico cadastros por mês + KPIs secundários */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-
-          {/* Gráfico */}
-          <div style={{ background: '#FFFFFF', border: '1px solid #E0D6CA', borderRadius: 20, padding: '18px 20px', boxShadow: '0 2px 16px rgba(0,0,0,0.05)' }}>
-            <p style={{ fontSize: 11, fontWeight: 700, color: '#8A7F76', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 16 }}>Novos alunos — 6 meses</p>
-            {isLoading
-              ? <Skeleton h={64} radius={6} />
-              : <MiniBarChart dados={porMes} />
-            }
-          </div>
-
-          {/* KPIs secundários */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-            {[
-              { icon: Dumbbell, label: 'Treinos', valor: st?.treinos_ativos, sub: `${st?.treinos_template ?? 0} templates`, cor: { icon: '#16A34A', bg: 'rgba(22,163,74,0.08)', border: 'rgba(22,163,74,0.18)' }, rota: '/admin/treinos' },
-              { icon: Sparkles, label: 'Templates', valor: st?.treinos_template, sub: 'protocolos base', cor: { icon: '#CC8800', bg: 'rgba(204,136,0,0.08)', border: 'rgba(204,136,0,0.18)' }, rota: '/admin/treinos' },
-            ].map(c => (
-              isLoading
-                ? <div key={c.label} style={{ background: '#FFFFFF', border: '1px solid #E0D6CA', borderRadius: 14, padding: 16, display: 'flex', flexDirection: 'column', gap: 8 }}><Skeleton h={28} w={28} radius={8} /><Skeleton h={24} w="55%" /><Skeleton h={11} w="75%" /></div>
-                : <KpiCard key={c.label} {...c} onClick={() => navigate(c.rota)} />
-            ))}
-          </div>
-        </div>
       </div>
 
     </div>

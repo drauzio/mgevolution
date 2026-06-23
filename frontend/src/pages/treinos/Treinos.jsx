@@ -592,7 +592,7 @@ export default function Treinos() {
   )
 
   if (!protocolo) return (
-    <div style={{ maxWidth: 560, display: 'flex', flexDirection: 'column', gap: 24 }}>
+    <div style={{ maxWidth: 560, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 24 }}>
       <h1 style={{ fontSize: 26, fontWeight: 900, color: '#1A1A1A', textTransform: 'uppercase', letterSpacing: '0.03em' }}>Treinos</h1>
       <div style={{ background: '#FFFFFF', border: '1px solid #E0D6CA', borderRadius: 20, padding: 40, textAlign: 'center', boxShadow: '0 2px 16px rgba(0,0,0,0.04)' }}>
         <div style={{ width: 56, height: 56, borderRadius: 16, background: '#F0EBE4', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
@@ -611,7 +611,7 @@ export default function Treinos() {
   const labelHoje   = DIAS.find(d => d.num === hoje)?.labelLong || ''
 
   return (
-    <div style={{ maxWidth: 560, display: 'flex', flexDirection: 'column', gap: 24 }}>
+    <div style={{ maxWidth: 560, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 24 }}>
 
       {/* Cabeçalho */}
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>

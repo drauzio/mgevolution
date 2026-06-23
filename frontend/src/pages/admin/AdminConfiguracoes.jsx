@@ -1,6 +1,7 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import useSWR, { mutate } from 'swr'
-import { Building2, Bell, Dumbbell, BarChart2, Bot, Users2, Save, Check } from 'lucide-react'
+import { Building2, Bell, Dumbbell, BarChart2, Bot, Users2, Save, Check, Home } from 'lucide-react'
 import { getAll, salvarCategoria } from '../../services/configuracao'
 
 const META = {
@@ -15,6 +16,7 @@ const META = {
 const ORDEM = ['academia', 'notificacoes', 'treino', 'shape_score', 'coach_ia', 'social']
 
 export default function AdminConfiguracoes() {
+  const navigate = useNavigate()
   const { data: config, isLoading } = useSWR('admin-config', getAll)
   const [form,     setForm]     = useState({})
   const [salvando, setSalvando] = useState(null)
@@ -59,7 +61,18 @@ export default function AdminConfiguracoes() {
 
   return (
     <div style={{ padding: '24px 28px', maxWidth: 820, margin: '0 auto' }}>
-      <h1 style={{ fontSize: 20, fontWeight: 800, color: '#1A1A1A', marginBottom: 28 }}>Configurações</h1>
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, marginBottom: 28 }}>
+        <h1 style={{ fontSize: 26, fontWeight: 900, color: '#1A1A1A', textTransform: 'uppercase', letterSpacing: '0.03em' }}>Configurações</h1>
+        <button
+          onClick={() => navigate('/admin')}
+          style={{ height: 36, paddingInline: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, border: '1px solid #E0D6CA', borderRadius: 8, background: '#FFFFFF', cursor: 'pointer', flexShrink: 0, fontSize: 12, fontWeight: 700, color: '#6B6560' }}
+          onMouseEnter={e => { e.currentTarget.style.borderColor = '#C4B9A8'; e.currentTarget.style.color = '#1A1A1A' }}
+          onMouseLeave={e => { e.currentTarget.style.borderColor = '#E0D6CA'; e.currentTarget.style.color = '#6B6560' }}
+        >
+          <Home size={14} color="currentColor" />
+          Home
+        </button>
+      </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
         {ORDEM.filter(cat => config?.[cat]).map(cat => {

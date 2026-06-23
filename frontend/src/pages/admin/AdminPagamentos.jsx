@@ -1,6 +1,8 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import useSWR, { mutate } from 'swr'
-import { DollarSign, Clock, AlertTriangle, Check, X, ChevronDown, ChevronUp } from 'lucide-react'
+import { DollarSign, Clock, AlertTriangle, Check, X, ChevronDown, ChevronUp, Home } from 'lucide-react'
+import { BtnIncluir } from '../../components/ui/Botoes'
 import { resumo, pendentes, historico, pagar, cancelar } from '../../services/pagamento'
 
 const FORMAS = [
@@ -103,6 +105,7 @@ function BadgeStatus({ status, diasParaVencer }) {
 }
 
 export default function AdminPagamentos() {
+  const navigate = useNavigate()
   const [aba, setAba]         = useState('pendentes')
   const [modal, setModal]     = useState(null)
   const [filtroMes, setFiltroMes]   = useState(new Date().getMonth() + 1)
@@ -133,7 +136,24 @@ export default function AdminPagamentos() {
 
   return (
     <div style={{ padding: '24px 28px', display: 'flex', flexDirection: 'column', gap: 24 }}>
-      <h1 style={{ fontSize: 20, fontWeight: 800, color: '#1A1A1A' }}>Pagamentos</h1>
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16 }}>
+        <div>
+          <h1 style={{ fontSize: 26, fontWeight: 900, color: '#1A1A1A', textTransform: 'uppercase', letterSpacing: '0.03em', marginBottom: 6 }}>Pagamentos</h1>
+          <p style={{ fontSize: 14, color: '#8A7F76' }}>{res?.qtd_pendente ?? 0} pendentes · {res?.qtd_vencido ?? 0} vencidos</p>
+        </div>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          <button
+            onClick={() => navigate('/admin')}
+            style={{ height: 36, paddingInline: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, border: '1px solid #E0D6CA', borderRadius: 8, background: '#FFFFFF', cursor: 'pointer', flexShrink: 0, fontSize: 12, fontWeight: 700, color: '#6B6560' }}
+            onMouseEnter={e => { e.currentTarget.style.borderColor = '#C4B9A8'; e.currentTarget.style.color = '#1A1A1A' }}
+            onMouseLeave={e => { e.currentTarget.style.borderColor = '#E0D6CA'; e.currentTarget.style.color = '#6B6560' }}
+          >
+            <Home size={14} color="currentColor" />
+            Home
+          </button>
+          <BtnIncluir onClick={() => navigate('/admin/pagamentos/novo')} label="Novo pagamento" />
+        </div>
+      </div>
 
       {/* Resumo */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>

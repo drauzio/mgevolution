@@ -95,7 +95,7 @@ export default function CoachIA() {
   const temMensagens = msgs.length > 1
 
   return (
-    <div style={{ maxWidth: 560, display: 'flex', flexDirection: 'column', height: 'calc(100dvh - 212px)' }}>
+    <div style={{ maxWidth: 560, margin: '0 auto', display: 'flex', flexDirection: 'column', height: 'calc(100dvh - 212px)' }}>
 
       {/* Cabeçalho */}
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 16, flexShrink: 0 }}>

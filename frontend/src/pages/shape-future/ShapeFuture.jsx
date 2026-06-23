@@ -107,7 +107,7 @@ export default function ShapeFuture() {
   )
 
   return (
-    <div style={{ maxWidth: 560, display: 'flex', flexDirection: 'column', gap: 24 }}>
+    <div style={{ maxWidth: 560, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 24 }}>
 
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
         <div>

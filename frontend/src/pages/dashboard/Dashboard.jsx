@@ -97,7 +97,7 @@ export default function Dashboard() {
   )
 
   return (
-    <div style={{ maxWidth: 680, display: 'flex', flexDirection: 'column', gap: 20 }}>
+    <div style={{ maxWidth: 680, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 20 }}>
 
       {/* Saudação */}
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>

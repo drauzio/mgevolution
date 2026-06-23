@@ -8,7 +8,8 @@ import {
   arrayMove, useSortable,
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { Check, Loader2, Plus, Trash2, X, Pencil, GripVertical } from 'lucide-react'
+import { Check, Loader2, Plus, Trash2, X, Pencil, GripVertical, Home, Settings } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
 import { useAuthContext } from '../../context/AuthContext'
 import { listar, atualizarPerfis, criar, editar, deletar, reordenar } from '../../services/menuAdmin'
 import { getIcon } from '../../utils/menuIcons'
@@ -248,6 +249,7 @@ function SortableItemRow({ item, perfis, grupos, onToggle, onDeletar, onEditar, 
 }
 
 export default function AdminMenuConfig() {
+  const navigate = useNavigate()
   const { token } = useAuthContext()
   const [salvando, setSalvando] = useState(new Set())
   const [modalAberto, setModalAberto] = useState(false)
@@ -351,12 +353,23 @@ export default function AdminMenuConfig() {
           <h1 style={{ fontSize: 20, fontWeight: 800, color: '#1A1A1A', marginBottom: 4 }}>Configuração de Menu</h1>
           <p style={{ fontSize: 13, color: '#8A7F76' }}>Arraste para reordenar · Marque quais perfis têm acesso.</p>
         </div>
-        <button
-          onClick={() => setModalAberto(true)}
-          style={{ display: 'flex', alignItems: 'center', gap: 6, height: 36, paddingInline: 14, borderRadius: 8, border: 'none', background: '#CC1A1A', color: '#FFFFFF', fontSize: 13, fontWeight: 700, cursor: 'pointer', flexShrink: 0 }}
-        >
-          <Plus size={14} /> Novo item
-        </button>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          <button
+            onClick={() => navigate('/admin')}
+            style={{ height: 36, paddingInline: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, border: '1px solid #E0D6CA', borderRadius: 8, background: '#FFFFFF', cursor: 'pointer', flexShrink: 0, fontSize: 12, fontWeight: 700, color: '#6B6560' }}
+            onMouseEnter={e => { e.currentTarget.style.borderColor = '#C4B9A8'; e.currentTarget.style.color = '#1A1A1A' }}
+            onMouseLeave={e => { e.currentTarget.style.borderColor = '#E0D6CA'; e.currentTarget.style.color = '#6B6560' }}
+          >
+            <Home size={14} color="currentColor" />
+            Home
+          </button>
+          <button
+            onClick={() => setModalAberto(true)}
+            style={{ display: 'flex', alignItems: 'center', gap: 6, height: 36, paddingInline: 14, borderRadius: 8, border: 'none', background: '#CC1A1A', color: '#FFFFFF', fontSize: 13, fontWeight: 700, cursor: 'pointer', flexShrink: 0 }}
+          >
+            <Plus size={14} /> Novo item
+          </button>
+        </div>
       </div>
 
       {/* Legenda perfis */}
