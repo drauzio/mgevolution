@@ -29,12 +29,20 @@ function OTPInput({ value, onChange }) {
   const digits = value.padEnd(6, '').split('').slice(0, 6);
 
   function handle(idx, val) {
-    const d = val.replace(/\D/g, '').slice(-1);
-    const next = [...digits];
-    next[idx] = d;
-    const joined = next.join('');
-    onChange(joined);
-    if (d && idx < 5) refs.current[idx + 1]?.focus();
+    const clean = val.replace(/\D/g, '');
+    if (clean.length > 1) {
+      const next = [...digits];
+      const chars = clean.slice(0, 6 - idx).split('');
+      chars.forEach((c, i) => { next[idx + i] = c; });
+      onChange(next.join(''));
+      refs.current[Math.min(idx + chars.length, 5)]?.focus();
+    } else {
+      const d = clean.slice(-1);
+      const next = [...digits];
+      next[idx] = d;
+      onChange(next.join(''));
+      if (d && idx < 5) refs.current[idx + 1]?.focus();
+    }
   }
 
   function handleKey(idx, e) {
@@ -57,7 +65,6 @@ function OTPInput({ value, onChange }) {
           onChangeText={v => handle(i, v)}
           onKeyPress={e => handleKey(i, e)}
           keyboardType="number-pad"
-          maxLength={1}
           textAlign="center"
           selectTextOnFocus
         />
@@ -72,11 +79,14 @@ function Countdown({ segundos, onZero }) {
   useEffect(() => {
     setRestam(segundos);
     const t = setInterval(() => setRestam(r => {
-      if (r <= 1) { clearInterval(t); onZero(); return 0; }
+      if (r <= 1) { clearInterval(t); return 0; }
       return r - 1;
     }), 1000);
     return () => clearInterval(t);
   }, [segundos]);
+  useEffect(() => {
+    if (restam === 0) onZero();
+  }, [restam]);
   if (restam === 0) return null;
   return (
     <Text style={s.countdown}>

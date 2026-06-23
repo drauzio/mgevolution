@@ -17,14 +17,16 @@ async function postTemplate(payloadBase) {
 
   const url = `https://graph.facebook.com/v22.0/${phoneId}/messages`
   try {
-    const r = await axios.post(url, { ...payloadBase, to: fone }, {
+    const r = await axios.post(url, { ...payloadBase, to: fone, recipient_type: 'individual' }, {
       headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
     })
     const messageId = r.data?.messages?.[0]?.id || null
     return { ok: !!messageId, messageId, motivo: messageId ? null : 'sem_message_id', telefone: fone }
   } catch (err) {
-    const motivo = err.response?.data?.error?.message || err.message
+    const error  = err.response?.data?.error || {}
+    const motivo = error.message || err.message
     console.error('[WhatsApp] Erro:', motivo)
+    console.error('[WhatsApp] Detalhes:', JSON.stringify(error, null, 2))
     return { ok: false, messageId: null, motivo, telefone: fone }
   }
 }
@@ -112,31 +114,19 @@ function isConfigurado() {
 }
 
 async function enviarOTP({ phone, codigo }) {
-  const token   = process.env.WHATSAPP_TOKEN
-  const phoneId = process.env.WHATSAPP_PHONE_NUMBER_ID
-  if (!token || !phoneId) return { ok: false, motivo: 'config_invalida' }
-
-  const fone = formatarTelefone(phone)
-  if (!fone) return { ok: false, motivo: 'telefone_invalido' }
-
-  const url = `https://graph.facebook.com/v22.0/${phoneId}/messages`
-  const headers = { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }
-
-  // Texto livre (reativa template aprovado quando disponível na Meta)
-  try {
-    const r = await axios.post(url, {
-      messaging_product: 'whatsapp',
-      to: fone,
-      type: 'text',
-      text: { body: `🔐 *MG Evolution*\n\nSeu código de verificação é: *${codigo}*\n\nVálido por 10 minutos. Não compartilhe com ninguém.` },
-    }, { headers })
-    const messageId = r.data?.messages?.[0]?.id || null
-    return { ok: !!messageId, messageId, motivo: messageId ? null : 'sem_message_id', telefone: fone }
-  } catch (err) {
-    const motivo = err.response?.data?.error?.message || err.message
-    console.error('[WhatsApp OTP] Texto livre também falhou:', motivo)
-    return { ok: false, messageId: null, motivo, telefone: fone }
-  }
+  return postTemplate({
+    messaging_product: 'whatsapp',
+    to: phone,
+    type: 'template',
+    template: {
+      name: 'otp_verificacao',
+      language: { code: 'pt_BR' },
+      components: [
+        { type: 'body', parameters: [{ type: 'text', text: String(codigo) }] },
+        { type: 'button', sub_type: 'url', index: '0', parameters: [{ type: 'text', text: String(codigo) }] },
+      ],
+    },
+  })
 }
 
 module.exports = { formatarTelefone, enviarBoasVindas, enviarAssinaturaNova, enviarAssinaturaVencendo, enviarAlunoInativo, enviarOTP, isConfigurado }

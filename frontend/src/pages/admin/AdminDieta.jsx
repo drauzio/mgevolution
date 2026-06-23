@@ -366,7 +366,12 @@ export default function AdminDieta() {
       header: 'Início',
       size: 110,
       cell: ({ row: { original: p } }) => (
-        <span style={{ fontSize: 12, color: '#6B6560' }}>{data(p.data_inicio)}</span>
+        <div>
+          <span style={{ fontSize: 12, color: '#6B6560' }}>{data(p.data_inicio) || '—'}</span>
+          {p.data_criacao && (
+            <p style={{ fontSize: 10, color: '#B0A89E', marginTop: 2 }}>Criado {data(p.data_criacao)}</p>
+          )}
+        </div>
       ),
     },
     {

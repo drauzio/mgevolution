@@ -126,7 +126,8 @@ export default function DietaForm() {
   const { data: alunos = [] } = useSWR(token ? 'alunos-lista' : null, () => alunosService.listar())
   const { data: nutricionistas = [] } = useSWR(token ? 'nutricionistas-lista' : null, () => nutricionistasService.listar({ status: 'ativos' }))
 
-  const [form, setForm] = useState({ id_usuario: idUsuarioSolicitacao || '', id_nutricionista: '', nome: '', objetivo: '', calorias_meta: '', proteina_meta: '', data_inicio: '', data_fim: '', observacoes: '', ativo: 1, status_plano: 'rascunho' })
+  const hoje = new Date().toISOString().slice(0, 10)
+  const [form, setForm] = useState({ id_usuario: idUsuarioSolicitacao || '', id_nutricionista: '', nome: '', objetivo: '', calorias_meta: '', proteina_meta: '', data_inicio: hoje, data_fim: '', observacoes: '', ativo: 1, status_plano: 'rascunho' })
 
   const { data: dadosAluno } = useSWR(
     token && form.id_usuario ? ['dieta-dados-aluno', form.id_usuario] : null,
@@ -270,8 +271,9 @@ export default function DietaForm() {
   }
 
   async function salvar() {
-    if (!form.nome)       { setErro('Nome do plano é obrigatório'); return }
-    if (!form.id_usuario) { setErro('Selecione o aluno'); return }
+    if (!form.nome)        { setErro('Nome do plano é obrigatório'); return }
+    if (!form.id_usuario)  { setErro('Selecione o aluno'); return }
+    if (!form.data_inicio) { setErro('Data de início é obrigatória'); return }
     setSalvando(true); setErro(null)
     try {
       const payload = { ...form, refeicoes }
@@ -377,8 +379,8 @@ export default function DietaForm() {
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-            <Campo label="Início">
-              <input style={inputStyle} type="date" value={form.data_inicio} onChange={setF('data_inicio')} />
+            <Campo label="Início *">
+              <input style={{ ...inputStyle, borderColor: !form.data_inicio ? '#FCA5A5' : '#E0D6CA' }} type="date" value={form.data_inicio} onChange={setF('data_inicio')} />
             </Campo>
             <Campo label="Fim">
               <input style={inputStyle} type="date" value={form.data_fim} onChange={setF('data_fim')} />

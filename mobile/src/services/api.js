@@ -2,7 +2,7 @@ import axios from 'axios';
 import * as SecureStore from 'expo-secure-store';
 import Constants from 'expo-constants';
 
-const PROD_URL = 'https://mgevolution.azurewebsites.net/api';
+const PROD_URL = 'https://mgevolution.com.br/api';
 
 function resolveApiUrl() {
   if (!__DEV__) return PROD_URL;

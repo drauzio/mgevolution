@@ -107,6 +107,18 @@ async function atualizarStatusPlano(idPlano, status) {
     .input('id',     sql.Int,         idPlano)
     .input('status', sql.VarChar(20), status)
     .query(`UPDATE dbo.dieta_plano SET status_plano = @status, data_atualizacao = SYSUTCDATETIME() WHERE id_dieta_plano = @id`)
+
+  if (status === 'liberado') {
+    const r = await pool.request()
+      .input('id', sql.Int, idPlano)
+      .query(`SELECT id_usuario FROM dbo.dieta_plano WHERE id_dieta_plano = @id`)
+    const idUsuario = r.recordset[0]?.id_usuario
+    if (idUsuario) {
+      await pool.request()
+        .input('id_usuario', sql.Int, idUsuario)
+        .query(`UPDATE dbo.dieta_solicitacao SET status = 'concluida', data_atualizacao = SYSUTCDATETIME() WHERE id_usuario = @id_usuario AND status <> 'concluida'`)
+    }
+  }
 }
 
 async function criar(dados, idCriador) {

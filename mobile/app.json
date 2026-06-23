@@ -42,9 +42,10 @@
     "owner": "drauziojr",
     "extra": {
       "eas": {
-        "projectId": ""
+        "projectId": "63c363ea-b5d7-4afa-8ed2-60a7c6e02168"
       },
-      "devIp": "192.168.3.61"
+      "devIp": "192.168.3.61",
+      "router": {}
     },
     "plugins": [
       "expo-router",
