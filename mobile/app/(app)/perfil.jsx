@@ -11,7 +11,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { useAuth } from '../../src/contexts/AuthContext';
 import { useRouter } from 'expo-router';
 import api from '../../src/services/api';
-import { formatarData, dataParaISO, dataParaDisplay } from '../../src/utils/format';
+import { formatarData, dataParaISO, dataParaDisplay, formatarTelefone } from '../../src/utils/format';
 
 export default function Perfil() {
   const { usuario, sair, faceIdAtivo, habilitarFaceId, desabilitarFaceId } = useAuth();
@@ -34,6 +34,7 @@ export default function Perfil() {
       setPerfil(res.data);
       setForm({
         nome:             res.data.nome    ?? '',
+        telefone:         formatarTelefone(res.data.telefone ?? ''),
         data_nascimento:  dataParaDisplay(res.data.data_nascimento ?? ''),
         sexo:             res.data.sexo   ?? '',
       });
@@ -52,6 +53,7 @@ export default function Perfil() {
     try {
       await api.put('/perfil', {
         nome:            form.nome,
+        telefone:        form.telefone.replace(/\D/g, ''),
         data_nascimento: dataParaISO(form.data_nascimento),
         sexo:            form.sexo,
       });
@@ -220,6 +222,15 @@ export default function Perfil() {
           value={form.nome}
           editando={editando}
           onChangeText={v => setForm(f => ({ ...f, nome: v }))}
+        />
+        <Campo
+          icon={<UserRound size={16} color="#8A7F76" />}
+          label="Telefone"
+          value={form.telefone}
+          editando={editando}
+          onChangeText={v => setForm(f => ({ ...f, telefone: formatarTelefone(v) }))}
+          placeholder="(00) 00000-0000"
+          keyboardType="number-pad"
         />
         <Campo
           icon={<Calendar size={16} color="#8A7F76" />}

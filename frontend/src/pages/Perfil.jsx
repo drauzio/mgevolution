@@ -3,6 +3,7 @@ import useSWR, { mutate } from 'swr'
 import { useNavigate } from 'react-router-dom'
 import { ArrowLeft, Camera, User, Lock, Save, Check, Eye, EyeOff } from 'lucide-react'
 import { buscar, atualizar, trocarSenha, uploadFoto } from '../services/perfil'
+import { mascaraFone } from '../utils/formatters'
 import { useAuthContext } from '../context/AuthContext'
 
 const inputStyle = {
@@ -96,7 +97,7 @@ export default function Perfil() {
     try {
       await atualizar({
         nome:            dados.nome,
-        telefone:        dados.telefone,
+        telefone:        (dados.telefone ?? '').replace(/\D/g, ''),
         data_nascimento: dados.data_nascimento,
         sexo:            dados.sexo,
         bio:             dados.bio,
@@ -212,7 +213,7 @@ export default function Perfil() {
               <input value={dados?.email ?? ''} disabled style={{ ...inputStyle, background: '#F7F3EE', color: '#8A7F76' }} />
             </Campo>
             <Campo label="Telefone / WhatsApp">
-              <input value={dados?.telefone ?? ''} onChange={e => set('telefone', e.target.value)} type="tel" style={inputStyle}
+              <input value={mascaraFone(dados?.telefone ?? '')} onChange={e => set('telefone', mascaraFone(e.target.value))} type="tel" placeholder="(00) 00000-0000" style={inputStyle}
                 onFocus={e => e.target.style.borderColor = '#CC1A1A'} onBlur={e => e.target.style.borderColor = '#E0D6CA'} />
             </Campo>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
