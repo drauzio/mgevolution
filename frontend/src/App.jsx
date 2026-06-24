@@ -62,6 +62,7 @@ import Onboarding from './pages/onboarding/Onboarding'
 import MinhaAvaliacao from './pages/avaliacao/MinhaAvaliacao'
 import Termos from './pages/Termos'
 import Privacidade from './pages/Privacidade'
+import Suporte from './pages/Suporte'
 
 function EmConstrucao() {
   return (
@@ -85,6 +86,7 @@ export default function App() {
           <Route path="/redefinir-senha" element={<RedefinirSenha />} />
           <Route path="/termos" element={<Termos />} />
           <Route path="/privacidade" element={<Privacidade />} />
+          <Route path="/suporte" element={<Suporte />} />
 
           {/* Todas as rotas autenticadas — layout único */}
           <Route element={<RotaProtegida />}>

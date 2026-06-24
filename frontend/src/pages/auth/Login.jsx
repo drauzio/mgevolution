@@ -258,6 +258,13 @@ export default function Login() {
           >
             Política de Privacidade
           </Link>
+          {' · '}
+          <Link to="/suporte" style={{ color: '#B0A89E', textDecoration: 'underline' }}
+            onMouseEnter={e => e.currentTarget.style.color = '#CC1A1A'}
+            onMouseLeave={e => e.currentTarget.style.color = '#B0A89E'}
+          >
+            Suporte
+          </Link>
         </p>
       </div>
     </div>
