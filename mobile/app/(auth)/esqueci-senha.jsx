@@ -7,7 +7,6 @@ import { useRouter } from 'expo-router';
 import { Phone, LockKeyhole, Eye, EyeOff, ArrowLeft, CheckCircle2 } from 'lucide-react-native';
 import api from '../../src/services/api';
 
-// ── 6 caixas OTP ─────────────────────────────────────────────────────────────
 function OTPInput({ value, onChange }) {
   const refs = useRef([]);
   const digits = value.padEnd(6, '').split('').slice(0, 6);
@@ -70,7 +69,7 @@ function Countdown({ segundos, onZero }) {
 export default function EsqueciSenha() {
   const router = useRouter();
 
-  const [etapa, setEtapa]         = useState('telefone'); // telefone | otp | senha | ok
+  const [etapa, setEtapa]         = useState('telefone');
   const [telefone, setTelefone]   = useState('');
   const [otp, setOtp]             = useState('');
   const [tokenOtp, setTokenOtp]   = useState('');
@@ -145,7 +144,6 @@ export default function EsqueciSenha() {
     router.back();
   }
 
-  // ── Sucesso ───────────────────────────────────────────────────
   if (etapa === 'ok') {
     return (
       <View style={[s.root, { justifyContent: 'center', alignItems: 'center', padding: 32 }]}>
@@ -160,14 +158,18 @@ export default function EsqueciSenha() {
   }
 
   return (
-    <KeyboardAvoidingView style={s.root} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-      <TouchableOpacity style={s.voltar} onPress={voltar} activeOpacity={0.7}>
-        <ArrowLeft size={22} color="#1A1A1A" strokeWidth={2.5} />
-      </TouchableOpacity>
-
+    <KeyboardAvoidingView
+      style={s.root}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+    >
       <ScrollView contentContainerStyle={s.scroll} keyboardShouldPersistTaps="handled">
+
         <View style={s.topArea}>
-          <Image source={require('../../assets/icon.png')} style={s.logo} resizeMode="contain" />
+          <Image
+            source={require('../../assets/icon.png')}
+            style={s.logo}
+            resizeMode="contain"
+          />
           <Text style={s.appName}>MG EVOLUTION</Text>
           <Text style={s.tagline}>Mais que um treino, uma evolução.</Text>
         </View>
@@ -178,22 +180,28 @@ export default function EsqueciSenha() {
           {etapa === 'telefone' && (
             <>
               <View style={s.cardHeader}>
+                <TouchableOpacity onPress={voltar} activeOpacity={0.7} style={s.voltarBtn}>
+                  <ArrowLeft size={18} color="#8A7F76" strokeWidth={2.5} />
+                </TouchableOpacity>
                 <Phone size={20} color="#CC1A1A" strokeWidth={2} />
                 <Text style={s.cardTitle}>Recuperar senha</Text>
               </View>
               <Text style={s.cardSub}>Informe seu WhatsApp cadastrado para receber o código</Text>
 
-              <Text style={s.label}>WhatsApp (com DDD)</Text>
-              <View style={s.inputBox}>
-                <Phone size={18} color="#8A7F76" strokeWidth={1.8} />
-                <TextInput
-                  style={s.input}
-                  placeholder="(11) 99999-9999"
-                  placeholderTextColor="#C4BAB2"
-                  value={telefone}
-                  onChangeText={v => setTelefone(fmtTelefone(v))}
-                  keyboardType="phone-pad"
-                />
+              <View style={s.field}>
+                <Text style={s.label}>WhatsApp (com DDD)</Text>
+                <View style={s.inputBox}>
+                  <Phone size={18} color="#8A7F76" strokeWidth={1.8} />
+                  <TextInput
+                    style={s.input}
+                    placeholder="(11) 99999-9999"
+                    placeholderTextColor="#C4BAB2"
+                    value={telefone}
+                    onChangeText={v => setTelefone(fmtTelefone(v))}
+                    keyboardType="phone-pad"
+                    editable={!loading}
+                  />
+                </View>
               </View>
 
               <TouchableOpacity
@@ -211,6 +219,9 @@ export default function EsqueciSenha() {
           {etapa === 'otp' && (
             <>
               <View style={[s.cardHeader, { justifyContent: 'center' }]}>
+                <TouchableOpacity onPress={voltar} activeOpacity={0.7} style={[s.voltarBtn, { position: 'absolute', left: 0 }]}>
+                  <ArrowLeft size={18} color="#8A7F76" strokeWidth={2.5} />
+                </TouchableOpacity>
                 <Text style={[s.cardTitle, { textAlign: 'center' }]}>Verificação</Text>
               </View>
               <Text style={[s.cardSub, { textAlign: 'center', marginBottom: 28 }]}>
@@ -245,42 +256,51 @@ export default function EsqueciSenha() {
           {etapa === 'senha' && (
             <>
               <View style={s.cardHeader}>
+                <TouchableOpacity onPress={voltar} activeOpacity={0.7} style={s.voltarBtn}>
+                  <ArrowLeft size={18} color="#8A7F76" strokeWidth={2.5} />
+                </TouchableOpacity>
                 <LockKeyhole size={20} color="#CC1A1A" strokeWidth={2} />
                 <Text style={s.cardTitle}>Nova senha</Text>
               </View>
               <Text style={s.cardSub}>Escolha uma senha com mínimo 6 caracteres</Text>
 
-              <Text style={s.label}>Nova senha</Text>
-              <View style={s.inputBox}>
-                <LockKeyhole size={18} color="#8A7F76" strokeWidth={1.8} />
-                <TextInput
-                  style={s.input}
-                  placeholder="Mínimo 6 caracteres"
-                  placeholderTextColor="#C4BAB2"
-                  value={novaSenha}
-                  onChangeText={setNovaSenha}
-                  secureTextEntry={!mostrar}
-                />
-                <TouchableOpacity onPress={() => setMostrar(v => !v)} activeOpacity={0.7} style={{ paddingRight: 14 }}>
-                  {mostrar ? <EyeOff size={18} color="#8A7F76" /> : <Eye size={18} color="#8A7F76" />}
-                </TouchableOpacity>
+              <View style={s.field}>
+                <Text style={s.label}>Nova senha</Text>
+                <View style={s.inputBox}>
+                  <LockKeyhole size={18} color="#8A7F76" strokeWidth={1.8} />
+                  <TextInput
+                    style={s.input}
+                    placeholder="Mínimo 6 caracteres"
+                    placeholderTextColor="#C4BAB2"
+                    value={novaSenha}
+                    onChangeText={setNovaSenha}
+                    secureTextEntry={!mostrar}
+                    editable={!loading}
+                  />
+                  <TouchableOpacity onPress={() => setMostrar(v => !v)} activeOpacity={0.7}>
+                    {mostrar ? <EyeOff size={19} color="#8A7F76" /> : <Eye size={19} color="#8A7F76" />}
+                  </TouchableOpacity>
+                </View>
               </View>
 
-              <Text style={[s.label, { marginTop: 12 }]}>Confirmar senha</Text>
-              <View style={s.inputBox}>
-                <LockKeyhole size={18} color="#8A7F76" strokeWidth={1.8} />
-                <TextInput
-                  style={s.input}
-                  placeholder="Repita a senha"
-                  placeholderTextColor="#C4BAB2"
-                  value={confirmar}
-                  onChangeText={setConfirmar}
-                  secureTextEntry={!mostrar}
-                />
+              <View style={s.field}>
+                <Text style={s.label}>Confirmar senha</Text>
+                <View style={s.inputBox}>
+                  <LockKeyhole size={18} color="#8A7F76" strokeWidth={1.8} />
+                  <TextInput
+                    style={s.input}
+                    placeholder="Repita a senha"
+                    placeholderTextColor="#C4BAB2"
+                    value={confirmar}
+                    onChangeText={setConfirmar}
+                    secureTextEntry={!mostrar}
+                    editable={!loading}
+                  />
+                </View>
               </View>
 
               <TouchableOpacity
-                style={[s.btn, { marginTop: 20 }, loading && s.btnDisabled]}
+                style={[s.btn, loading && s.btnDisabled]}
                 onPress={redefinirSenha}
                 disabled={loading}
                 activeOpacity={0.85}
@@ -291,6 +311,8 @@ export default function EsqueciSenha() {
           )}
 
         </View>
+
+        <Text style={s.footer}>© MG Evolution</Text>
       </ScrollView>
     </KeyboardAvoidingView>
   );
@@ -300,16 +322,8 @@ const s = StyleSheet.create({
   root:   { flex: 1, backgroundColor: '#F0EBE4' },
   scroll: { flexGrow: 1, justifyContent: 'center', padding: 24 },
 
-  voltar: {
-    width: 40, height: 40, borderRadius: 12, marginTop: 56, marginLeft: 16,
-    backgroundColor: '#fff', alignItems: 'center', justifyContent: 'center',
-    shadowColor: '#000', shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.06, shadowRadius: 4, elevation: 2,
-    alignSelf: 'flex-start',
-  },
-
-  topArea: { alignItems: 'center', marginBottom: 28, marginTop: 8 },
-  logo:    { width: 80, height: 80, marginBottom: 10 },
+  topArea: { alignItems: 'center', marginBottom: 32 },
+  logo:    { width: 90, height: 90, marginBottom: 12 },
   appName: { fontSize: 15, fontWeight: '900', color: '#1A1A1A', letterSpacing: 6 },
   tagline: { fontSize: 12, color: '#8A7F76', marginTop: 6, letterSpacing: 0.3, fontStyle: 'italic' },
 
@@ -319,25 +333,27 @@ const s = StyleSheet.create({
     shadowOpacity: 0.08, shadowRadius: 16, elevation: 5,
   },
   cardHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 4 },
-  cardTitle:  { fontSize: 20, fontWeight: '900', color: '#1A1A1A', textTransform: 'uppercase', letterSpacing: 1 },
-  cardSub:    { fontSize: 13, color: '#8A7F76', marginBottom: 20 },
+  cardTitle:  { flex: 1, fontSize: 20, fontWeight: '900', color: '#1A1A1A', textTransform: 'uppercase', letterSpacing: 1 },
+  cardSub:    { fontSize: 13, color: '#8A7F76', marginBottom: 24 },
 
-  label:    { fontSize: 10, fontWeight: '700', color: '#8A7F76', textTransform: 'uppercase', letterSpacing: 1.5, marginBottom: 6 },
+  voltarBtn: { padding: 4 },
+
+  field:    { marginBottom: 16 },
+  label:    { fontSize: 11, fontWeight: '700', color: '#8A7F76', textTransform: 'uppercase', letterSpacing: 1.5, marginBottom: 8 },
   inputBox: {
-    minHeight: 48, borderWidth: 1, borderColor: '#E8E2DC',
-    borderRadius: 12, paddingHorizontal: 14,
+    minHeight: 50, borderWidth: 1, borderColor: '#E8E2DC',
+    borderRadius: 14, paddingHorizontal: 14, backgroundColor: '#FAF8F6',
     flexDirection: 'row', alignItems: 'center', gap: 10,
-    backgroundColor: '#FAF8F6', marginBottom: 4,
   },
-  input: { flex: 1, fontSize: 14, color: '#1A1A1A', paddingVertical: 12 },
+  input: { flex: 1, fontSize: 15, color: '#1A1A1A', paddingVertical: 12 },
 
   btn:         { backgroundColor: '#CC1A1A', borderRadius: 14, paddingVertical: 16, alignItems: 'center', marginTop: 8 },
   btnDisabled: { opacity: 0.6 },
-  btnText:     { color: '#fff', fontSize: 15, fontWeight: '800', letterSpacing: 0.5 },
+  btnText:     { color: '#fff', fontSize: 16, fontWeight: '800', letterSpacing: 1 },
 
-  otpRow:      { flexDirection: 'row', gap: 8, justifyContent: 'center' },
-  otpBox:      { width: 46, height: 56, borderRadius: 12, borderWidth: 2, borderColor: '#E0D6CA', fontSize: 24, fontWeight: '800', color: '#1A1A1A', backgroundColor: '#FAF8F6' },
-  otpBoxFilled:{ borderColor: '#CC1A1A', backgroundColor: '#FEF2F2' },
+  otpRow:       { flexDirection: 'row', gap: 6 },
+  otpBox:       { flex: 1, height: 52, borderRadius: 12, borderWidth: 2, borderColor: '#E0D6CA', fontSize: 22, fontWeight: '800', color: '#1A1A1A', backgroundColor: '#FAF8F6' },
+  otpBoxFilled: { borderColor: '#CC1A1A', backgroundColor: '#FEF2F2' },
 
   reenviarWrap: { alignItems: 'center', marginTop: 20 },
   countdown:    { fontSize: 13, color: '#8A7F76' },
@@ -347,4 +363,6 @@ const s = StyleSheet.create({
   okTitulo: { fontSize: 24, fontWeight: '900', color: '#1A1A1A', marginBottom: 10 },
   okSub:    { fontSize: 14, color: '#8A7F76', textAlign: 'center', lineHeight: 22, marginBottom: 32 },
   okBtn:    { backgroundColor: '#CC1A1A', borderRadius: 14, paddingVertical: 14, paddingHorizontal: 40, alignItems: 'center' },
+
+  footer: { textAlign: 'center', color: '#C4BAB2', fontSize: 12, marginTop: 16 },
 });

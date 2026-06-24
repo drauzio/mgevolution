@@ -78,7 +78,7 @@ export default function EsqueciSenha() {
       {/* ── Painel direito – formulário ── */}
       <div className="flex-1 flex items-center justify-center px-6 py-12">
       <div
-        className="w-full max-w-md rounded-2xl"
+        className="w-full max-w-95 rounded-2xl"
         style={{ background: '#FFFFFF', boxShadow: '0 8px 48px rgba(0,0,0,0.10)', padding: '44px 40px' }}
       >
         {/* Voltar */}
