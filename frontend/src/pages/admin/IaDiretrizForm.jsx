@@ -199,7 +199,7 @@ export default function IaDiretrizForm() {
 
         {criterios.length === 0 && (
           <div style={{ padding: '16px 20px', borderRadius: 12, background: '#F7F3EE', border: '1px dashed #E0D6CA', textAlign: 'center' }}>
-            <p style={{ fontSize: 13, color: '#B0A89E' }}>Nenhum critério — esta diretriz será usada para qualquer perfil de aluno desta nutricionista.</p>
+            <p style={{ fontSize: 13, color: '#B0A89E' }}>Nenhum critério — esta diretriz será usada para qualquer perfil de aluno {form.tipo === 'treino' ? 'deste personal' : 'desta nutricionista'}.</p>
           </div>
         )}
 
