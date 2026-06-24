@@ -4,6 +4,6 @@ export const APP = {
   subtitulo: 'Método Márcio Gonçalves',
   slogan: ['Método', 'Disciplina', 'Tecnologia', 'Resultados'],
   sigla: 'MG',
-  whatsapp: '5562994473009',        // <- número WhatsApp Business (DDI+DDD+número)
+  whatsapp: '556299473009',         // <- número WhatsApp Business (DDI+DDD+número)
   emailSuporte: 'suporte@mgevolution.com.br',
 }
