@@ -1,4 +1,27 @@
-const router = require('express').Router()
+const router  = require('express').Router()
+const crypto  = require('crypto')
+
+function validarAssinaturaMeta(req, res, next) {
+  const segredo = process.env.WHATSAPP_APP_SECRET
+  if (!segredo) return next()
+
+  const assinatura = req.headers['x-hub-signature-256']
+  if (!assinatura) return res.sendStatus(403)
+
+  const esperado = 'sha256=' + crypto
+    .createHmac('sha256', segredo)
+    .update(req.rawBody || '')
+    .digest('hex')
+
+  try {
+    if (!crypto.timingSafeEqual(Buffer.from(assinatura), Buffer.from(esperado)))
+      return res.sendStatus(403)
+  } catch {
+    return res.sendStatus(403)
+  }
+
+  next()
+}
 
 // ── Verificação do webhook (Meta chama GET para confirmar) ────────────────────
 router.get('/whatsapp', (req, res) => {
@@ -16,7 +39,7 @@ router.get('/whatsapp', (req, res) => {
 })
 
 // ── Recebimento de mensagens (Meta chama POST) ────────────────────────────────
-router.post('/whatsapp', (req, res) => {
+router.post('/whatsapp', validarAssinaturaMeta, (req, res) => {
   // Responde 200 imediatamente — Meta exige resposta rápida
   res.sendStatus(200)
 

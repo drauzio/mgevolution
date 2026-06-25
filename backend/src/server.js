@@ -2,13 +2,35 @@ require('dotenv').config()
 const express = require('express')
 const cors = require('cors')
 const path = require('path')
+const rateLimit = require('express-rate-limit')
 const { authMiddleware } = require('./middleware/auth')
 const { iniciarCrons } = require('./jobs/whatsappCron')
 
 const app = express()
 
-app.use(cors())
-app.use(express.json())
+const limiterGeral = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 200,
+  message: { erro: 'Muitas requisições, tente novamente em alguns minutos.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+})
+
+const limiterLogin = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  message: { erro: 'Muitas tentativas de login. Tente novamente em 15 minutos.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+})
+
+const allowedOrigin = process.env.CORS_ORIGIN
+app.use(cors(allowedOrigin ? { origin: allowedOrigin, credentials: true } : undefined))
+app.use(express.json({
+  verify: (req, _, buf) => { req.rawBody = buf },
+}))
+app.use('/api/', limiterGeral)
+app.use('/api/auth/login', limiterLogin)
 
 // Saúde
 app.get('/api/health', (_, res) => res.json({ ok: true, ts: new Date() }))
