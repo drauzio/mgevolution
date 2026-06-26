@@ -14,8 +14,13 @@ async function buscar(id_usuario) {
   return r.recordset[0] || null
 }
 
-async function atualizar(id_usuario, { nome, telefone, data_nascimento, sexo, bio }) {
+async function atualizar(id_usuario, { nome, telefone, data_nascimento, sexo, bio, cpf }) {
   const pool = await getPool()
+  const cpfDigitos = cpf ? String(cpf).replace(/\D/g, '') : ''
+  if (cpfDigitos && cpfDigitos !== '00000000000') {
+    if (cpfDigitos.length !== 11 || !validarCPF(cpfDigitos))
+      throw Object.assign(new Error('CPF inválido'), { status: 400 })
+  }
   await pool.request()
     .input('id',               sql.Int,          id_usuario)
     .input('nome',             sql.VarChar(120),  nome)
@@ -23,13 +28,27 @@ async function atualizar(id_usuario, { nome, telefone, data_nascimento, sexo, bi
     .input('data_nascimento',  sql.Date,          data_nascimento || null)
     .input('sexo',             sql.VarChar(1),    sexo || null)
     .input('bio',              sql.VarChar(500),  bio || null)
+    .input('cpf',              sql.VarChar(11),   cpfDigitos || '00000000000')
     .query(`
       UPDATE dbo.usuario
       SET nome = @nome, telefone = @telefone,
           data_nascimento = @data_nascimento, sexo = @sexo, bio = @bio,
+          cpf = @cpf,
           data_atualizacao = SYSUTCDATETIME()
       WHERE id_usuario = @id AND ativo = 1
     `)
+}
+
+function validarCPF(n) {
+  if (/^(\d)\1{10}$/.test(n)) return false
+  let s = 0
+  for (let i = 0; i < 9; i++) s += Number(n[i]) * (10 - i)
+  let d1 = (s * 10) % 11; if (d1 >= 10) d1 = 0
+  if (d1 !== Number(n[9])) return false
+  s = 0
+  for (let i = 0; i < 10; i++) s += Number(n[i]) * (11 - i)
+  let d2 = (s * 10) % 11; if (d2 >= 10) d2 = 0
+  return d2 === Number(n[10])
 }
 
 async function atualizarFoto(id_usuario, foto_url) {
@@ -66,4 +85,40 @@ async function trocarSenha(id_usuario, senhaAtual, novaSenha) {
     `)
 }
 
-module.exports = { buscar, atualizar, atualizarFoto, trocarSenha }
+async function excluirConta(id_usuario) {
+  const pool = await getPool()
+
+  const r = await pool.request()
+    .input('id', sql.Int, id_usuario)
+    .query(`SELECT nome, email FROM dbo.usuario WHERE id_usuario = @id AND ativo = 1`)
+
+  const usuario = r.recordset[0]
+  if (!usuario) throw Object.assign(new Error('Usuário não encontrado'), { status: 404 })
+
+  await pool.request()
+    .input('id',          sql.Int,          id_usuario)
+    .input('nome',        sql.VarChar(100), usuario.nome)
+    .input('dados_antes', sql.NVarChar,     JSON.stringify({ nome: usuario.nome, email: usuario.email }))
+    .query(`
+      INSERT INTO dbo.auditoria_log (id_usuario, nome_usuario, acao, entidade, id_entidade, descricao, dados_antes)
+      VALUES (@id, @nome, 'EXCLUIR_CONTA', 'usuario', @id, 'Exclusão de conta solicitada pelo próprio usuário', @dados_antes)
+    `)
+
+  await pool.request()
+    .input('id', sql.Int, id_usuario)
+    .query(`
+      UPDATE dbo.usuario
+      SET ativo = 0,
+          nome = 'Conta excluída',
+          email = CONCAT('deleted_', CAST(id_usuario AS NVARCHAR(20)), '_', REPLACE(CAST(SYSUTCDATETIME() AS NVARCHAR(30)), ':', ''), '@deleted.local'),
+          telefone = NULL,
+          data_nascimento = NULL,
+          sexo = NULL,
+          bio = NULL,
+          foto_url = NULL,
+          data_atualizacao = SYSUTCDATETIME()
+      WHERE id_usuario = @id AND ativo = 1
+    `)
+}
+
+module.exports = { buscar, atualizar, atualizarFoto, trocarSenha, excluirConta }

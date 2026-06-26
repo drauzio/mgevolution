@@ -86,4 +86,50 @@ async function enviarRedefinicaoSenha(destinatario, nomeUsuario, linkRedefinicao
   })
 }
 
-module.exports = { enviarRedefinicaoSenha }
+async function enviarOTPEmail(destinatario, codigo) {
+  const transport = criarTransport()
+  await transport.sendMail({
+    from: `"${process.env.SMTP_FROM_NAME || APP_NOME}" <${process.env.SMTP_FROM || process.env.SMTP_USER}>`,
+    to: destinatario,
+    subject: `Código de verificação — ${APP_NOME}`,
+    html: `
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:0;background:#F0EBE4;font-family:Arial,sans-serif">
+  <table width="100%" cellpadding="0" cellspacing="0" style="padding:40px 20px">
+    <tr><td align="center">
+      <table width="100%" style="max-width:480px;background:#FFFFFF;border-radius:16px;overflow:hidden;border:1px solid #E0D6CA">
+        <tr>
+          <td style="background:#CC1A1A;padding:28px 32px;text-align:center">
+            <p style="margin:0;font-size:11px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:rgba(255,255,255,0.7)">${APP_NOME}</p>
+            <h1 style="margin:8px 0 0;font-size:22px;font-weight:900;color:#FFFFFF;letter-spacing:-0.01em">Verificação de e-mail</h1>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:36px 32px;text-align:center">
+            <p style="margin:0 0 24px;font-size:14px;color:#6B6560;line-height:1.6">
+              Use o código abaixo para verificar seu e-mail. Ele expira em <strong>10 minutos</strong>.
+            </p>
+            <div style="display:inline-block;padding:18px 40px;background:#FEF2F2;border:2px dashed #FCA5A5;border-radius:12px;margin-bottom:24px">
+              <span style="font-size:36px;font-weight:900;letter-spacing:0.15em;color:#CC1A1A">${codigo}</span>
+            </div>
+            <p style="margin:0;font-size:12px;color:#B0A89E;line-height:1.6">
+              Se você não solicitou este código, ignore este e-mail.
+            </p>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:20px 32px;border-top:1px solid #E0D6CA;text-align:center">
+            <p style="margin:0;font-size:11px;color:#C4B9A8;text-transform:uppercase;letter-spacing:0.12em">${APP_NOME} · ${APP_TAGLINE}</p>
+          </td>
+        </tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`,
+  })
+}
+
+module.exports = { enviarRedefinicaoSenha, enviarOTPEmail }

@@ -3,12 +3,19 @@ const otpService  = require('../services/otp.service')
 
 async function registro(req, res) {
   try {
-    const { nome, email, senha, telefone, token_otp } = req.body
-    if (!nome || !email || !senha || !telefone) return res.status(400).json({ erro: 'Preencha todos os campos' })
-    if (!token_otp) return res.status(400).json({ erro: 'Verifique seu WhatsApp antes de criar a conta' })
-    const valido = await otpService.checarToken(telefone, token_otp)
-    if (!valido) return res.status(400).json({ erro: 'Verificação de telefone inválida ou expirada' })
-    const id = await authService.registro({ nome, email, senha, telefone })
+    const { nome, email, senha, telefone, token_otp, token_otp_email } = req.body
+    if (!nome || !email || !senha) return res.status(400).json({ erro: 'Preencha todos os campos' })
+    const tel = telefone ? String(telefone).replace(/\D/g, '') : ''
+    if (tel) {
+      if (!token_otp) return res.status(400).json({ erro: 'Verifique seu WhatsApp antes de criar a conta' })
+      const valido = await otpService.checarToken(telefone, token_otp)
+      if (!valido) return res.status(400).json({ erro: 'Verificação de telefone inválida ou expirada' })
+    } else {
+      if (!token_otp_email) return res.status(400).json({ erro: 'Verifique seu e-mail antes de criar a conta' })
+      const valido = await otpService.checarTokenEmail(email, token_otp_email)
+      if (!valido) return res.status(400).json({ erro: 'Verificação de e-mail inválida ou expirada' })
+    }
+    const id = await authService.registro({ nome, email, senha, telefone: tel || null })
     res.status(201).json({ id_usuario: id })
   } catch (e) {
     console.error('[registro]', e)
@@ -20,9 +27,9 @@ async function registro(req, res) {
 
 async function otpEnviar(req, res) {
   try {
-    const { telefone } = req.body
-    if (!telefone) return res.status(400).json({ erro: 'Telefone obrigatório' })
-    const r = await otpService.enviar(telefone)
+    const { telefone, email } = req.body
+    if (!telefone && !email) return res.status(400).json({ erro: 'Telefone ou e-mail obrigatório' })
+    const r = email ? await otpService.enviarEmail(email) : await otpService.enviar(telefone)
     res.json(r)
   } catch (e) {
     const status = e.status || 500
@@ -32,9 +39,10 @@ async function otpEnviar(req, res) {
 
 async function otpVerificar(req, res) {
   try {
-    const { telefone, codigo } = req.body
-    if (!telefone || !codigo) return res.status(400).json({ erro: 'Telefone e código obrigatórios' })
-    const r = await otpService.verificar(telefone, codigo)
+    const { telefone, email, codigo } = req.body
+    if (!codigo) return res.status(400).json({ erro: 'Código obrigatório' })
+    if (!telefone && !email) return res.status(400).json({ erro: 'Telefone ou e-mail obrigatório' })
+    const r = email ? await otpService.verificarEmail(email, codigo) : await otpService.verificar(telefone, codigo)
     res.json(r)
   } catch (e) {
     res.status(e.status || 500).json({ erro: e.message })

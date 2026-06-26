@@ -15,5 +15,6 @@ router.get('/',          ctrl.buscar)
 router.put('/',          ctrl.atualizar)
 router.put('/senha',     ctrl.trocarSenha)
 router.post('/foto',     upload.single('foto'), ctrl.uploadFoto)
+router.delete('/',       ctrl.excluirConta)
 
 module.exports = router

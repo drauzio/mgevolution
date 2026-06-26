@@ -162,6 +162,9 @@ export default function EsqueciSenha() {
       style={s.root}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
+      <TouchableOpacity style={s.voltar} onPress={voltar} activeOpacity={0.7}>
+        <ArrowLeft size={22} color="#1A1A1A" strokeWidth={2.5} />
+      </TouchableOpacity>
       <ScrollView contentContainerStyle={s.scroll} keyboardShouldPersistTaps="handled">
 
         <View style={s.topArea}>
@@ -180,9 +183,6 @@ export default function EsqueciSenha() {
           {etapa === 'telefone' && (
             <>
               <View style={s.cardHeader}>
-                <TouchableOpacity onPress={voltar} activeOpacity={0.7} style={s.voltarBtn}>
-                  <ArrowLeft size={18} color="#8A7F76" strokeWidth={2.5} />
-                </TouchableOpacity>
                 <Phone size={20} color="#CC1A1A" strokeWidth={2} />
                 <Text style={s.cardTitle}>Recuperar senha</Text>
               </View>
@@ -219,9 +219,6 @@ export default function EsqueciSenha() {
           {etapa === 'otp' && (
             <>
               <View style={[s.cardHeader, { justifyContent: 'center' }]}>
-                <TouchableOpacity onPress={voltar} activeOpacity={0.7} style={[s.voltarBtn, { position: 'absolute', left: 0 }]}>
-                  <ArrowLeft size={18} color="#8A7F76" strokeWidth={2.5} />
-                </TouchableOpacity>
                 <Text style={[s.cardTitle, { textAlign: 'center' }]}>Verificação</Text>
               </View>
               <Text style={[s.cardSub, { textAlign: 'center', marginBottom: 28 }]}>
@@ -256,9 +253,6 @@ export default function EsqueciSenha() {
           {etapa === 'senha' && (
             <>
               <View style={s.cardHeader}>
-                <TouchableOpacity onPress={voltar} activeOpacity={0.7} style={s.voltarBtn}>
-                  <ArrowLeft size={18} color="#8A7F76" strokeWidth={2.5} />
-                </TouchableOpacity>
                 <LockKeyhole size={20} color="#CC1A1A" strokeWidth={2} />
                 <Text style={s.cardTitle}>Nova senha</Text>
               </View>
@@ -336,7 +330,12 @@ const s = StyleSheet.create({
   cardTitle:  { flex: 1, fontSize: 20, fontWeight: '900', color: '#1A1A1A', textTransform: 'uppercase', letterSpacing: 1 },
   cardSub:    { fontSize: 13, color: '#8A7F76', marginBottom: 24 },
 
-  voltarBtn: { padding: 4 },
+  voltar: {
+    width: 40, height: 40, borderRadius: 12, marginTop: 56, marginLeft: 16,
+    backgroundColor: '#fff', alignItems: 'center', justifyContent: 'center',
+    shadowColor: '#000', shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.08, shadowRadius: 4, elevation: 3,
+  },
 
   field:    { marginBottom: 16 },
   label:    { fontSize: 11, fontWeight: '700', color: '#8A7F76', textTransform: 'uppercase', letterSpacing: 1.5, marginBottom: 8 },

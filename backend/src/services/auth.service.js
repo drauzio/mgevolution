@@ -51,7 +51,14 @@ async function registro({ nome, email, senha, telefone }) {
   const pool = await getPool()
   const tel  = telefone ? telefone.replace(/\D/g, '') : null
 
-  // Bloqueia telefone duplicado
+  // Bloqueia e-mail duplicado (apenas usuários ativos)
+  const dupEmail = await pool.request()
+    .input('email', sql.VarChar(120), email)
+    .query(`SELECT 1 FROM dbo.usuario WHERE email = @email AND ativo = 1`)
+  if (dupEmail.recordset.length > 0)
+    throw Object.assign(new Error('E-mail já cadastrado'), { number: 2627 })
+
+  // Bloqueia telefone duplicado (apenas usuários ativos)
   if (tel) {
     const dupTel = await pool.request()
       .input('tel', sql.VarChar(20), tel)

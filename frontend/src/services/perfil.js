@@ -8,3 +8,4 @@ export const uploadFoto   = (file)   => {
   form.append('foto', file)
   return api.post('/perfil/foto', form, { headers: { 'Content-Type': 'multipart/form-data' } }).then(r => r.data)
 }
+export const excluirConta = ()       => api.delete('/perfil').then(r => r.data)

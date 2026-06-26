@@ -100,6 +100,7 @@ export default function Cadastro() {
   const router = useRouter();
 
   const [etapa, setEtapa]             = useState('form'); // 'form' | 'otp' | 'ok'
+  const [metodoOTP, setMetodoOTP]     = useState('email'); // 'whatsapp' | 'email'
   const [nome, setNome]               = useState('');
   const [email, setEmail]             = useState('');
   const [telefone, setTelefone]       = useState('');
@@ -121,10 +122,13 @@ export default function Cadastro() {
 
   async function enviarOTP() {
     const tel = telefone.replace(/\D/g, '');
+    const metodo = tel.length >= 10 ? 'whatsapp' : 'email';
+    setMetodoOTP(metodo);
     setLoading(true);
     try {
-      const res = await api.post('/auth/otp/enviar', { telefone: tel });
-      setAguardar(res.data?.aguardar ?? 120);
+      const body = metodo === 'whatsapp' ? { telefone: tel } : { email: email.trim().toLowerCase() };
+      const res = await api.post('/auth/otp/enviar', body);
+      setAguardar(res.data?.aguardar ?? 60);
       setPodReenviar(false);
       setEtapa('otp');
     } catch (err) {
@@ -140,11 +144,11 @@ export default function Cadastro() {
   async function handleContinuar() {
     const e = email.trim().toLowerCase();
     const tel = telefone.replace(/\D/g, '');
-    if (!nome.trim())         return Alert.alert('Atenção', 'Informe seu nome.');
-    if (!e || !e.includes('@')) return Alert.alert('Atenção', 'E-mail inválido.');
-    if (tel.length < 10)      return Alert.alert('Atenção', 'Telefone inválido.');
-    if (senha.length < 6)     return Alert.alert('Atenção', 'Senha com mínimo 6 caracteres.');
-    if (senha !== confirmar)  return Alert.alert('Atenção', 'Senhas não coincidem.');
+    if (!nome.trim())              return Alert.alert('Atenção', 'Informe seu nome.');
+    if (!e || !e.includes('@'))    return Alert.alert('Atenção', 'E-mail inválido.');
+    if (tel.length > 0 && tel.length < 10) return Alert.alert('Atenção', 'Telefone inválido.');
+    if (senha.length < 6)          return Alert.alert('Atenção', 'Senha com mínimo 6 caracteres.');
+    if (senha !== confirmar)       return Alert.alert('Atenção', 'Senhas não coincidem.');
     await enviarOTP();
   }
 
@@ -153,17 +157,19 @@ export default function Cadastro() {
     const tel = telefone.replace(/\D/g, '');
     setLoading(true);
     try {
-      // 1. Verifica o código e obtém o token UUID
-      const resVerif = await api.post('/auth/otp/verificar', { telefone: tel, codigo: otp });
+      const body = metodoOTP === 'whatsapp'
+        ? { telefone: tel, codigo: otp }
+        : { email: email.trim().toLowerCase(), codigo: otp };
+      const resVerif = await api.post('/auth/otp/verificar', body);
       const { token } = resVerif.data;
 
-      // 2. Cria a conta com o token
       await api.post('/auth/registro', {
-        nome: nome.trim(),
-        email: email.trim().toLowerCase(),
-        telefone: tel,
+        nome:            nome.trim(),
+        email:           email.trim().toLowerCase(),
+        telefone:        tel || '',
         senha,
-        token_otp: token,
+        token_otp:       metodoOTP === 'whatsapp' ? token : undefined,
+        token_otp_email: metodoOTP === 'email'    ? token : undefined,
       });
       setEtapa('ok');
     } catch (err) {
@@ -205,13 +211,15 @@ export default function Cadastro() {
           <View style={s.card}>
             <View style={[s.cardHeader, { justifyContent: 'center', marginBottom: 8 }]}>
               <View style={s.whatsappBadge}>
-                <MessageCircle size={22} color="#15803D" strokeWidth={2} />
+                <MessageCircle size={22} color={metodoOTP === 'whatsapp' ? '#15803D' : '#CC1A1A'} strokeWidth={2} />
               </View>
             </View>
             <Text style={[s.cardTitle, { textAlign: 'center' }]}>Verificação</Text>
             <Text style={[s.cardSub, { textAlign: 'center', marginBottom: 28 }]}>
-              Enviamos um código de 6 dígitos para seu WhatsApp{'\n'}
-              <Text style={{ fontWeight: '700', color: '#1A1A1A' }}>{telefone}</Text>
+              {metodoOTP === 'whatsapp'
+                ? <>Enviamos um código de 6 dígitos para seu WhatsApp{'\n'}<Text style={{ fontWeight: '700', color: '#1A1A1A' }}>{telefone}</Text></>
+                : <>Enviamos um código de 6 dígitos para o e-mail{'\n'}<Text style={{ fontWeight: '700', color: '#1A1A1A' }}>{email.trim().toLowerCase()}</Text></>
+              }
             </Text>
 
             <OTPInput value={otp} onChange={setOtp} />
@@ -260,7 +268,7 @@ export default function Cadastro() {
           </View>
           <Text style={s.cardSub}>Preencha seus dados para começar</Text>
 
-          <Campo icon={UserRound} label="Nome completo">
+          <Campo icon={UserRound} label="Nome completo *">
             <TextInput
               style={s.input}
               placeholder="Seu nome"
@@ -271,7 +279,7 @@ export default function Cadastro() {
             />
           </Campo>
 
-          <Campo icon={Mail} label="E-mail">
+          <Campo icon={Mail} label="E-mail *">
             <TextInput
               style={s.input}
               placeholder="seu@email.com"
@@ -284,7 +292,7 @@ export default function Cadastro() {
             />
           </Campo>
 
-          <Campo icon={Phone} label="WhatsApp (com DDD)">
+          <Campo icon={Phone} label="WhatsApp (opcional)">
             <TextInput
               style={s.input}
               placeholder="(11) 99999-9999"
@@ -295,7 +303,7 @@ export default function Cadastro() {
             />
           </Campo>
 
-          <Campo icon={LockKeyhole} label="Senha">
+          <Campo icon={LockKeyhole} label="Senha *">
             <TextInput
               style={s.input}
               placeholder="Mínimo 6 caracteres"
@@ -309,7 +317,7 @@ export default function Cadastro() {
             </TouchableOpacity>
           </Campo>
 
-          <Campo icon={LockKeyhole} label="Confirmar senha">
+          <Campo icon={LockKeyhole} label="Confirmar senha *">
             <TextInput
               style={s.input}
               placeholder="Repita a senha"

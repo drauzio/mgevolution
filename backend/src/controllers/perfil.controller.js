@@ -35,4 +35,11 @@ async function trocarSenha(req, res, next) {
   }
 }
 
-module.exports = { buscar, atualizar, uploadFoto, trocarSenha }
+async function excluirConta(req, res, next) {
+  try {
+    await svc.excluirConta(req.usuario.id)
+    res.json({ ok: true })
+  } catch (e) { next(e) }
+}
+
+module.exports = { buscar, atualizar, uploadFoto, trocarSenha, excluirConta }

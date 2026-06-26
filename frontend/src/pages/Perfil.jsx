@@ -1,9 +1,10 @@
 import { useState, useRef } from 'react'
 import useSWR, { mutate } from 'swr'
 import { useNavigate } from 'react-router-dom'
-import { ArrowLeft, Camera, User, Lock, Save, Check, Eye, EyeOff } from 'lucide-react'
-import { buscar, atualizar, trocarSenha, uploadFoto } from '../services/perfil'
-import { mascaraFone } from '../utils/formatters'
+import { ArrowLeft, Camera, User, Lock, Save, Check, Eye, EyeOff, Trash2 } from 'lucide-react'
+import { buscar, atualizar, trocarSenha, uploadFoto, excluirConta } from '../services/perfil'
+import { mascaraFone, mascaraCPF } from '../utils/formatters'
+import { validarCPF } from '../utils/validators'
 import { useAuthContext } from '../context/AuthContext'
 
 const inputStyle = {
@@ -68,12 +69,13 @@ function BotaoSalvar({ salvando, salvo, onClick }) {
 
 export default function Perfil() {
   const navigate = useNavigate()
-  const { usuario: usuarioCtx } = useAuthContext()
+  const { usuario: usuarioCtx, logout } = useAuthContext()
   const { data: perfil, isLoading } = useSWR('perfil', buscar)
   const fotoRef = useRef()
 
   // form dados pessoais
   const [form, setForm]           = useState(null)
+  const [erroCPF, setErroCPF]     = useState(null)
   const [salvandoDados, setSalvandoDados] = useState(false)
   const [salvoDados,    setSalvoDados]    = useState(false)
 
@@ -88,11 +90,20 @@ export default function Perfil() {
   // upload foto
   const [uploadando,  setUploadando]  = useState(false)
 
+  // exclusão de conta
+  const [confirmDelete, setConfirmDelete] = useState(false)
+  const [excluindo,     setExcluindo]     = useState(false)
+
   const dados = form ?? perfil
   const set   = (campo, val) => setForm(f => ({ ...(f ?? perfil), [campo]: val }))
 
   async function salvarDados() {
     if (!dados) return
+    const cpfDigitos = (dados.cpf ?? '').replace(/\D/g, '')
+    if (cpfDigitos && cpfDigitos !== '00000000000') {
+      if (!validarCPF(cpfDigitos)) { setErroCPF('CPF inválido'); return }
+    }
+    setErroCPF(null)
     setSalvandoDados(true)
     try {
       await atualizar({
@@ -101,6 +112,7 @@ export default function Perfil() {
         data_nascimento: dados.data_nascimento,
         sexo:            dados.sexo,
         bio:             dados.bio,
+        cpf:             dados.cpf,
       })
       await mutate('perfil')
       setForm(null)
@@ -137,6 +149,18 @@ export default function Perfil() {
     } catch { /* silencia */ }
     setUploadando(false)
     e.target.value = ''
+  }
+
+  async function handleExcluirConta() {
+    setExcluindo(true)
+    try {
+      await excluirConta()
+      logout()
+      navigate('/login')
+    } catch {
+      setExcluindo(false)
+      setConfirmDelete(false)
+    }
   }
 
   const inicial = (dados?.nome || usuarioCtx?.nome || 'A')[0].toUpperCase()
@@ -212,6 +236,18 @@ export default function Perfil() {
             <Campo label="E-mail">
               <input value={dados?.email ?? ''} disabled style={{ ...inputStyle, background: '#F7F3EE', color: '#8A7F76' }} />
             </Campo>
+            <Campo label="CPF">
+              <input
+                value={mascaraCPF(dados?.cpf === '00000000000' ? '' : (dados?.cpf ?? ''))}
+                onChange={e => { setErroCPF(null); set('cpf', mascaraCPF(e.target.value)) }}
+                placeholder="000.000.000-00"
+                maxLength={14}
+                style={{ ...inputStyle, borderColor: erroCPF ? '#EF4444' : undefined }}
+                onFocus={e => e.target.style.borderColor = erroCPF ? '#EF4444' : '#CC1A1A'}
+                onBlur={e => e.target.style.borderColor = erroCPF ? '#EF4444' : '#E0D6CA'}
+              />
+              {erroCPF && <p style={{ fontSize: 11, color: '#EF4444', paddingLeft: 4 }}>{erroCPF}</p>}
+            </Campo>
             <Campo label="Telefone / WhatsApp">
               <input value={mascaraFone(dados?.telefone ?? '')} onChange={e => set('telefone', mascaraFone(e.target.value))} type="tel" placeholder="(00) 00000-0000" style={inputStyle}
                 onFocus={e => e.target.style.borderColor = '#CC1A1A'} onBlur={e => e.target.style.borderColor = '#E0D6CA'} />
@@ -267,6 +303,62 @@ export default function Perfil() {
         </div>
 
       </div>
+
+      {/* Card: Excluir conta */}
+      <div style={{ background: '#FFF', border: '1px solid #FECACA', borderRadius: 16 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '14px 20px', borderBottom: '1px solid #FEE2E2' }}>
+          <div style={{ width: 32, height: 32, borderRadius: 9, background: 'rgba(239,68,68,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Trash2 size={15} color="#DC2626" />
+          </div>
+          <span style={{ fontSize: 15, fontWeight: 700, color: '#1A1A1A' }}>Excluir Conta</span>
+        </div>
+        <div style={{ padding: '18px 20px', display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <p style={{ fontSize: 13, color: '#6B6560' }}>
+            A exclusão é permanente e irrecuperável. Todos os seus dados pessoais serão apagados e o acesso será encerrado.
+          </p>
+          {!confirmDelete ? (
+            <button
+              type="button"
+              onClick={() => setConfirmDelete(true)}
+              style={{
+                height: 42, borderRadius: 10, border: '1px solid #FECACA',
+                background: '#FFF5F5', color: '#DC2626', fontSize: 13, fontWeight: 700,
+                cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+              }}
+            >
+              <Trash2 size={14} /> Excluir minha conta
+            </button>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <p style={{ fontSize: 13, color: '#DC2626', fontWeight: 600 }}>
+                Tem certeza? Esta ação não pode ser desfeita.
+              </p>
+              <div style={{ display: 'flex', gap: 10 }}>
+                <button
+                  type="button"
+                  onClick={() => setConfirmDelete(false)}
+                  style={{ flex: 1, height: 42, borderRadius: 10, border: '1px solid #E0D6CA', background: '#FFF', color: '#6B6560', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  onClick={handleExcluirConta}
+                  disabled={excluindo}
+                  style={{
+                    flex: 1, height: 42, borderRadius: 10, border: 'none',
+                    background: '#DC2626', color: '#FFF', fontSize: 13, fontWeight: 700,
+                    cursor: excluindo ? 'not-allowed' : 'pointer', opacity: excluindo ? 0.7 : 1,
+                  }}
+                >
+                  {excluindo ? 'Excluindo…' : 'Sim, excluir'}
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
     </div>
   )
 }

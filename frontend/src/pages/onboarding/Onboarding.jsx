@@ -65,9 +65,10 @@ export default function Onboarding() {
     if (!pergunta) return false
     if (!pergunta.obrigatorio) return true
     const r = resposta(pergunta)
-    if (pergunta.tipo === 'opcao') return r?.id_opcao != null
-    if (pergunta.tipo === 'bool') return r?.bit != null
-    if (pergunta.tipo === 'numero') return r?.numero != null && r.numero > 0
+    if (pergunta.tipo === 'opcao')       return r?.id_opcao != null
+    if (pergunta.tipo === 'bool')        return r?.bit != null
+    if (pergunta.codigo === 'idade')     return !!r?.texto
+    if (pergunta.tipo === 'numero')      return r?.numero != null && r.numero > 0
     return true
   }
 
@@ -192,7 +193,27 @@ export default function Onboarding() {
             </div>
           )}
 
-          {pergunta.tipo === 'numero' && (
+          {pergunta.codigo === 'idade' && (
+            <div>
+              <input
+                type="date"
+                value={resposta(pergunta)?.iso ?? ''}
+                max={new Date().toISOString().slice(0, 10)}
+                onChange={e => {
+                  const iso = e.target.value
+                  if (!iso) { setResp(pergunta.id, {}); return }
+                  const [y, m, d] = iso.split('-')
+                  const texto = `${d}/${m}/${y}`
+                  setResp(pergunta.id, { iso, texto, resposta_texto: texto })
+                }}
+                style={{ width: '100%', height: 56, borderRadius: 12, border: '2px solid #E0D6CA', padding: '0 20px', fontSize: 16, fontWeight: 600, color: '#1A1A1A', outline: 'none', background: '#FFFFFF', boxSizing: 'border-box', cursor: 'pointer' }}
+                onFocus={e => e.target.style.borderColor = '#CC1A1A'}
+                onBlur={e => e.target.style.borderColor = '#E0D6CA'}
+              />
+            </div>
+          )}
+
+          {pergunta.tipo === 'numero' && pergunta.codigo !== 'idade' && (
             <div>
               <input
                 type="number"

@@ -6,12 +6,13 @@ import {
 import { useRouter } from 'expo-router';
 import { Eye, EyeOff, LockKeyhole, Mail, Dumbbell, ScanFace } from 'lucide-react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as SecureStore from 'expo-secure-store';
 import { useAuth } from '../../src/contexts/AuthContext';
 import { Loading } from '../../src/components/Loading';
 import api from '../../src/services/api';
 
 export default function Login() {
-  const { entrar, faceIdAtivo, loginComFaceId } = useAuth();
+  const { entrar, faceIdAtivo, loginComFaceId, sessaoExpirada, setSessaoExpirada } = useAuth();
   const router = useRouter();
 
   const [email, setEmail]               = useState('');
@@ -19,6 +20,7 @@ export default function Login() {
   const [mostrarSenha, setMostrarSenha] = useState(false);
   const [loading, setLoading]           = useState(false);
   const [lembrar, setLembrar]           = useState(false);
+  const [mostrarFaceId, setMostrarFaceId] = useState(false);
 
   useEffect(() => {
     AsyncStorage.getItem('login_email').then(v => {
@@ -27,13 +29,30 @@ export default function Login() {
   }, []);
 
   useEffect(() => {
-    if (faceIdAtivo) handleFaceId();
+    if (sessaoExpirada) {
+      Alert.alert('Sessão expirada', 'Entre com seu e-mail e senha para continuar.');
+      setSessaoExpirada(false);
+    }
+  }, [sessaoExpirada]);
+
+  useEffect(() => {
+    if (faceIdAtivo) {
+      SecureStore.getItemAsync('mg_token')
+        .then(t => setMostrarFaceId(!!t))
+        .catch(() => setMostrarFaceId(false));
+    } else {
+      setMostrarFaceId(false);
+    }
   }, [faceIdAtivo]);
 
   async function handleFaceId() {
     try {
-      const ok = await loginComFaceId();
-      if (ok) router.replace('/(app)');
+      const resultado = await loginComFaceId();
+      if (resultado === 'ok') router.replace('/(app)');
+      else if (resultado === 'expirado') {
+        setMostrarFaceId(false);
+        Alert.alert('Sessão expirada', 'Entre com seu e-mail e senha para continuar.');
+      }
     } catch {}
   }
 
@@ -149,7 +168,7 @@ export default function Login() {
             }
           </TouchableOpacity>
 
-          {faceIdAtivo && (
+          {mostrarFaceId && (
             <TouchableOpacity style={s.btnFaceId} onPress={handleFaceId} activeOpacity={0.85}>
               <ScanFace size={22} color="#CC1A1A" strokeWidth={2} />
               <Text style={s.btnFaceIdText}>Entrar com Face ID</Text>

@@ -5,13 +5,14 @@ import {
 } from 'react-native';
 import {
   UserRound, LogOut, ScanFace, ChevronRight,
-  Camera, Pencil, Check, X, Calendar, User,
+  Camera, Pencil, Check, X, Calendar, User, Trash2,
 } from 'lucide-react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { useAuth } from '../../src/contexts/AuthContext';
 import { useRouter } from 'expo-router';
 import api from '../../src/services/api';
-import { formatarData, dataParaISO, dataParaDisplay, formatarTelefone } from '../../src/utils/format';
+import { formatarData, dataParaISO, dataParaDisplay, formatarTelefone, formatarCPF } from '../../src/utils/format';
+import { validarCPF } from '../../src/utils/validators';
 
 export default function Perfil() {
   const { usuario, sair, faceIdAtivo, habilitarFaceId, desabilitarFaceId } = useAuth();
@@ -23,20 +24,23 @@ export default function Perfil() {
   const [salvando, setSalvando]       = useState(false);
   const [uploadFoto, setUploadFoto]   = useState(false);
   const [loadingFaceId, setLoadingFaceId] = useState(false);
+  const [excluindo, setExcluindo]     = useState(false);
 
   const [form, setForm] = useState({
-    nome: '', telefone: '', data_nascimento: '', sexo: '', bio: '',
+    nome: '', telefone: '', data_nascimento: '', sexo: '', bio: '', cpf: '',
   });
 
   const carregarPerfil = useCallback(async () => {
     try {
       const res = await api.get('/perfil');
       setPerfil(res.data);
+      const cpfBruto = res.data.cpf ?? ''
       setForm({
         nome:             res.data.nome    ?? '',
         telefone:         formatarTelefone(res.data.telefone ?? ''),
         data_nascimento:  dataParaDisplay(res.data.data_nascimento ?? ''),
         sexo:             res.data.sexo   ?? '',
+        cpf:              cpfBruto === '00000000000' ? '' : formatarCPF(cpfBruto),
       });
     } catch {
       Alert.alert('Erro', 'Não foi possível carregar o perfil.');
@@ -49,6 +53,10 @@ export default function Perfil() {
 
   async function salvar() {
     if (!form.nome.trim()) { Alert.alert('Atenção', 'Nome é obrigatório.'); return; }
+    const cpfDigitos = form.cpf.replace(/\D/g, '')
+    if (cpfDigitos && cpfDigitos !== '00000000000') {
+      if (!validarCPF(cpfDigitos)) { Alert.alert('Atenção', 'CPF inválido.'); return; }
+    }
     setSalvando(true);
     try {
       await api.put('/perfil', {
@@ -56,6 +64,7 @@ export default function Perfil() {
         telefone:        form.telefone.replace(/\D/g, ''),
         data_nascimento: dataParaISO(form.data_nascimento),
         sexo:            form.sexo,
+        cpf:             form.cpf,
       });
       await carregarPerfil();
       setEditando(false);
@@ -123,14 +132,34 @@ export default function Perfil() {
     ]);
   }
 
+  async function handleExcluirConta() {
+    Alert.alert(
+      'Excluir conta',
+      'Esta ação é permanente e irrecuperável. Todos os seus dados serão apagados.',
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Sim, excluir',
+          style: 'destructive',
+          onPress: async () => {
+            setExcluindo(true);
+            try {
+              await api.delete('/perfil');
+              await sair();
+              router.replace('/(auth)/login');
+            } catch {
+              Alert.alert('Erro', 'Não foi possível excluir a conta. Tente novamente.');
+              setExcluindo(false);
+            }
+          },
+        },
+      ]
+    );
+  }
+
   async function handleSair() {
-    Alert.alert('Sair', 'Deseja encerrar a sessão?', [
-      { text: 'Cancelar', style: 'cancel' },
-      {
-        text: 'Sair', style: 'destructive',
-        onPress: async () => { await sair(); router.replace('/(auth)/login'); },
-      },
-    ]);
+    await sair();
+    router.replace('/(auth)/login');
   }
 
   async function toggleFaceId(valor) {
@@ -233,6 +262,15 @@ export default function Perfil() {
           keyboardType="number-pad"
         />
         <Campo
+          icon={<UserRound size={16} color="#8A7F76" />}
+          label="CPF"
+          value={form.cpf}
+          editando={editando}
+          onChangeText={v => setForm(f => ({ ...f, cpf: formatarCPF(v) }))}
+          placeholder="000.000.000-00"
+          keyboardType="number-pad"
+        />
+        <Campo
           icon={<Calendar size={16} color="#8A7F76" />}
           label="Nascimento"
           value={form.data_nascimento}
@@ -283,6 +321,25 @@ export default function Perfil() {
           </View>
           <ChevronRight size={18} color="#C4BAB2" />
         </TouchableOpacity>
+      </View>
+
+      {/* Zona de perigo */}
+      <View style={[s.secao, { borderWidth: 1, borderColor: '#FECACA' }]}>
+        <Text style={[s.secaoTitle, { color: '#DC2626' }]}>Exclusão de conta</Text>
+        <View style={{ paddingHorizontal: 18, paddingBottom: 16 }}>
+          <Text style={{ fontSize: 12, color: '#8A7F76', marginBottom: 14, lineHeight: 18 }}>
+            A exclusão é permanente e irrecuperável. Todos os seus dados pessoais serão apagados.
+          </Text>
+          <TouchableOpacity
+            style={s.btnExcluir}
+            onPress={handleExcluirConta}
+            disabled={excluindo}
+            activeOpacity={0.85}
+          >
+            <Trash2 size={16} color="#DC2626" strokeWidth={2} />
+            <Text style={s.btnExcluirText}>{excluindo ? 'Excluindo…' : 'Excluir minha conta'}</Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
     </ScrollView>
@@ -414,6 +471,13 @@ const s = StyleSheet.create({
   itemLabel:    { fontSize: 15, fontWeight: '600', color: '#1A1A1A' },
   itemLabelRed: { fontSize: 15, fontWeight: '600', color: '#CC1A1A' },
   itemSub:      { fontSize: 12, color: '#8A7F76', marginTop: 2 },
+
+  btnExcluir: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
+    borderWidth: 1.5, borderColor: '#FECACA', borderRadius: 12,
+    paddingVertical: 13, backgroundColor: '#FFF5F5',
+  },
+  btnExcluirText: { fontSize: 14, fontWeight: '700', color: '#DC2626' },
 });
 
 const c = StyleSheet.create({

@@ -10,7 +10,10 @@ import { APP } from '../../config/app'
 const schema = z.object({
   nome:      z.string().min(3, 'Nome obrigatório'),
   email:     z.string().email('E-mail inválido'),
-  telefone:  z.string().min(10, 'Telefone inválido').max(20),
+  telefone:  z.string().optional().refine(
+    v => !v || v.replace(/\D/g, '').length >= 10,
+    { message: 'Telefone inválido' }
+  ),
   senha:     z.string().min(6, 'Mínimo 6 caracteres'),
   confirmar: z.string(),
 }).refine(d => d.senha === d.confirmar, {
@@ -142,7 +145,50 @@ export default function Cadastro() {
   })
 
   const telefone = watch('telefone', '')
+  const email    = watch('email', '')
   const telefoneValido = telefone.replace(/\D/g, '').length >= 10
+  const emailValido    = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
+
+  // OTP e-mail state
+  const [faseOTPEmail,      setFaseOTPEmail]      = useState('idle')
+  const [erroOTPEmail,      setErroOTPEmail]      = useState(null)
+  const [tokenOTPEmail,     setTokenOTPEmail]     = useState(null)
+  const [countdownEmail,    setCountdownEmail]    = useState(0)
+  const [podeReenviarEmail, setPodeReenviarEmail] = useState(false)
+
+  async function enviarOTPEmail() {
+    if (!emailValido) return
+    setFaseOTPEmail('enviando')
+    setErroOTPEmail(null)
+    setPodeReenviarEmail(false)
+    try {
+      await api.post('/auth/otp/enviar', { email })
+      setFaseOTPEmail('aguardando')
+      setCountdownEmail(60)
+    } catch (e) {
+      const aguardar = e.response?.data?.aguardar
+      if (aguardar) {
+        setFaseOTPEmail('aguardando')
+        setCountdownEmail(aguardar)
+      } else {
+        setFaseOTPEmail('idle')
+        setErroOTPEmail(e.response?.data?.erro || 'Erro ao enviar código')
+      }
+    }
+  }
+
+  async function verificarOTPEmail(codigo) {
+    setFaseOTPEmail('verificando')
+    setErroOTPEmail(null)
+    try {
+      const r = await api.post('/auth/otp/verificar', { email, codigo })
+      setTokenOTPEmail(r.data.token)
+      setFaseOTPEmail('ok')
+    } catch (e) {
+      setErroOTPEmail(e.response?.data?.erro || 'Código incorreto')
+      setFaseOTPEmail('aguardando')
+    }
+  }
 
   async function enviarOTP() {
     if (!telefoneValido) return
@@ -179,15 +225,18 @@ export default function Cadastro() {
   }
 
   async function onSubmit(data) {
-    if (faseOTP !== 'ok') { setErro('Verifique seu WhatsApp antes de continuar'); return }
+    const temTelefone = !!data.telefone && data.telefone.replace(/\D/g, '').length >= 10
+    if (temTelefone && faseOTP !== 'ok')      { setErro('Verifique seu WhatsApp antes de continuar'); return }
+    if (!temTelefone && faseOTPEmail !== 'ok') { setErro('Verifique seu e-mail antes de continuar'); return }
     setErro(null)
     try {
       await api.post('/auth/registro', {
-        nome:      data.nome,
-        email:     data.email,
-        telefone:  data.telefone,
-        senha:     data.senha,
-        token_otp: tokenOTP,
+        nome:            data.nome,
+        email:           data.email,
+        telefone:        data.telefone || '',
+        senha:           data.senha,
+        token_otp:       temTelefone ? tokenOTP      : undefined,
+        token_otp_email: !temTelefone ? tokenOTPEmail : undefined,
       })
       navigate('/login?cadastrado=1')
     } catch (e) {
@@ -266,12 +315,78 @@ export default function Cadastro() {
           <form onSubmit={handleSubmit(onSubmit)} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
 
             <Campo icon={UserRound} error={errors.nome?.message}>
-              <input {...register('nome')} type="text" placeholder="Nome completo" autoComplete="name" style={inputStyle} />
+              <input {...register('nome')} type="text" placeholder="Nome completo *" autoComplete="name" style={inputStyle} />
             </Campo>
 
-            <Campo icon={Mail} error={errors.email?.message}>
-              <input {...register('email')} type="email" placeholder="E-mail" autoComplete="email" style={inputStyle} />
+            {/* ── Campo e-mail + botão verificar (quando sem telefone) ── */}
+            <Campo
+              icon={faseOTPEmail === 'ok' ? Check : Mail}
+              error={errors.email?.message || (!telefoneValido ? erroOTPEmail : null)}
+              extra={
+                !telefoneValido && faseOTPEmail !== 'ok' && (
+                  <button
+                    type="button"
+                    onClick={enviarOTPEmail}
+                    disabled={!emailValido || faseOTPEmail === 'enviando' || faseOTPEmail === 'verificando' || (faseOTPEmail === 'aguardando' && !podeReenviarEmail)}
+                    style={{
+                      flexShrink: 0, height: 40, paddingInline: 12, border: 'none',
+                      borderLeft: '1px solid #E0D6CA',
+                      background: '#F7F3EE', fontSize: 12, fontWeight: 700,
+                      color: emailValido ? '#CC1A1A' : '#B0A89E',
+                      cursor: emailValido ? 'pointer' : 'default',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    {faseOTPEmail === 'enviando' ? 'Enviando…' : faseOTPEmail === 'aguardando' && !podeReenviarEmail ? '•••' : 'Verificar'}
+                  </button>
+                )
+              }
+            >
+              <input
+                {...register('email')}
+                type="email"
+                placeholder="E-mail *"
+                autoComplete="email"
+                disabled={faseOTPEmail === 'ok'}
+                style={{
+                  ...inputStyle,
+                  color: faseOTPEmail === 'ok' ? '#15803d' : '#1A1A1A',
+                  fontWeight: faseOTPEmail === 'ok' ? 700 : 400,
+                }}
+              />
             </Campo>
+
+            {/* ── Painel OTP e-mail ── */}
+            {!telefoneValido && (faseOTPEmail === 'aguardando' || faseOTPEmail === 'verificando') && (
+              <div style={{ background: '#FDFAF7', border: '1px solid #E8E2DC', borderRadius: 10, padding: '16px 12px', display: 'flex', flexDirection: 'column', gap: 12 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <ShieldCheck size={15} color="#CC1A1A" />
+                  <p style={{ fontSize: 12, color: '#6B6560' }}>
+                    Código enviado para <strong>{email}</strong>
+                  </p>
+                </div>
+                <OTPInput onComplete={verificarOTPEmail} key={faseOTPEmail === 'aguardando' ? 'einput' : 'everif'} />
+                {faseOTPEmail === 'verificando' && (
+                  <p style={{ fontSize: 12, color: '#8A7F76', textAlign: 'center' }}>Verificando…</p>
+                )}
+                <div style={{ display: 'flex', justifyContent: 'center' }}>
+                  {podeReenviarEmail
+                    ? <button type="button" onClick={enviarOTPEmail} style={{ fontSize: 12, color: '#CC1A1A', fontWeight: 700, background: 'none', border: 'none', cursor: 'pointer' }}>
+                        Reenviar código
+                      </button>
+                    : <Countdown segundos={countdownEmail} onZero={() => setPodeReenviarEmail(true)} />
+                  }
+                </div>
+              </div>
+            )}
+
+            {/* ── Confirmação de e-mail verificado ── */}
+            {!telefoneValido && faseOTPEmail === 'ok' && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 12px', background: '#F0FDF4', border: '1px solid #86EFAC', borderRadius: 8 }}>
+                <Check size={14} color="#15803d" />
+                <p style={{ fontSize: 12, color: '#15803d', fontWeight: 600 }}>E-mail verificado com sucesso</p>
+              </div>
+            )}
 
             {/* ── Campo telefone + botão verificar ── */}
             <Campo
@@ -300,8 +415,8 @@ export default function Cadastro() {
               <input
                 {...register('telefone')}
                 type="tel"
-                placeholder="WhatsApp (62) 99999-9999"
-                autoComplete="tel"
+                placeholder="WhatsApp (62) 99999-9999 (opcional)"
+                autoComplete="off"
                 disabled={faseOTP === 'ok'}
                 style={{
                   ...inputStyle,
@@ -347,11 +462,11 @@ export default function Cadastro() {
             )}
 
             <Campo icon={Lock} error={errors.senha?.message}>
-              <input {...register('senha')} type="password" placeholder="Senha (mín. 6 caracteres)" style={inputStyle} />
+              <input {...register('senha')} type="password" placeholder="Senha * (mín. 6 caracteres)" style={inputStyle} />
             </Campo>
 
             <Campo icon={Lock} error={errors.confirmar?.message}>
-              <input {...register('confirmar')} type="password" placeholder="Confirmar senha" style={inputStyle} />
+              <input {...register('confirmar')} type="password" placeholder="Confirmar senha *" style={inputStyle} />
             </Campo>
 
             {erro && (
@@ -362,9 +477,9 @@ export default function Cadastro() {
 
             <button
               type="submit"
-              disabled={isSubmitting || faseOTP !== 'ok'}
+              disabled={isSubmitting || (telefoneValido && faseOTP !== 'ok') || (!telefoneValido && faseOTPEmail !== 'ok')}
               className="w-full rounded-lg font-black text-[12px] text-white uppercase tracking-widest transition-all disabled:opacity-50 active:scale-[0.98]"
-              style={{ marginTop: 4, height: 40, background: 'linear-gradient(135deg, #A81515 0%, #CC1A1A 100%)', boxShadow: '0 4px 16px rgba(180,26,26,0.3)', border: 'none', cursor: faseOTP === 'ok' ? 'pointer' : 'not-allowed' }}
+              style={{ marginTop: 4, height: 40, background: 'linear-gradient(135deg, #A81515 0%, #CC1A1A 100%)', boxShadow: '0 4px 16px rgba(180,26,26,0.3)', border: 'none', cursor: (telefoneValido ? faseOTP === 'ok' : faseOTPEmail === 'ok') ? 'pointer' : 'not-allowed' }}
               onMouseEnter={e => faseOTP === 'ok' && (e.currentTarget.style.filter = 'brightness(1.08)')}
               onMouseLeave={e => e.currentTarget.style.filter = 'brightness(1)'}
             >
@@ -372,9 +487,14 @@ export default function Cadastro() {
             </button>
           </form>
 
-          {faseOTP !== 'ok' && (
+          {telefoneValido && faseOTP !== 'ok' && (
             <p style={{ fontSize: 11, color: '#B0A89E', textAlign: 'center', marginTop: 8 }}>
               Verifique o WhatsApp para continuar
+            </p>
+          )}
+          {!telefoneValido && faseOTPEmail !== 'ok' && (
+            <p style={{ fontSize: 11, color: '#B0A89E', textAlign: 'center', marginTop: 8 }}>
+              Verifique o e-mail para continuar
             </p>
           )}
 
