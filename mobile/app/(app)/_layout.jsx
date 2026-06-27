@@ -1,6 +1,7 @@
 import { useState, useCallback, useRef } from 'react';
 import { Tabs, useRouter, useFocusEffect } from 'expo-router';
 import { View, StyleSheet } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Home, Dumbbell, Salad, TrendingUp, UserRound } from 'lucide-react-native';
 import { useAuth } from '../../src/contexts/AuthContext';
 import { Loading } from '../../src/components/Loading';
@@ -19,6 +20,7 @@ function TabIcon({ focused, color, children }) {
 export default function AppLayout() {
   const { usuario, carregando } = useAuth();
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const [checkingOnboarding, setCheckingOnboarding] = useState(true);
   const checked = useRef(false);
 
@@ -54,7 +56,7 @@ export default function AppLayout() {
         headerShown: false,
         tabBarActiveTintColor: BRAND,
         tabBarInactiveTintColor: '#8A7F76',
-        tabBarStyle: s.tabBar,
+        tabBarStyle: [s.tabBar, { height: 60 + insets.bottom, paddingBottom: 6 + insets.bottom }],
         tabBarLabelStyle: s.label,
         tabBarItemStyle: s.item,
       }}
@@ -125,7 +127,7 @@ export default function AppLayout() {
 
 const s = StyleSheet.create({
   tabBar: {
-    height: 68, paddingTop: 6, paddingBottom: 8,
+    paddingTop: 6,
     backgroundColor: '#fff', borderTopWidth: 1, borderTopColor: '#E8E2DC',
     elevation: 12, shadowColor: '#000',
     shadowOffset: { width: 0, height: -2 }, shadowOpacity: 0.08, shadowRadius: 8,

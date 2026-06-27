@@ -241,6 +241,18 @@ export default function Login() {
               Criar conta
             </Link>
           </p>
+
+          <p className="text-center" style={{ marginTop: 16, fontSize: 12, color: '#B0A89E' }}>
+            Contato:{' '}
+            <a
+              href="mailto:contato@mgevolution.com.br"
+              style={{ color: '#8A7F76', textDecoration: 'underline' }}
+              onMouseEnter={e => e.currentTarget.style.color = '#CC1A1A'}
+              onMouseLeave={e => e.currentTarget.style.color = '#8A7F76'}
+            >
+              contato@mgevolution.com.br
+            </a>
+          </p>
         </div>
 
         <p style={{ marginTop: 24, fontSize: 11, color: '#B0A89E', textAlign: 'center' }}>

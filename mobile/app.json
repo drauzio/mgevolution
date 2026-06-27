@@ -16,7 +16,7 @@
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.mgevolution.mobile",
-      "buildNumber": "1",
+      "buildNumber": "7",
       "infoPlist": {
         "CFBundleDevelopmentRegion": "pt-BR",
         "CFBundleLocalizations": [
