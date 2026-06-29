@@ -1,6 +1,6 @@
 import { Outlet } from 'react-router-dom'
 import useSWR from 'swr'
-import { Clock, ShieldCheck } from 'lucide-react'
+import { Clock, ShieldCheck, Loader2, LogOut } from 'lucide-react'
 import { buscarStatus, buscarPlanos, criarPreferencia } from '../../services/checkout'
 import { useState } from 'react'
 import { useAuthContext } from '../../context/AuthContext'
@@ -32,16 +32,30 @@ function BannerCarencia({ dias }) {
   )
 }
 
+function duracaoLabel(dias) {
+  if (dias <= 30)  return 'Mensal'
+  if (dias <= 60)  return 'Bimestral'
+  if (dias <= 90)  return 'Trimestral'
+  if (dias <= 180) return 'Semestral'
+  return 'Anual'
+}
+
 function TelaExpirado() {
-  const { data: planos = [] } = useSWR('planos-publicos', buscarPlanos)
+  const { logout } = useAuthContext()
+  const { data: planos = [], isLoading, error } = useSWR('planos-publicos', buscarPlanos)
   const [assinando, setAssinando] = useState(null)
+  const [erro, setErro] = useState(null)
 
   async function assinar(id_plano) {
     setAssinando(id_plano)
+    setErro(null)
     try {
       const { init_point } = await criarPreferencia(id_plano)
       window.location.href = init_point
-    } catch { setAssinando(null) }
+    } catch {
+      setErro('Erro ao iniciar pagamento. Tente novamente.')
+      setAssinando(null)
+    }
   }
 
   const ativos = planos.filter(p => p.ativo)
@@ -57,32 +71,67 @@ function TelaExpirado() {
           <p style={{ fontSize: 13, color: '#8A7F76' }}>Escolha um plano para continuar usando o MG Evolution.</p>
         </div>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-          {ativos.map(p => (
-            <div key={p.id_plano} style={{ background: '#FFFFFF', border: '1px solid #E0D6CA', borderRadius: 14, padding: '16px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
-              <div>
-                <p style={{ fontSize: 14, fontWeight: 800, color: '#1A1A1A' }}>{p.nome}</p>
-                <p style={{ fontSize: 12, color: '#8A7F76' }}>{p.duracao_dias} dias</p>
+        {isLoading ? (
+          <div style={{ display: 'flex', justifyContent: 'center', padding: 32 }}>
+            <Loader2 size={24} color="#CC1A1A" style={{ animation: 'spin 1s linear infinite' }} />
+          </div>
+        ) : error ? (
+          <div style={{ padding: '14px 16px', borderRadius: 10, background: '#FEF2F2', border: '1px solid #FCA5A5', color: '#CC1A1A', fontSize: 13, textAlign: 'center' }}>
+            Não foi possível carregar os planos. Recarregue a página.
+          </div>
+        ) : ativos.length === 0 ? (
+          <div style={{ padding: '14px 16px', borderRadius: 10, background: '#F3F4F6', border: '1px solid #E5E7EB', color: '#6B7280', fontSize: 13, textAlign: 'center' }}>
+            Nenhum plano disponível no momento. Entre em contato com seu personal.
+          </div>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {ativos.map(p => (
+              <div key={p.id_plano} style={{ background: '#FFFFFF', border: '1px solid #E0D6CA', borderRadius: 14, padding: '16px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+                <div>
+                  <p style={{ fontSize: 14, fontWeight: 800, color: '#1A1A1A', marginBottom: 2 }}>{p.nome}</p>
+                  <p style={{ fontSize: 12, color: '#8A7F76' }}>{duracaoLabel(p.duracao_dias)} · {p.duracao_dias} dias</p>
+                  {p.descricao && <p style={{ fontSize: 12, color: '#8A7F76', marginTop: 2 }}>{p.descricao}</p>}
+                </div>
+                <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                  <p style={{ fontSize: 18, fontWeight: 900, color: '#CC1A1A', marginBottom: 6 }}>
+                    R$ {Number(p.preco).toFixed(2).replace('.', ',')}
+                  </p>
+                  <button
+                    onClick={() => assinar(p.id_plano)}
+                    disabled={!!assinando}
+                    style={{ height: 34, paddingInline: 16, borderRadius: 8, border: 'none', background: assinando === p.id_plano ? '#C4B9A8' : '#CC1A1A', color: '#FFF', fontSize: 12, fontWeight: 700, cursor: assinando ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}
+                  >
+                    {assinando === p.id_plano
+                      ? <><Loader2 size={12} style={{ animation: 'spin 1s linear infinite' }} /> Aguarde...</>
+                      : 'Assinar'}
+                  </button>
+                </div>
               </div>
-              <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                <p style={{ fontSize: 18, fontWeight: 900, color: '#CC1A1A', marginBottom: 6 }}>
-                  R$ {Number(p.preco).toFixed(2).replace('.', ',')}
-                </p>
-                <button
-                  onClick={() => assinar(p.id_plano)}
-                  disabled={!!assinando}
-                  style={{ height: 34, paddingInline: 16, borderRadius: 8, border: 'none', background: assinando === p.id_plano ? '#C4B9A8' : '#CC1A1A', color: '#FFF', fontSize: 12, fontWeight: 700, cursor: assinando ? 'not-allowed' : 'pointer' }}
-                >
-                  {assinando === p.id_plano ? 'Aguarde...' : 'Assinar'}
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
+
+        {erro && (
+          <div style={{ marginTop: 12, padding: '12px 16px', borderRadius: 10, background: '#FEF2F2', border: '1px solid #FCA5A5', color: '#CC1A1A', fontSize: 13, textAlign: 'center' }}>
+            {erro}
+          </div>
+        )}
 
         <p style={{ textAlign: 'center', fontSize: 11, color: '#C4B9A8', marginTop: 20 }}>
           Pagamento seguro via Mercado Pago · Pix ou Cartão
         </p>
+
+        <div style={{ textAlign: 'center', marginTop: 16 }}>
+          <button
+            onClick={logout}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'none', border: 'none', cursor: 'pointer', fontSize: 13, color: '#8A7F76', padding: '6px 12px', borderRadius: 8 }}
+          >
+            <LogOut size={14} />
+            Sair da conta
+          </button>
+        </div>
+
+        <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
       </div>
     </div>
   )

@@ -39,6 +39,7 @@ export default function AppLayout() {
   const insets = useSafeAreaInsets();
   const [checkingOnboarding, setCheckingOnboarding] = useState(true);
   const [assinaturaStatus, setAssinaturaStatus] = useState(null);
+  const [expirado, setExpirado] = useState(false);
   const checked = useRef(false);
 
   useFocusEffect(
@@ -61,18 +62,29 @@ export default function AppLayout() {
         .then(status => {
           if (!status) return;
           if (status.status === 'expirado') {
-            router.replace('/assinar');
+            setExpirado(true);
+            checked.current = true;
+            setCheckingOnboarding(false);
             return;
           }
           setAssinaturaStatus(status);
           checked.current = true;
           setCheckingOnboarding(false);
         })
-        .catch(() => { checked.current = true; setCheckingOnboarding(false); });
+        .catch(() => {
+          // Em caso de erro de rede, bloqueia por segurança se ainda não verificou
+          checked.current = true;
+          setCheckingOnboarding(false);
+        });
     }, [usuario, carregando])
   );
 
   if (carregando || !usuario || checkingOnboarding) {
+    return <Loading style={{ backgroundColor: '#F0EBE4' }} />;
+  }
+
+  if (expirado) {
+    router.replace('/assinar');
     return <Loading style={{ backgroundColor: '#F0EBE4' }} />;
   }
 

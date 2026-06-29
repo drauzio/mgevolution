@@ -37,6 +37,10 @@ async function criarPreferencia({ id_usuario, id_plano, nome_usuario, email_usua
         failure: `${backUrl}/pagamento/falhou`,
         pending: `${backUrl}/pagamento/pendente`,
       },
+      payment_methods: {
+        excluded_payment_types: [],
+        installments: 1,
+      },
       auto_return:      'approved',
       notification_url: `${process.env.BACKEND_URL}/webhook/mercadopago`,
       metadata: { id_usuario, id_plano },
