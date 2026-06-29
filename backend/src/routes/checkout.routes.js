@@ -1,7 +1,6 @@
 const router = require('express').Router()
 const svc    = require('../services/mp.service')
-const sql    = require('mssql')
-const { getPool } = require('../database/db')
+const { getPool, sql } = require('../database/connection')
 
 router.post('/preferencia', async (req, res, next) => {
   try {

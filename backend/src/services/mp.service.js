@@ -1,6 +1,5 @@
 const { MercadoPagoConfig, Preference, Payment } = require('mercadopago')
-const sql = require('mssql')
-const { getPool } = require('../database/db')
+const { getPool, sql } = require('../database/connection')
 
 const mp = new MercadoPagoConfig({
   accessToken: process.env.MP_ACCESS_TOKEN,
