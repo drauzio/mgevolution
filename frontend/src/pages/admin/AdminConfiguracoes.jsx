@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import useSWR, { mutate } from 'swr'
-import { Building2, Bell, Dumbbell, BarChart2, Bot, Users2, Save, Check, Home } from 'lucide-react'
+import { Building2, Bell, Dumbbell, BarChart2, Bot, Users2, Save, Check, Home, ShieldCheck } from 'lucide-react'
 import { getAll, salvarCategoria } from '../../services/configuracao'
 
 const META = {
@@ -10,10 +10,11 @@ const META = {
   treino:       { label: 'Treino',         icon: Dumbbell,  cor: '#15803d' },
   shape_score:  { label: 'Shape Score',    icon: BarChart2, cor: '#7C3AED' },
   coach_ia:     { label: 'Coach IA',       icon: Bot,       cor: '#0e7490' },
-  social:       { label: 'Social',         icon: Users2,    cor: '#CC1A1A' },
+  social:       { label: 'Social',            icon: Users2,      cor: '#CC1A1A' },
+  acesso:       { label: 'Acesso e Carência', icon: ShieldCheck, cor: '#0f766e' },
 }
 
-const ORDEM = ['academia', 'notificacoes', 'treino', 'shape_score', 'coach_ia', 'social']
+const ORDEM = ['academia', 'notificacoes', 'treino', 'shape_score', 'coach_ia', 'social', 'acesso']
 
 export default function AdminConfiguracoes() {
   const navigate = useNavigate()

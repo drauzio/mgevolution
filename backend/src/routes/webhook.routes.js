@@ -63,4 +63,19 @@ router.post('/whatsapp', validarAssinaturaMeta, (req, res) => {
   }
 })
 
+// ── Webhook Mercado Pago ──────────────────────────────────────────────────────
+router.post('/mercadopago', async (req, res) => {
+  res.sendStatus(200) // MP exige resposta imediata
+
+  try {
+    const { type, data } = req.body
+    if (type !== 'payment' || !data?.id) return
+
+    const mpSvc = require('../services/mp.service')
+    await mpSvc.processarWebhook(data.id)
+  } catch (e) {
+    console.error('[Webhook MP] Erro:', e.message)
+  }
+})
+
 module.exports = router

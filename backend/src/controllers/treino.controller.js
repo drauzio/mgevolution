@@ -18,14 +18,16 @@ async function buscar(req, res, next) {
 
 async function criar(req, res, next) {
   try {
-    const result = await svc.criar(req.body, req.usuario.id)
+    const idPersonal = req.body.id_personal ? Number(req.body.id_personal) : req.usuario.id
+    const result = await svc.criar(req.body, idPersonal)
     res.status(201).json(result)
   } catch (err) { next(err) }
 }
 
 async function atualizar(req, res, next) {
   try {
-    await svc.atualizar(Number(req.params.id), req.body, req.usuario.id)
+    const idPersonal = req.body.id_personal ? Number(req.body.id_personal) : req.usuario.id
+    await svc.atualizar(Number(req.params.id), req.body, idPersonal)
     res.json({ ok: true })
   } catch (err) { next(err) }
 }

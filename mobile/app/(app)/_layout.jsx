@@ -1,11 +1,12 @@
 import { useState, useCallback, useRef } from 'react';
 import { Tabs, useRouter, useFocusEffect } from 'expo-router';
-import { View, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Home, Dumbbell, Salad, TrendingUp, UserRound } from 'lucide-react-native';
+import { Home, Dumbbell, Salad, TrendingUp, UserRound, Clock } from 'lucide-react-native';
 import { useAuth } from '../../src/contexts/AuthContext';
 import { Loading } from '../../src/components/Loading';
 import api from '../../src/services/api';
+import { buscarStatus } from '../../src/services/checkout';
 
 const BRAND = '#CC1A1A';
 
@@ -17,16 +18,32 @@ function TabIcon({ focused, color, children }) {
   );
 }
 
+function BannerCarencia({ dias, onAssinar }) {
+  const urgente = dias <= 3;
+  return (
+    <View style={[banner.wrap, urgente ? banner.wrapUrgente : banner.wrapNormal]}>
+      <Clock size={14} color={urgente ? '#CC1A1A' : '#B45309'} />
+      <Text style={[banner.txt, { color: urgente ? '#CC1A1A' : '#B45309' }]}>
+        {dias === 0 ? 'Último dia de carência!' : `Carência: ${dias} dia${dias !== 1 ? 's' : ''} restante${dias !== 1 ? 's' : ''}`}
+      </Text>
+      <TouchableOpacity onPress={onAssinar} style={[banner.btn, urgente ? banner.btnUrgente : banner.btnNormal]}>
+        <Text style={[banner.btnTxt, { color: urgente ? '#CC1A1A' : '#B45309' }]}>Assinar</Text>
+      </TouchableOpacity>
+    </View>
+  );
+}
+
 export default function AppLayout() {
   const { usuario, carregando } = useAuth();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const [checkingOnboarding, setCheckingOnboarding] = useState(true);
+  const [assinaturaStatus, setAssinaturaStatus] = useState(null);
   const checked = useRef(false);
 
   useFocusEffect(
     useCallback(() => {
-      if (checked.current) return; // já passou, não re-executa
+      if (checked.current) return;
       if (carregando) return;
       if (!usuario) { router.replace('/(auth)/login'); return; }
 
@@ -37,10 +54,19 @@ export default function AppLayout() {
         .then(r => {
           if (!r.data.concluida) {
             router.replace('/onboarding');
-          } else {
-            checked.current = true;
-            setCheckingOnboarding(false);
+            return;
           }
+          return buscarStatus();
+        })
+        .then(status => {
+          if (!status) return;
+          if (status.status === 'expirado') {
+            router.replace('/assinar');
+            return;
+          }
+          setAssinaturaStatus(status);
+          checked.current = true;
+          setCheckingOnboarding(false);
         })
         .catch(() => { checked.current = true; setCheckingOnboarding(false); });
     }, [usuario, carregando])
@@ -51,6 +77,13 @@ export default function AppLayout() {
   }
 
   return (
+    <View style={{ flex: 1 }}>
+      {assinaturaStatus?.status === 'carencia' && (
+        <BannerCarencia
+          dias={assinaturaStatus.dias_restantes}
+          onAssinar={() => router.push('/assinar')}
+        />
+      )}
     <Tabs
       screenOptions={{
         headerShown: false,
@@ -122,8 +155,20 @@ export default function AppLayout() {
         }}
       />
     </Tabs>
+    </View>
   );
 }
+
+const banner = StyleSheet.create({
+  wrap:        { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 16, paddingVertical: 8 },
+  wrapNormal:  { backgroundColor: '#FFFBEB', borderBottomWidth: 1, borderBottomColor: '#FDE68A' },
+  wrapUrgente: { backgroundColor: '#FEF2F2', borderBottomWidth: 1, borderBottomColor: '#FCA5A5' },
+  txt:         { flex: 1, fontSize: 12, fontWeight: '600' },
+  btn:         { borderRadius: 6, paddingVertical: 4, paddingHorizontal: 10, borderWidth: 1 },
+  btnNormal:   { borderColor: '#FDE68A' },
+  btnUrgente:  { borderColor: '#FCA5A5' },
+  btnTxt:      { fontSize: 11, fontWeight: '700' },
+});
 
 const s = StyleSheet.create({
   tabBar: {

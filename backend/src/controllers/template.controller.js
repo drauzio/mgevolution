@@ -16,7 +16,8 @@ async function buscar(req, res, next) {
 
 async function criar(req, res, next) {
   try {
-    const result = await svc.criar(req.body, req.usuario.id)
+    const idPersonal = req.body.id_personal ? Number(req.body.id_personal) : req.usuario.id
+    const result = await svc.criar(req.body, idPersonal)
     res.status(201).json(result)
   } catch (err) { next(err) }
 }

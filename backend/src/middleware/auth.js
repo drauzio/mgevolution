@@ -20,4 +20,18 @@ function adminMiddleware(req, res, next) {
   next()
 }
 
-module.exports = { authMiddleware, adminMiddleware }
+function verificarPerfil(...perfis) {
+  return (req, res, next) => {
+    const raw = req.usuario?.perfis
+    const perfisUsuario = Array.isArray(raw)
+      ? raw
+      : typeof raw === 'string'
+        ? raw.split(',')
+        : [req.usuario?.perfil].filter(Boolean)
+    const temAcesso = perfis.some(p => perfisUsuario.includes(p))
+    if (!temAcesso) return res.status(403).json({ erro: 'Acesso não autorizado para este perfil' })
+    next()
+  }
+}
+
+module.exports = { authMiddleware, adminMiddleware, verificarPerfil }

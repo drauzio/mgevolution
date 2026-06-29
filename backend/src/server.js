@@ -56,6 +56,7 @@ app.use('/api/notificacoes',   authMiddleware, require('./routes/notificacoes.ro
 app.use('/api/menu-admin',    authMiddleware, require('./routes/menu-admin.routes'))
 app.use('/api/social',        authMiddleware, require('./routes/social.routes'))
 app.use('/api/perfil',        authMiddleware, require('./routes/perfil.routes'))
+app.use('/api/checkout',      authMiddleware, require('./routes/checkout.routes'))
 
 // Error handler global
 app.use((err, req, res, next) => {

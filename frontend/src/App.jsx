@@ -2,8 +2,10 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider } from './context/AuthContext'
 import RotaProtegida from './components/layout/RotaProtegida'
 import RotaAdmin from './components/layout/RotaAdmin'
+import RotaMenuDinamica from './components/layout/RotaMenuDinamica'
 import RotaNutricionista from './components/layout/RotaNutricionista'
 import GuardaOnboarding from './components/layout/GuardaOnboarding'
+import GuardaAssinatura from './components/layout/GuardaAssinatura'
 import LayoutAdmin from './components/layout/LayoutAdmin'
 import Login from './pages/auth/Login'
 import Cadastro from './pages/auth/Cadastro'
@@ -63,6 +65,8 @@ import MinhaAvaliacao from './pages/avaliacao/MinhaAvaliacao'
 import Termos from './pages/Termos'
 import Privacidade from './pages/Privacidade'
 import Suporte from './pages/Suporte'
+import Assinar from './pages/Assinar'
+import PagamentoRetorno from './pages/PagamentoRetorno'
 
 function EmConstrucao() {
   return (
@@ -87,11 +91,16 @@ export default function App() {
           <Route path="/termos" element={<Termos />} />
           <Route path="/privacidade" element={<Privacidade />} />
           <Route path="/suporte" element={<Suporte />} />
+          <Route path="/pagamento/sucesso"  element={<PagamentoRetorno />} />
+          <Route path="/pagamento/falhou"   element={<PagamentoRetorno />} />
+          <Route path="/pagamento/pendente" element={<PagamentoRetorno />} />
 
           {/* Todas as rotas autenticadas — layout único */}
           <Route element={<RotaProtegida />}>
             <Route path="/onboarding" element={<Onboarding />} />
+            <Route path="/assinar" element={<Assinar />} />
             <Route element={<GuardaOnboarding />}>
+            <Route element={<GuardaAssinatura />}>
               <Route element={<LayoutAdmin />}>
 
                 {/* Aluno */}
@@ -182,22 +191,13 @@ export default function App() {
                   <Route path="/gestao/evolucao-alunos"     element={<AdminEvolucaoAlunos />} />
                   <Route path="/gestao/evolucao-alunos/:id" element={<AdminEvolucaoAluno />} />
 
-                  {/* Conteúdo */}
-                  <Route path="/conteudo/treinos" element={<TreinoList />} />
-                  <Route path="/conteudo/treinos/novo" element={<TreinoForm />} />
-                  <Route path="/conteudo/treinos/:id" element={<TreinoForm />} />
+                  {/* Conteúdo — dietas e questionários só admin */}
                   <Route path="/conteudo/dietas" element={<AdminDieta />} />
                   <Route path="/conteudo/dietas/novo" element={<DietaForm />} />
                   <Route path="/conteudo/dietas/:id" element={<DietaForm />} />
-                  <Route path="/conteudo/exercicios" element={<ExercicioList />} />
-                  <Route path="/conteudo/exercicios/novo" element={<ExercicioForm />} />
-                  <Route path="/conteudo/exercicios/:id" element={<ExercicioForm />} />
                   <Route path="/conteudo/questionarios" element={<QuestionarioList />} />
                   <Route path="/conteudo/questionarios/novo" element={<QuestionarioForm />} />
                   <Route path="/conteudo/questionarios/:id" element={<QuestionarioForm />} />
-                  <Route path="/conteudo/protocolos" element={<TreinoList />} />
-                  <Route path="/conteudo/protocolos/novo" element={<TreinoForm />} />
-                  <Route path="/conteudo/protocolos/:id" element={<TreinoForm />} />
 
                   {/* Equipe */}
                   <Route path="/equipe/personais" element={<AdminPersonais />} />
@@ -208,10 +208,25 @@ export default function App() {
                   <Route path="/equipe/nutricionistas/:id" element={<NutricionistaForm />} />
                 </Route>
 
+                {/* Treinos, Protocolos e Exercícios — acesso controlado pelo menu (personal + admin) */}
+                <Route element={<RotaMenuDinamica />}>
+                  <Route path="/conteudo/treinos" element={<TreinoList />} />
+                  <Route path="/conteudo/treinos/novo" element={<TreinoForm />} />
+                  <Route path="/conteudo/treinos/:id" element={<TreinoForm />} />
+                  <Route path="/conteudo/exercicios" element={<ExercicioList />} />
+                  <Route path="/conteudo/exercicios/novo" element={<ExercicioForm />} />
+                  <Route path="/conteudo/exercicios/:id" element={<ExercicioForm />} />
+                  <Route path="/conteudo/protocolos" element={<TreinoList />} />
+                  <Route path="/conteudo/protocolos/novo" element={<TreinoForm />} />
+                  <Route path="/conteudo/protocolos/:id" element={<TreinoForm />} />
+                </Route>
+
                 {/* Qualquer caminho desconhecido mantém o layout */}
                 <Route path="*" element={<EmConstrucao />} />
 
               </Route>
+            </Route>
+            </Route>
             </Route>
           </Route>
 

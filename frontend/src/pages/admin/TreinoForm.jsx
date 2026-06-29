@@ -211,7 +211,7 @@ export default function TreinoForm() {
   const isEdicao = !!id
   const navigate = useNavigate()
   const location = useLocation()
-  const { token } = useAuthContext()
+  const { token, usuario } = useAuthContext()
 
   const isProtocolos = location.pathname.startsWith('/conteudo/protocolos') || location.pathname.startsWith('/admin/protocolos')
   const base = location.pathname.startsWith('/conteudo/protocolos') ? '/conteudo/protocolos'
@@ -229,8 +229,10 @@ export default function TreinoForm() {
     () => templatesService.listar()
   )
 
+  const isPersonal = usuario?.perfil === 'personal'
+
   const { data: personais = [] } = useSWR(
-    token && isProtocolos ? 'personais-lista' : null,
+    token && !isPersonal ? 'personais-lista' : null,
     () => personaisService.listar({ status: 'ativos' })
   )
 
@@ -247,7 +249,7 @@ export default function TreinoForm() {
   }, [isDirty])
 
   const [form, setForm] = useState({
-    id_usuario: '', nome: '', objetivo: '', observacoes: '',
+    id_usuario: '', id_personal: '', nome: '', objetivo: '', observacoes: '',
     data_inicio: '', data_fim: '',
     criterio_objetivo: '', criterio_nivel: '', criterio_sexo: '',
     criterio_idade_min: '', criterio_idade_max: '',
@@ -276,6 +278,7 @@ export default function TreinoForm() {
       .then(data => {
         setForm({
           id_usuario: data.id_usuario || '',
+          id_personal: data.id_personal || '',
           nome: data.nome,
           objetivo: data.objetivo || '',
           observacoes: data.observacoes || '',
@@ -396,9 +399,10 @@ export default function TreinoForm() {
     setIsDirty(true)
   }
 
-  const podeGerar = !!idPersonalIA && !!form.criterio_objetivo && !!form.criterio_sexo && !!form.criterio_idade_min && !!form.criterio_idade_max
+  const personalEfetivo = isPersonal ? usuario.id : (idPersonalIA || form.id_personal)
+  const podeGerar = !!personalEfetivo && !!form.criterio_objetivo && !!form.criterio_sexo && !!form.criterio_idade_min && !!form.criterio_idade_max
   const faltandoIA = [
-    !idPersonalIA          && 'personal',
+    !personalEfetivo        && 'personal',
     !form.criterio_objetivo && 'objetivo',
     !form.criterio_sexo     && 'sexo',
     !form.criterio_idade_min && 'idade mín.',
@@ -420,7 +424,7 @@ export default function TreinoForm() {
         criterio_idade_min: form.criterio_idade_min || undefined,
         criterio_idade_max: form.criterio_idade_max || undefined,
         num_dias:           Number(numDias),
-        id_personal:        idPersonalIA || undefined,
+        id_personal:        personalEfetivo || undefined,
       })
       setDias(result.dias)
       if (!form.nome)     setForm(f => ({ ...f, nome: result.nome }))
@@ -600,12 +604,22 @@ export default function TreinoForm() {
 
         <div className="treino-grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
           {!isProtocolos ? (
-            <Campo label="Aluno">
-              <select value={form.id_usuario} onChange={setF('id_usuario')} style={selectStyle}>
-                <option value="">Selecione o aluno</option>
-                {alunos.map(a => <option key={a.id_usuario} value={a.id_usuario}>{a.nome}</option>)}
-              </select>
-            </Campo>
+            <>
+              <Campo label="Aluno">
+                <select value={form.id_usuario} onChange={setF('id_usuario')} style={selectStyle}>
+                  <option value="">Selecione o aluno</option>
+                  {alunos.map(a => <option key={a.id_usuario} value={a.id_usuario}>{a.nome}</option>)}
+                </select>
+              </Campo>
+              {!isPersonal && personais.length > 0 && (
+                <Campo label="Personal responsável">
+                  <select value={form.id_personal} onChange={setF('id_personal')} style={selectStyle}>
+                    <option value="">Nenhum (sem personal)</option>
+                    {personais.map(p => <option key={p.id_usuario} value={p.id_usuario}>{p.nome}</option>)}
+                  </select>
+                </Campo>
+              )}
+            </>
           ) : (
             <Campo label="Critério — Objetivo">
               <select value={form.criterio_objetivo} onChange={setF('criterio_objetivo')} style={selectStyle}>
@@ -674,11 +688,11 @@ export default function TreinoForm() {
           <div style={{ marginTop: 8, paddingTop: 18, borderTop: '1px dashed #E0D6CA', display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
             <Sparkles size={15} color="#CC1A1A" />
             <span style={{ fontSize: 12, fontWeight: 700, color: '#8A7F76', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Gerar com IA</span>
-            {personais.length > 0 && (
+            {!isPersonal && personais.length > 0 && (
               <select
-                value={idPersonalIA}
-                onChange={e => setIdPersonalIA(e.target.value)}
-                style={{ height: 36, padding: '0 10px', border: '1px solid ' + (!idPersonalIA ? '#FCA5A5' : '#E0D6CA'), borderRadius: 10, fontSize: 12, color: '#1A1A1A', background: '#FFFFFF', cursor: 'pointer', outline: 'none' }}
+                value={form.id_personal}
+                onChange={e => { setIdPersonalIA(e.target.value); setForm(f => ({ ...f, id_personal: e.target.value })) }}
+                style={{ height: 36, padding: '0 10px', border: '1px solid ' + (!form.id_personal ? '#FCA5A5' : '#E0D6CA'), borderRadius: 10, fontSize: 12, color: '#1A1A1A', background: '#FFFFFF', cursor: 'pointer', outline: 'none' }}
               >
                 <option value="">Selecione o personal</option>
                 {personais.map(p => <option key={p.id_usuario} value={p.id_usuario}>{p.nome}</option>)}

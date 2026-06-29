@@ -95,6 +95,21 @@ async function registro({ nome, email, senha, telefone }) {
       SELECT @id_usuario, id_perfil FROM dbo.perfil WHERE nome = 'aluno'
     `)
 
+  // define carência com base na configuração
+  const cfgRes = await pool.request().query(`
+    SELECT valor FROM dbo.configuracao
+    WHERE categoria = 'acesso' AND chave = 'dias_carencia'
+  `)
+  const diasCarencia = parseInt(cfgRes.recordset[0]?.valor ?? '7', 10)
+  await pool.request()
+    .input('id',   sql.Int,  id)
+    .input('dias', sql.Int,  diasCarencia)
+    .query(`
+      UPDATE dbo.usuario
+      SET data_fim_carencia = DATEADD(day, @dias, CAST(GETDATE() AS DATE))
+      WHERE id_usuario = @id
+    `)
+
   return id
 }
 
