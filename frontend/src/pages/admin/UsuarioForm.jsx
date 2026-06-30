@@ -49,7 +49,7 @@ export default function UsuarioForm() {
   const navigate = useNavigate()
   const [form, setForm] = useState({
     nome: '', email: '', telefone: '', senha: '',
-    cpf: '', data_nascimento: '', sexo: '', bio: '',
+    cpf: '', data_nascimento: '', sexo: '', bio: '', data_fim_carencia: '',
   })
   const [perfis, setPerfis]         = useState([])
   const [fotoUrl, setFotoUrl]       = useState(null)
@@ -71,9 +71,10 @@ export default function UsuarioForm() {
           telefone:        mascaraFone(data.telefone),
           senha:           '',
           cpf:             mascaraCPF(data.cpf),
-          data_nascimento: data.data_nascimento ? data.data_nascimento.slice(0, 10) : '',
-          sexo:            data.sexo || '',
-          bio:             data.bio || '',
+          data_nascimento:  data.data_nascimento  ? data.data_nascimento.slice(0, 10)  : '',
+          sexo:             data.sexo || '',
+          bio:              data.bio || '',
+          data_fim_carencia: data.data_fim_carencia ? data.data_fim_carencia.slice(0, 10) : '',
         })
         setPerfis(data.perfis || [])
         setFotoUrl(data.foto_url || null)
@@ -259,15 +260,25 @@ export default function UsuarioForm() {
           </Campo>
         </div>
 
-        {/* Bio */}
-        <Campo label="Bio / Observações">
-          <textarea
-            style={{ ...inputBase, height: 80, padding: '10px 14px', resize: 'vertical', fontFamily: 'inherit', border: inputBorder(false) }}
-            placeholder="Informações adicionais sobre o usuário..."
-            value={form.bio}
-            onChange={set('bio')}
-          />
-        </Campo>
+        {/* Linha 4: Carência + Bio */}
+        <div style={{ display: 'grid', gridTemplateColumns: '200px 1fr', gap: 16 }}>
+          <Campo label="Carência até">
+            <input
+              type="date"
+              style={{ ...inputBase, border: inputBorder(false) }}
+              value={form.data_fim_carencia}
+              onChange={set('data_fim_carencia')}
+            />
+          </Campo>
+          <Campo label="Bio / Observações">
+            <textarea
+              style={{ ...inputBase, height: 42, padding: '10px 14px', resize: 'none', fontFamily: 'inherit', border: inputBorder(false) }}
+              placeholder="Informações adicionais sobre o usuário..."
+              value={form.bio}
+              onChange={set('bio')}
+            />
+          </Campo>
+        </div>
       </div>
 
       {/* Perfis de acesso */}
