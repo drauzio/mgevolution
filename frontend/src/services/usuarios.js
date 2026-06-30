@@ -6,3 +6,4 @@ export const criar          = (dados)        => api.post('/admin/usuarios', dado
 export const atualizar      = (id, dados)    => api.put(`/admin/usuarios/${id}`, dados).then(r => r.data)
 export const toggleAtivo    = (id)           => api.patch(`/admin/usuarios/${id}/toggle-ativo`).then(r => r.data)
 export const verificarEmail = (email, id)    => api.get('/admin/usuarios/verificar-email', { params: { email, id } }).then(r => r.data)
+export const uploadFoto     = (id, file)     => { const fd = new FormData(); fd.append('foto', file); return api.post(`/admin/usuarios/${id}/foto`, fd, { headers: { 'Content-Type': 'multipart/form-data' } }).then(r => r.data) }

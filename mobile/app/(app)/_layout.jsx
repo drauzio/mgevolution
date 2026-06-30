@@ -44,7 +44,8 @@ function duracaoLabel(dias) {
 
 function TelaExpirado() {
   const insets = useSafeAreaInsets();
-  const { logout } = useAuth();
+  const { sair } = useAuth();
+  const router = useRouter();
   const [planos, setPlanos]       = useState([]);
   const [loading, setLoading]     = useState(true);
   const [assinando, setAssinando] = useState(null);
@@ -119,7 +120,7 @@ function TelaExpirado() {
 
       <Text style={exp.rodape}>Pagamento seguro via Mercado Pago · Pix ou Cartão</Text>
 
-      <TouchableOpacity onPress={logout} style={exp.sairBtn}>
+      <TouchableOpacity onPress={async () => { await sair(); router.replace('/(auth)/login'); }} style={exp.sairBtn}>
         <Text style={exp.sairTxt}>Sair da conta</Text>
       </TouchableOpacity>
     </ScrollView>

@@ -41,13 +41,16 @@ async function buscarPorId(id_usuario) {
     .input('id', sql.Int, id_usuario)
     .query(`
       SELECT
-        u.id_usuario, u.nome, u.email, u.telefone, u.ativo, u.administrador,
+        u.id_usuario, u.nome, u.email, u.telefone, u.cpf,
+        u.data_nascimento, u.sexo, u.bio, u.foto_url,
+        u.ativo, u.administrador,
         STRING_AGG(p.nome, ',') AS perfis
       FROM dbo.usuario u
       LEFT JOIN dbo.usuario_perfil up ON up.id_usuario = u.id_usuario AND up.ativo = 1
       LEFT JOIN dbo.perfil p          ON p.id_perfil  = up.id_perfil  AND p.ativo  = 1
       WHERE u.id_usuario = @id
-      GROUP BY u.id_usuario, u.nome, u.email, u.telefone, u.ativo, u.administrador
+      GROUP BY u.id_usuario, u.nome, u.email, u.telefone, u.cpf,
+               u.data_nascimento, u.sexo, u.bio, u.foto_url, u.ativo, u.administrador
     `)
 
   if (!result.recordset[0]) return null
@@ -79,7 +82,7 @@ async function criar({ nome, email, telefone, senha, perfis = [] }) {
   const result = await pool.request()
     .input('nome',     sql.VarChar(120),   nome)
     .input('email',    sql.VarChar(120),   email)
-    .input('telefone', sql.VarChar(20),    telefone || null)
+    .input('telefone', sql.VarChar(20),    telefone ? telefone.replace(/\D/g, '') : null)
     .input('hash',     sql.VarBinary(256), Buffer.from(hash))
     .query(`
       INSERT INTO dbo.usuario (nome, cpf, email, senha_hash, telefone, administrador, senha_provisoria)
@@ -102,32 +105,43 @@ async function criar({ nome, email, telefone, senha, perfis = [] }) {
   return id
 }
 
-async function atualizar(id_usuario, { nome, email, telefone, senha, perfis }) {
+async function atualizar(id_usuario, { nome, email, telefone, senha, perfis, cpf, data_nascimento, sexo, bio }) {
   const pool = await getPool()
+  const cpfDigitos = cpf ? String(cpf).replace(/\D/g, '') : '00000000000'
 
   if (senha) {
     const hash = await bcrypt.hash(senha, 10)
     await pool.request()
-      .input('id',       sql.Int,           id_usuario)
-      .input('nome',     sql.VarChar(120),   nome)
-      .input('email',    sql.VarChar(120),   email)
-      .input('telefone', sql.VarChar(20),    telefone || null)
-      .input('hash',     sql.VarBinary(256), Buffer.from(hash))
+      .input('id',               sql.Int,           id_usuario)
+      .input('nome',             sql.VarChar(120),   nome)
+      .input('email',            sql.VarChar(120),   email)
+      .input('telefone',         sql.VarChar(20),    telefone ? telefone.replace(/\D/g, '') : null)
+      .input('cpf',              sql.VarChar(11),    cpfDigitos)
+      .input('data_nascimento',  sql.Date,           data_nascimento || null)
+      .input('sexo',             sql.VarChar(1),     sexo || null)
+      .input('bio',              sql.VarChar(500),   bio || null)
+      .input('hash',             sql.VarBinary(256), Buffer.from(hash))
       .query(`
         UPDATE dbo.usuario
         SET nome = @nome, email = @email, telefone = @telefone,
+            cpf = @cpf, data_nascimento = @data_nascimento, sexo = @sexo, bio = @bio,
             senha_hash = @hash, senha_provisoria = 1
         WHERE id_usuario = @id
       `)
   } else {
     await pool.request()
-      .input('id',       sql.Int,          id_usuario)
-      .input('nome',     sql.VarChar(120),  nome)
-      .input('email',    sql.VarChar(120),  email)
-      .input('telefone', sql.VarChar(20),   telefone || null)
+      .input('id',               sql.Int,          id_usuario)
+      .input('nome',             sql.VarChar(120),  nome)
+      .input('email',            sql.VarChar(120),  email)
+      .input('telefone',         sql.VarChar(20),   telefone ? telefone.replace(/\D/g, '') : null)
+      .input('cpf',              sql.VarChar(11),   cpfDigitos)
+      .input('data_nascimento',  sql.Date,          data_nascimento || null)
+      .input('sexo',             sql.VarChar(1),    sexo || null)
+      .input('bio',              sql.VarChar(500),  bio || null)
       .query(`
         UPDATE dbo.usuario
-        SET nome = @nome, email = @email, telefone = @telefone
+        SET nome = @nome, email = @email, telefone = @telefone,
+            cpf = @cpf, data_nascimento = @data_nascimento, sexo = @sexo, bio = @bio
         WHERE id_usuario = @id
       `)
   }

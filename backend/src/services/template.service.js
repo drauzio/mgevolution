@@ -336,7 +336,7 @@ async function gerarComIA(dados, idPersonal) {
     'EXERCÍCIOS DISPONÍVEIS (use APENAS estes IDs, não invente outros):',
     JSON.stringify(listaEx),
     '',
-    diretriz ? `DIRETRIZES DO PERSONAL (seguir obrigatoriamente):\n${diretriz}\n` : null,
+    diretriz ? `DIRETRIZES DO PERSONAL (prioridade máxima — sobrepõem qualquer outra regra abaixo):\n${diretriz}\n` : null,
     '',
     'Retorne JSON com esta estrutura exata:',
     '{"nome":"...","objetivo":"...","dias":[{"dia_semana":1,"nome":"Peito e Tríceps","descanso":false,"exercicios":[{"id_exercicio":N,"series":4,"repeticoes":"8-12","descanso_seg":60,"observacao":""}]},{"dia_semana":7,"nome":"","descanso":true,"exercicios":[]}]}',
@@ -345,7 +345,7 @@ async function gerarComIA(dados, idPersonal) {
     '- Inclua TODOS os 7 dias (1=Seg, 2=Ter, 3=Qua, 4=Qui, 5=Sex, 6=Sáb, 7=Dom)',
     '- Dias de descanso: descanso=true, exercicios=[]',
     '- Use SOMENTE id_exercicio da lista fornecida',
-    '- 4 a 6 exercícios por dia de treino',
+    '- Quantidade de exercícios por dia: siga EXATAMENTE as diretrizes do personal se informadas; caso contrário use entre 4 e 6 exercícios',
     '- Varie grupos musculares entre os dias (ex: peito+tri, costas+bi, pernas, ombro)',
     '- series é número inteiro, repeticoes pode ser "8-12" ou "10" etc',
   ].filter(Boolean)

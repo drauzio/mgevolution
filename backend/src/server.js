@@ -17,9 +17,9 @@ const limiterGeral = rateLimit({
 })
 
 const limiterLogin = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 10,
-  message: { erro: 'Muitas tentativas de login. Tente novamente em 15 minutos.' },
+  windowMs: 5 * 60 * 1000,
+  max: 15,
+  message: { erro: 'Muitas tentativas de login. Tente novamente em 5 minutos.' },
   standardHeaders: true,
   legacyHeaders: false,
 })

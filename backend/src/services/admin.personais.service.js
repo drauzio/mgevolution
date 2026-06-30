@@ -80,7 +80,7 @@ async function criar({ nome, email, telefone, senha }) {
   const result = await pool.request()
     .input('nome',     sql.VarChar(120),   nome)
     .input('email',    sql.VarChar(120),   email)
-    .input('telefone', sql.VarChar(20),    telefone || null)
+    .input('telefone', sql.VarChar(20),    telefone ? telefone.replace(/\D/g, '') : null)
     .input('hash',     sql.VarBinary(256), Buffer.from(hash))
     .query(`
       INSERT INTO dbo.usuario (nome, cpf, email, senha_hash, telefone, administrador, senha_provisoria)
@@ -123,7 +123,7 @@ async function atualizar(id_usuario, { nome, email, telefone, senha }) {
       .input('id',       sql.Int,           id_usuario)
       .input('nome',     sql.VarChar(120),   nome)
       .input('email',    sql.VarChar(120),   email)
-      .input('telefone', sql.VarChar(20),    telefone || null)
+      .input('telefone', sql.VarChar(20),    telefone ? telefone.replace(/\D/g, '') : null)
       .input('hash',     sql.VarBinary(256), Buffer.from(hash))
       .query(`
         UPDATE dbo.usuario
@@ -136,7 +136,7 @@ async function atualizar(id_usuario, { nome, email, telefone, senha }) {
       .input('id',       sql.Int,          id_usuario)
       .input('nome',     sql.VarChar(120),  nome)
       .input('email',    sql.VarChar(120),  email)
-      .input('telefone', sql.VarChar(20),   telefone || null)
+      .input('telefone', sql.VarChar(20),   telefone ? telefone.replace(/\D/g, '') : null)
       .query(`
         UPDATE dbo.usuario
         SET nome = @nome, email = @email, telefone = @telefone

@@ -1,5 +1,8 @@
-const svc       = require('../services/admin.usuarios.service')
-const auditoria = require('../services/auditoria.service')
+const svc        = require('../services/admin.usuarios.service')
+const auditoria  = require('../services/auditoria.service')
+const perfilSvc  = require('../services/perfil.service')
+const { uploadBuffer, gerarSasReadUrl } = require('../utils/azureBlob')
+const blobPaths  = require('../utils/blobPaths')
 
 function semSenha(obj) { if (!obj) return obj; const { senha, ...resto } = obj; return resto }
 function audit(req, dados) { auditoria.registrar({ id_usuario: req.usuario.id, nome_usuario: req.usuario.nome, ip: req.ip, ...dados }).catch(() => {}) }
@@ -86,4 +89,16 @@ async function toggleAtivo(req, res, next) {
   } catch (e) { next(e) }
 }
 
-module.exports = { listar, buscar, criar, atualizar, toggleAtivo, verificarEmail }
+async function uploadFoto(req, res, next) {
+  try {
+    if (!req.file) return res.status(400).json({ erro: 'Nenhuma imagem enviada' })
+    const id      = Number(req.params.id)
+    const blobName = blobPaths.fotoUsuario({ id_usuario: id, mimeType: req.file.mimetype })
+    await uploadBuffer({ buffer: req.file.buffer, blobName, contentType: req.file.mimetype })
+    const sasUrl = await gerarSasReadUrl(blobName, { minutes: 60 * 24 * 365 * 5 })
+    await perfilSvc.atualizarFoto(id, sasUrl)
+    res.json({ foto_url: sasUrl })
+  } catch (e) { next(e) }
+}
+
+module.exports = { listar, buscar, criar, atualizar, toggleAtivo, verificarEmail, uploadFoto }
