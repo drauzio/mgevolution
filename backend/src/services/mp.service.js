@@ -149,4 +149,47 @@ async function buscarStatusAluno(id_usuario) {
   return { status: 'expirado', dias_restantes: 0 }
 }
 
-module.exports = { criarPreferencia, processarWebhook, buscarStatusAluno }
+async function criarPagamento({ id_usuario, id_plano, formData, email_usuario }) {
+  const pool = await getPool()
+
+  const planoRes = await pool.request()
+    .input('id', sql.Int, id_plano)
+    .query('SELECT nome, preco FROM dbo.plano WHERE id_plano = @id AND ativo = 1')
+  if (!planoRes.recordset.length) throw new Error('Plano não encontrado')
+  const plano = planoRes.recordset[0]
+
+  const paymentClient = new Payment(mp)
+  const result = await paymentClient.create({
+    body: {
+      transaction_amount: Number(plano.preco),
+      description:        `MG Evolution — ${plano.nome}`,
+      payment_method_id:  formData.payment_method_id,
+      token:              formData.token              || undefined,
+      installments:       formData.installments       || 1,
+      issuer_id:          formData.issuer_id          || undefined,
+      payer: {
+        email:           formData.payer?.email || email_usuario,
+        identification:  formData.payer?.identification,
+        first_name:      formData.payer?.first_name,
+        last_name:       formData.payer?.last_name,
+      },
+      metadata:             { id_usuario, id_plano },
+      notification_url:     `${process.env.BACKEND_URL}/webhook/mercadopago`,
+      statement_descriptor: 'MG EVOLUTION',
+    }
+  })
+
+  if (result.status === 'approved') {
+    await processarWebhook(result.id).catch(() => {})
+  }
+
+  return {
+    status:          result.status,
+    payment_id:      result.id,
+    qr_code:         result.point_of_interaction?.transaction_data?.qr_code,
+    qr_code_base64:  result.point_of_interaction?.transaction_data?.qr_code_base64,
+    ticket_url:      result.point_of_interaction?.transaction_data?.ticket_url,
+  }
+}
+
+module.exports = { criarPreferencia, processarWebhook, buscarStatusAluno, criarPagamento }

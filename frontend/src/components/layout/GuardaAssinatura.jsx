@@ -1,7 +1,7 @@
-import { Outlet } from 'react-router-dom'
+import { Outlet, useNavigate } from 'react-router-dom'
 import useSWR from 'swr'
 import { Clock, ShieldCheck, Loader2, LogOut } from 'lucide-react'
-import { buscarStatus, buscarPlanos, criarPreferencia } from '../../services/checkout'
+import { buscarStatus, buscarPlanos } from '../../services/checkout'
 import { useState } from 'react'
 import { useAuthContext } from '../../context/AuthContext'
 
@@ -42,20 +42,14 @@ function duracaoLabel(dias) {
 
 function TelaExpirado() {
   const { logout } = useAuthContext()
+  const navigate = useNavigate()
   const { data: planos = [], isLoading, error } = useSWR('planos-publicos', buscarPlanos)
   const [assinando, setAssinando] = useState(null)
   const [erro, setErro] = useState(null)
 
-  async function assinar(id_plano) {
+  function assinar(id_plano) {
     setAssinando(id_plano)
-    setErro(null)
-    try {
-      const { init_point } = await criarPreferencia(id_plano)
-      window.location.href = init_point
-    } catch {
-      setErro('Erro ao iniciar pagamento. Tente novamente.')
-      setAssinando(null)
-    }
+    navigate(`/assinar?id_plano=${id_plano}`)
   }
 
   const ativos = planos.filter(p => p.ativo)

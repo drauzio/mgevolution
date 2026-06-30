@@ -1,15 +1,25 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { Tabs, useRouter, useFocusEffect } from 'expo-router';
-import { View, Text, TouchableOpacity, ScrollView, ActivityIndicator, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, ActivityIndicator, StyleSheet, Modal, SafeAreaView } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Home, Dumbbell, Salad, TrendingUp, UserRound, Clock, ShieldCheck } from 'lucide-react-native';
+import { Home, Dumbbell, Salad, TrendingUp, UserRound, Clock, ShieldCheck, X, CheckCircle } from 'lucide-react-native';
+import { WebView } from 'react-native-webview';
+import * as SecureStore from 'expo-secure-store';
+import Constants from 'expo-constants';
 import { useAuth } from '../../src/contexts/AuthContext';
 import { Loading } from '../../src/components/Loading';
-import api from '../../src/services/api';
-import { buscarStatus, buscarPlanos, criarPreferencia } from '../../src/services/checkout';
-import * as Linking from 'expo-linking';
+import api, { API_URL } from '../../src/services/api';
+import { buscarStatus, buscarPlanos } from '../../src/services/checkout';
 
 const BRAND = '#CC1A1A';
+
+// URL base do site web (mesmo host, sem /api)
+const WEB_URL = __DEV__
+  ? (() => {
+      const host = Constants.expoConfig?.hostUri?.split(':')[0];
+      return host && host !== 'localhost' ? `http://${host}:5173` : 'https://mgevolution.com.br';
+    })()
+  : API_URL.replace('/api', '');
 
 function TabIcon({ focused, color, children }) {
   return (
@@ -42,14 +52,17 @@ function duracaoLabel(dias) {
   return 'Anual';
 }
 
-function TelaExpirado() {
+function TelaExpirado({ onPagamentoConcluido }) {
   const insets = useSafeAreaInsets();
   const { sair } = useAuth();
   const router = useRouter();
-  const [planos, setPlanos]       = useState([]);
-  const [loading, setLoading]     = useState(true);
-  const [assinando, setAssinando] = useState(null);
-  const [erro, setErro]           = useState(null);
+  const [planos, setPlanos]               = useState([]);
+  const [loading, setLoading]             = useState(true);
+  const [erro, setErro]                   = useState(null);
+  const [webviewVisible, setWebviewVisible] = useState(false);
+  const [webviewUrl, setWebviewUrl]         = useState('');
+  const [webviewToken, setWebviewToken]     = useState('');
+  const [pagou, setPagou]                   = useState(false);
 
   useEffect(() => {
     buscarPlanos()
@@ -59,71 +72,118 @@ function TelaExpirado() {
   }, []);
 
   async function assinar(id_plano) {
-    setAssinando(id_plano);
-    setErro(null);
-    try {
-      const { init_point } = await criarPreferencia(id_plano);
-      await Linking.openURL(init_point);
-    } catch {
-      setErro('Erro ao iniciar pagamento. Tente novamente.');
-    } finally {
-      setAssinando(null);
+    const token = await SecureStore.getItemAsync('mg_token');
+    setWebviewToken(token || '');
+    setWebviewUrl(`${WEB_URL}/assinar?id_plano=${id_plano}`);
+    setPagou(false);
+    setWebviewVisible(true);
+  }
+
+  function fecharWebView() {
+    setWebviewVisible(false);
+    if (pagou) onPagamentoConcluido();
+  }
+
+  function onNavChange(state) {
+    if (state.url?.includes('/dashboard') || state.url?.includes('/pagamento/sucesso')) {
+      setPagou(true);
+      setWebviewVisible(false);
+      onPagamentoConcluido();
     }
   }
 
+  const injectJS = webviewToken
+    ? `localStorage.setItem('mg_token', '${webviewToken}'); true;`
+    : 'true;';
+
   return (
-    <ScrollView
-      style={{ flex: 1, backgroundColor: '#F7F3EE' }}
-      contentContainerStyle={{ padding: 24, paddingTop: insets.top + 24, paddingBottom: insets.bottom + 32 }}
-    >
-      <View style={exp.header}>
-        <View style={exp.iconBox}>
-          <ShieldCheck size={28} color="#CC1A1A" />
-        </View>
-        <Text style={exp.titulo}>Sua carência expirou</Text>
-        <Text style={exp.subtitulo}>Escolha um plano para continuar usando o MG Evolution.</Text>
-      </View>
-
-      {loading ? (
-        <ActivityIndicator size="large" color="#CC1A1A" style={{ marginTop: 40 }} />
-      ) : planos.length === 0 && !erro ? (
-        <View style={exp.aviso}>
-          <Text style={exp.avisoTxt}>Nenhum plano disponível no momento. Entre em contato com seu personal.</Text>
-        </View>
-      ) : (
-        <View style={{ gap: 12 }}>
-          {planos.map(p => (
-            <View key={p.id_plano} style={exp.card}>
-              <View style={{ flex: 1 }}>
-                <Text style={exp.planoNome}>{p.nome}</Text>
-                <Text style={exp.planoDuracao}>{duracaoLabel(p.duracao_dias)} · {p.duracao_dias} dias</Text>
-                {p.descricao ? <Text style={exp.planoDesc}>{p.descricao}</Text> : null}
+    <>
+      {/* Modal WebView de pagamento */}
+      <Modal visible={webviewVisible} animationType="slide" onRequestClose={fecharWebView}>
+        <SafeAreaView style={{ flex: 1, backgroundColor: '#FFF' }}>
+          <View style={wv.header}>
+            <TouchableOpacity onPress={fecharWebView} style={wv.closeBtn}>
+              <X size={22} color="#1A1A1A" />
+            </TouchableOpacity>
+            <Text style={wv.titulo}>Assinar plano</Text>
+            {pagou ? (
+              <CheckCircle size={22} color="#16A34A" />
+            ) : (
+              <View style={{ width: 22 }} />
+            )}
+          </View>
+          <WebView
+            source={{ uri: webviewUrl }}
+            injectedJavaScriptBeforeContentLoaded={injectJS}
+            onNavigationStateChange={onNavChange}
+            javaScriptEnabled
+            domStorageEnabled
+            startInLoadingState
+            renderLoading={() => (
+              <View style={wv.loadingBox}>
+                <ActivityIndicator size="large" color="#CC1A1A" />
               </View>
-              <View style={{ alignItems: 'flex-end' }}>
-                <Text style={exp.preco}>R$ {Number(p.preco).toFixed(2).replace('.', ',')}</Text>
-                <TouchableOpacity
-                  onPress={() => assinar(p.id_plano)}
-                  disabled={!!assinando}
-                  style={[exp.btn, assinando && exp.btnDisabled]}
-                >
-                  {assinando === p.id_plano
-                    ? <ActivityIndicator size="small" color="#FFF" />
-                    : <Text style={exp.btnTxt}>Assinar</Text>}
-                </TouchableOpacity>
-              </View>
-            </View>
-          ))}
+            )}
+          />
+          <View style={[wv.footer, { paddingBottom: insets.bottom + 8 }]}>
+            <TouchableOpacity
+              onPress={() => { setPagou(true); fecharWebView(); }}
+              style={wv.jaPageiBtn}
+            >
+              <Text style={wv.jaPageiTxt}>Já paguei — verificar acesso</Text>
+            </TouchableOpacity>
+          </View>
+        </SafeAreaView>
+      </Modal>
+
+      {/* Tela de planos */}
+      <ScrollView
+        style={{ flex: 1, backgroundColor: '#F7F3EE' }}
+        contentContainerStyle={{ padding: 24, paddingTop: insets.top + 24, paddingBottom: insets.bottom + 32 }}
+      >
+        <View style={exp.header}>
+          <View style={exp.iconBox}>
+            <ShieldCheck size={28} color="#CC1A1A" />
+          </View>
+          <Text style={exp.titulo}>Sua carência expirou</Text>
+          <Text style={exp.subtitulo}>Escolha um plano para continuar usando o MG Evolution.</Text>
         </View>
-      )}
 
-      {erro ? <Text style={exp.erro}>{erro}</Text> : null}
+        {loading ? (
+          <ActivityIndicator size="large" color="#CC1A1A" style={{ marginTop: 40 }} />
+        ) : planos.length === 0 && !erro ? (
+          <View style={exp.aviso}>
+            <Text style={exp.avisoTxt}>Nenhum plano disponível no momento. Entre em contato com seu personal.</Text>
+          </View>
+        ) : (
+          <View style={{ gap: 12 }}>
+            {planos.map(p => (
+              <View key={p.id_plano} style={exp.card}>
+                <View style={{ flex: 1 }}>
+                  <Text style={exp.planoNome}>{p.nome}</Text>
+                  <Text style={exp.planoDuracao}>{duracaoLabel(p.duracao_dias)} · {p.duracao_dias} dias</Text>
+                  {p.descricao ? <Text style={exp.planoDesc}>{p.descricao}</Text> : null}
+                </View>
+                <View style={{ alignItems: 'flex-end' }}>
+                  <Text style={exp.preco}>R$ {Number(p.preco).toFixed(2).replace('.', ',')}</Text>
+                  <TouchableOpacity onPress={() => assinar(p.id_plano)} style={exp.btn}>
+                    <Text style={exp.btnTxt}>Assinar</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            ))}
+          </View>
+        )}
 
-      <Text style={exp.rodape}>Pagamento seguro via Mercado Pago · Pix ou Cartão</Text>
+        {erro ? <Text style={exp.erro}>{erro}</Text> : null}
 
-      <TouchableOpacity onPress={async () => { await sair(); router.replace('/(auth)/login'); }} style={exp.sairBtn}>
-        <Text style={exp.sairTxt}>Sair da conta</Text>
-      </TouchableOpacity>
-    </ScrollView>
+        <Text style={exp.rodape}>Pagamento seguro via Mercado Pago · Pix ou Cartão</Text>
+
+        <TouchableOpacity onPress={async () => { await sair(); router.replace('/(auth)/login'); }} style={exp.sairBtn}>
+          <Text style={exp.sairTxt}>Sair da conta</Text>
+        </TouchableOpacity>
+      </ScrollView>
+    </>
   );
 }
 
@@ -180,7 +240,7 @@ export default function AppLayout() {
   }
 
   if (estado === 'expirado') {
-    return <TelaExpirado />;
+    return <TelaExpirado onPagamentoConcluido={verificar} />;
   }
 
   return (
@@ -293,6 +353,16 @@ const exp = StyleSheet.create({
   rodape:     { color: '#C4B9A8', fontSize: 11, textAlign: 'center', marginTop: 24 },
   sairBtn:    { alignItems: 'center', marginTop: 12, padding: 8 },
   sairTxt:    { fontSize: 13, color: '#8A7F76' },
+});
+
+const wv = StyleSheet.create({
+  header:     { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 16, borderBottomWidth: 1, borderBottomColor: '#E0D6CA' },
+  closeBtn:   { padding: 4 },
+  titulo:     { fontSize: 16, fontWeight: '800', color: '#1A1A1A' },
+  loadingBox: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, alignItems: 'center', justifyContent: 'center', backgroundColor: '#F7F3EE' },
+  footer:     { borderTopWidth: 1, borderTopColor: '#E0D6CA', padding: 12 },
+  jaPageiBtn: { alignItems: 'center', padding: 12, borderRadius: 12, backgroundColor: '#F0EBE4' },
+  jaPageiTxt: { fontSize: 14, fontWeight: '700', color: '#8A7F76' },
 });
 
 const s = StyleSheet.create({

@@ -2,6 +2,13 @@ const router = require('express').Router()
 const svc    = require('../services/mp.service')
 const { getPool, sql } = require('../database/connection')
 
+router.get('/config', (req, res) => {
+  res.json({
+    public_key: process.env.MP_PUBLIC_KEY,
+    email:      req.usuario.email,
+  })
+})
+
 router.post('/preferencia', async (req, res, next) => {
   try {
     const { id_plano } = req.body
@@ -18,6 +25,22 @@ router.post('/preferencia', async (req, res, next) => {
       id_plano:      Number(id_plano),
       nome_usuario:  usuario.nome,
       email_usuario: usuario.email,
+    })
+
+    res.json(result)
+  } catch (err) { next(err) }
+})
+
+router.post('/pagar', async (req, res, next) => {
+  try {
+    const { id_plano, formData } = req.body
+    if (!id_plano || !formData) return res.status(400).json({ erro: 'id_plano e formData são obrigatórios' })
+
+    const result = await svc.criarPagamento({
+      id_usuario:    req.usuario.id,
+      id_plano:      Number(id_plano),
+      formData,
+      email_usuario: req.usuario.email,
     })
 
     res.json(result)
