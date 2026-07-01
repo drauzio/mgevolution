@@ -179,12 +179,20 @@ async function criarPagamento({ id_usuario, id_plano, formData, email_usuario })
     }
   })
 
+  console.log('[MP] payment result:', JSON.stringify({
+    id:              result.id,
+    status:          result.status,
+    status_detail:   result.status_detail,
+    payment_method:  result.payment_method_id,
+  }))
+
   if (result.status === 'approved') {
     await processarWebhook(result.id).catch(() => {})
   }
 
   return {
     status:          result.status,
+    status_detail:   result.status_detail,
     payment_id:      result.id,
     qr_code:         result.point_of_interaction?.transaction_data?.qr_code,
     qr_code_base64:  result.point_of_interaction?.transaction_data?.qr_code_base64,

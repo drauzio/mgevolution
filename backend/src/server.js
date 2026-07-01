@@ -8,6 +8,9 @@ const { iniciarCrons } = require('./jobs/whatsappCron')
 
 const app = express()
 
+// Azure (e qualquer proxy reverso) envia X-Forwarded-For — precisa confiar nele
+app.set('trust proxy', 1)
+
 const limiterGeral = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 200,

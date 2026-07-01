@@ -97,7 +97,8 @@ export default function Assinar() {
                   setPixData(result)
                   setFase('pix')
                 } else {
-                  setErroBrick('Pagamento não aprovado. Verifique os dados e tente novamente.')
+                  const detalhe = result.status_detail ? ` (${result.status_detail})` : ''
+                  setErroBrick(`Pagamento não aprovado${detalhe}. Verifique os dados e tente novamente.`)
                 }
               }).catch(() => {
                 if (ativo) setErroBrick('Erro ao processar pagamento. Tente novamente.')
