@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useSearchParams, useLocation } from 'react-router-dom'
 import useSWR from 'swr'
 import { ShieldCheck, Loader2, CheckCircle2, Copy, Check, ChevronLeft, QrCode, Lock, CreditCard, Zap } from 'lucide-react'
-import { buscarPlanos, buscarConfig, pagar, cancelarPagamento } from '../services/checkout'
+import { buscarPlanos, buscarConfig, pagar, cancelarPagamento, buscarStatus } from '../services/checkout'
 
 function duracaoLabel(dias) {
   if (dias <= 30)  return 'Mensal'
@@ -52,6 +52,20 @@ export default function Assinar() {
   // pra ele decidir se mostra o rodapé "Já paguei — verificar acesso"
   useEffect(() => {
     window.ReactNativeWebView?.postMessage(JSON.stringify({ tipo: 'mg_fase', fase }))
+  }, [fase])
+
+  // Enquanto espera o Pix, checa periodicamente se o pagamento já foi confirmado
+  // (o usuário não precisa ficar recarregando a página pra descobrir)
+  useEffect(() => {
+    if (fase !== 'pix') return
+    let ativo = true
+    const intervalo = setInterval(async () => {
+      try {
+        const status = await buscarStatus()
+        if (ativo && status?.status === 'ativa') setFase('sucesso')
+      } catch { /* tenta de novo no próximo intervalo */ }
+    }, 5000)
+    return () => { ativo = false; clearInterval(intervalo) }
   }, [fase])
 
   async function iniciarPagamento(plano) {
@@ -205,9 +219,14 @@ export default function Assinar() {
           {copiado ? <><Check size={16} /> Copiado!</> : <><Copy size={16} /> Copiar código Pix</>}
         </button>
 
-        <p style={{ fontSize: 12, color: '#C4B9A8', marginTop: 20 }}>
-          Após pagar, recarregue o app para liberar o acesso.
-        </p>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, marginTop: 20 }}>
+          <Loader2 size={14} color="#8A7F76" style={{ animation: 'spin 1s linear infinite' }} />
+          <p style={{ fontSize: 12, color: '#8A7F76' }}>
+            Aguardando confirmação do pagamento...
+          </p>
+        </div>
+
+        <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
       </div>
     </Pagina>
   )

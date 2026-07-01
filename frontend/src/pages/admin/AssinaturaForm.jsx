@@ -58,6 +58,7 @@ export default function AssinaturaForm() {
     id_usuario: '', id_plano: '', data_inicio: hoje(), data_fim: '',
     status: 'ativa', valor_pago: '', observacao: '',
   })
+  const [pagoViaGateway, setPagoViaGateway] = useState(false)
   const [erro, setErro]           = useState(null)
   const [salvando, setSalvando]   = useState(false)
   const [cancelando, setCancelando] = useState(false)
@@ -86,6 +87,7 @@ export default function AssinaturaForm() {
           valor_pago:  a.valor_pago != null ? String(a.valor_pago) : '',
           observacao:  a.observacao || '',
         })
+        setPagoViaGateway(!!a.pago_via_gateway)
       })
       .finally(() => setCarregando(false))
   }, [id])
@@ -249,12 +251,18 @@ export default function AssinaturaForm() {
                 type="number"
                 min="0"
                 step="0.01"
-                style={{ ...inputStyle, paddingLeft: 40 }}
+                disabled={pagoViaGateway}
+                style={{ ...inputStyle, paddingLeft: 40, background: pagoViaGateway ? '#F7F3EE' : inputStyle.background, color: pagoViaGateway ? '#8A7F76' : inputStyle.color, cursor: pagoViaGateway ? 'not-allowed' : 'text' }}
                 placeholder="0,00"
                 value={form.valor_pago}
                 onChange={set('valor_pago')}
               />
             </div>
+            {pagoViaGateway && (
+              <p style={{ fontSize: 11, color: '#8A7F76' }}>
+                Pago via gateway (Mercado Pago) — valor confirmado não pode ser alterado.
+              </p>
+            )}
           </Campo>
         </div>
 

@@ -8,6 +8,7 @@ import { Eye, EyeOff, LockKeyhole, Mail, Dumbbell, ScanFace } from 'lucide-react
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as SecureStore from 'expo-secure-store';
 import * as Updates from 'expo-updates';
+import Constants from 'expo-constants';
 import { useAuth } from '../../src/contexts/AuthContext';
 import { Loading } from '../../src/components/Loading';
 import api from '../../src/services/api';
@@ -181,7 +182,9 @@ export default function Login() {
           <Text style={s.linkText}>Não tem conta? <Text style={s.link}>Criar conta</Text></Text>
         </TouchableOpacity>
 
-        <Text style={s.footer}>© MG Evolution · v{Updates.runtimeVersion || '1.0.2'}</Text>
+        <Text style={s.footer}>
+          © MG Evolution · v{Constants.nativeApplicationVersion || Updates.runtimeVersion || '?'} ({Constants.nativeBuildVersion || '?'})
+        </Text>
       </ScrollView>
     </KeyboardAvoidingView>
   );

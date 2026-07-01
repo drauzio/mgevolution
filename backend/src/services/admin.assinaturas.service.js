@@ -54,7 +54,11 @@ async function buscarPorId(id) {
         a.status, a.valor_pago, a.observacao, a.data_criacao, a.data_atualizacao,
         u.nome AS aluno_nome, u.email AS aluno_email, u.telefone AS aluno_telefone,
         p.nome AS plano_nome, p.preco AS plano_preco, p.duracao_dias,
-        DATEDIFF(day, CAST(GETDATE() AS DATE), a.data_fim) AS dias_restantes
+        DATEDIFF(day, CAST(GETDATE() AS DATE), a.data_fim) AS dias_restantes,
+        CAST(CASE WHEN EXISTS (
+          SELECT 1 FROM dbo.pagamento pg
+          WHERE pg.id_assinatura = a.id_assinatura AND pg.gateway_id IS NOT NULL AND pg.status = 'pago'
+        ) THEN 1 ELSE 0 END AS BIT) AS pago_via_gateway
       FROM dbo.assinatura a
       INNER JOIN dbo.usuario u ON u.id_usuario = a.id_usuario
       INNER JOIN dbo.plano   p ON p.id_plano   = a.id_plano
@@ -83,20 +87,41 @@ async function criar({ id_usuario, id_plano, data_inicio, data_fim, status, valo
 
 async function atualizar(id, { data_inicio, data_fim, status, valor_pago, observacao }) {
   const pool = await getPool()
-  await pool.request()
+
+  // Assinatura com pagamento real confirmado por gateway (Pix/cartão) não pode
+  // ter o valor pago alterado pelo admin — só protege quem criou/editou manualmente.
+  const gatewayRes = await pool.request()
+    .input('id', sql.Int, id)
+    .query(`
+      SELECT 1 FROM dbo.pagamento
+      WHERE id_assinatura = @id AND gateway_id IS NOT NULL AND status = 'pago'
+    `)
+  const pagoViaGateway = gatewayRes.recordset.length > 0
+
+  const req = pool.request()
     .input('id',          sql.Int, id)
     .input('data_inicio', sql.Date, new Date(data_inicio))
     .input('data_fim',    sql.Date, new Date(data_fim))
     .input('status',      sql.VarChar(20), status)
-    .input('valor_pago',  sql.Decimal(10,2), valor_pago != null ? Number(valor_pago) : null)
     .input('observacao',  sql.VarChar(500), observacao || null)
-    .query(`
+
+  if (pagoViaGateway) {
+    await req.query(`
+      UPDATE dbo.assinatura
+      SET data_inicio = @data_inicio, data_fim = @data_fim, status = @status,
+          observacao = @observacao, data_atualizacao = SYSUTCDATETIME()
+      WHERE id_assinatura = @id
+    `)
+  } else {
+    req.input('valor_pago', sql.Decimal(10,2), valor_pago != null ? Number(valor_pago) : null)
+    await req.query(`
       UPDATE dbo.assinatura
       SET data_inicio = @data_inicio, data_fim = @data_fim, status = @status,
           valor_pago = @valor_pago, observacao = @observacao,
           data_atualizacao = SYSUTCDATETIME()
       WHERE id_assinatura = @id
     `)
+  }
 }
 
 async function cancelar(id) {
