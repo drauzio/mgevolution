@@ -5,3 +5,4 @@ export const buscarPlanos     = ()                     => api.get('/admin/planos
 export const buscarConfig     = ()                     => api.get('/checkout/config').then(r => r.data)
 export const criarPreferencia = (id_plano)             => api.post('/checkout/preferencia', { id_plano }).then(r => r.data)
 export const pagar            = (id_plano, formData)   => api.post('/checkout/pagar', { id_plano, formData }).then(r => r.data)
+export const cancelarPagamento = (payment_id)          => api.delete(`/checkout/pagamento/${payment_id}`).then(r => r.data)

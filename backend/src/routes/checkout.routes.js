@@ -47,6 +47,13 @@ router.post('/pagar', async (req, res, next) => {
   } catch (err) { next(err) }
 })
 
+router.delete('/pagamento/:payment_id', async (req, res, next) => {
+  try {
+    await svc.cancelarPagamento(req.params.payment_id)
+    res.json({ ok: true })
+  } catch (err) { next(err) }
+})
+
 router.get('/status', async (req, res, next) => {
   try {
     const status = await svc.buscarStatusAluno(req.usuario.id)

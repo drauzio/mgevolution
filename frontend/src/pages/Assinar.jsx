@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import useSWR from 'swr'
 import { ShieldCheck, Loader2, CheckCircle2, Copy, Check, ChevronLeft, QrCode, Lock, CreditCard, Zap } from 'lucide-react'
-import { buscarPlanos, buscarConfig, pagar } from '../services/checkout'
+import { buscarPlanos, buscarConfig, pagar, cancelarPagamento } from '../services/checkout'
 
 function duracaoLabel(dias) {
   if (dias <= 30)  return 'Mensal'
@@ -32,6 +32,7 @@ export default function Assinar() {
   const [fase, setFase]               = useState('planos')
   const [planoSelecionado, setPlano]  = useState(null)
   const [pixData, setPixData]         = useState(null)
+  const [pixPaymentId, setPixPaymentId] = useState(null)
   const [copiado, setCopiado]         = useState(false)
   const [erroBrick, setErroBrick]     = useState(null)
   const [brickPronto, setBrickPronto] = useState(false)
@@ -84,6 +85,7 @@ export default function Assinar() {
                   setFase('sucesso')
                 } else if (result.status === 'pending' && result.qr_code) {
                   setPixData(result)
+                  setPixPaymentId(result.payment_id)
                   setFase('pix')
                 } else {
                   const detalhe = result.status_detail ? ` (${result.status_detail})` : ''
@@ -113,10 +115,15 @@ export default function Assinar() {
   }, [fase, planoSelecionado])
 
   function voltar() {
+    if (pixPaymentId) {
+      cancelarPagamento(pixPaymentId).catch(() => {})
+      setPixPaymentId(null)
+    }
     controllerRef.current?.unmount()
     controllerRef.current = null
     setFase('planos')
     setPlano(null)
+    setPixData(null)
     setErroBrick(null)
     setBrickPronto(false)
   }

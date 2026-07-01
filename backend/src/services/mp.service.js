@@ -200,4 +200,9 @@ async function criarPagamento({ id_usuario, id_plano, formData, email_usuario })
   }
 }
 
-module.exports = { criarPreferencia, processarWebhook, buscarStatusAluno, criarPagamento }
+async function cancelarPagamento(payment_id) {
+  const paymentClient = new Payment(mp)
+  await paymentClient.cancel({ id: payment_id })
+}
+
+module.exports = { criarPreferencia, processarWebhook, buscarStatusAluno, criarPagamento, cancelarPagamento }
