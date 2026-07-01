@@ -1,11 +1,59 @@
 import { useState, useRef } from 'react'
 import useSWR, { mutate } from 'swr'
 import { useNavigate } from 'react-router-dom'
-import { ArrowLeft, Camera, User, Lock, Save, Check, Eye, EyeOff, Trash2 } from 'lucide-react'
+import { ArrowLeft, Camera, User, Lock, Save, Check, Eye, EyeOff, Trash2, CreditCard, Clock, ShieldAlert } from 'lucide-react'
 import { buscar, atualizar, trocarSenha, uploadFoto, excluirConta } from '../services/perfil'
-import { mascaraFone, mascaraCPF } from '../utils/formatters'
+import { buscarStatus } from '../services/checkout'
+import { mascaraFone, mascaraCPF, data as formatarData } from '../utils/formatters'
 import { validarCPF } from '../utils/validators'
 import { useAuthContext } from '../context/AuthContext'
+
+function CardPlano() {
+  const navigate = useNavigate()
+  const { data: status, isLoading } = useSWR('checkout-status', buscarStatus)
+
+  if (isLoading || !status) return null
+
+  const config = {
+    ativa:    { icon: CreditCard, color: '#15803d', bg: 'rgba(21,128,61,0.08)', titulo: status.plano },
+    carencia: { icon: Clock,      color: '#B45309', bg: 'rgba(180,83,9,0.08)',  titulo: 'Período gratuito (carência)' },
+    expirado: { icon: ShieldAlert,color: '#CC1A1A', bg: 'rgba(204,26,26,0.08)', titulo: 'Nenhum plano ativo' },
+  }[status.status]
+  const Icone = config.icon
+
+  return (
+    <div style={{ background: '#FFF', border: '1px solid #E8E2DC', borderRadius: 16, padding: '18px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+        <div style={{ width: 40, height: 40, borderRadius: 10, background: config.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+          <Icone size={18} color={config.color} />
+        </div>
+        <div>
+          <p style={{ fontSize: 14, fontWeight: 800, color: '#1A1A1A' }}>{config.titulo}</p>
+          {status.status === 'ativa' && (
+            <p style={{ fontSize: 12, color: '#8A7F76', marginTop: 2 }}>Vence em {formatarData(status.data_fim)}</p>
+          )}
+          {status.status === 'carencia' && (
+            <p style={{ fontSize: 12, color: '#8A7F76', marginTop: 2 }}>
+              {status.dias_restantes === 0 ? 'Último dia' : `${status.dias_restantes} dia${status.dias_restantes > 1 ? 's' : ''} restante${status.dias_restantes > 1 ? 's' : ''}`}
+              {status.data_fim_carencia && ` · até ${formatarData(status.data_fim_carencia)}`}
+            </p>
+          )}
+          {status.status === 'expirado' && (
+            <p style={{ fontSize: 12, color: '#8A7F76', marginTop: 2 }}>Assine um plano para continuar com acesso completo.</p>
+          )}
+        </div>
+      </div>
+      {status.status !== 'ativa' && (
+        <button
+          onClick={() => navigate('/assinar')}
+          style={{ height: 36, paddingInline: 16, borderRadius: 9, border: 'none', background: '#CC1A1A', color: '#FFF', fontSize: 12, fontWeight: 700, cursor: 'pointer', flexShrink: 0 }}
+        >
+          Assinar agora
+        </button>
+      )}
+    </div>
+  )
+}
 
 const inputStyle = {
   width: '100%', height: 42, padding: '0 12px', borderRadius: 9,
@@ -216,6 +264,9 @@ export default function Perfil() {
           {!uploadando && <p style={{ fontSize: 11, color: '#C4B9A8', marginTop: 4 }}>JPG, PNG ou WebP · máx. 5 MB</p>}
         </div>
       </div>
+
+      {/* Plano / Carência */}
+      {usuarioCtx?.perfil === 'aluno' && <CardPlano />}
 
       {/* Dois cards lado a lado */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, alignItems: 'start' }}>

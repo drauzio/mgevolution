@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react'
 import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, StyleSheet } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { useRouter } from 'expo-router'
 import * as Linking from 'expo-linking'
-import { ShieldCheck } from 'lucide-react-native'
+import { ShieldCheck, ChevronLeft } from 'lucide-react-native'
 import { buscarPlanos, criarPreferencia } from '../src/services/checkout'
 
 function duracaoLabel(dias) {
@@ -15,6 +16,7 @@ function duracaoLabel(dias) {
 
 export default function Assinar() {
   const insets = useSafeAreaInsets()
+  const router = useRouter()
   const [planos, setPlanos]     = useState([])
   const [loading, setLoading]   = useState(true)
   const [assinando, setAssinando] = useState(null)
@@ -44,6 +46,10 @@ export default function Assinar() {
       style={{ flex: 1, backgroundColor: '#F7F3EE' }}
       contentContainerStyle={[s.container, { paddingTop: insets.top + 24, paddingBottom: insets.bottom + 32 }]}
     >
+      <TouchableOpacity onPress={() => router.back()} style={s.btnVoltar} activeOpacity={0.75}>
+        <ChevronLeft size={20} color="#1A1A1A" strokeWidth={2.5} />
+      </TouchableOpacity>
+
       <View style={s.header}>
         <View style={s.iconBox}>
           <ShieldCheck size={28} color="#CC1A1A" />
@@ -89,6 +95,7 @@ export default function Assinar() {
 
 const s = StyleSheet.create({
   container:   { padding: 24 },
+  btnVoltar:   { width: 36, height: 36, borderRadius: 10, backgroundColor: '#FFF', borderWidth: 1.5, borderColor: '#E0D6CA', alignItems: 'center', justifyContent: 'center', marginBottom: 12 },
   header:      { alignItems: 'center', marginBottom: 28 },
   iconBox:     { width: 60, height: 60, borderRadius: 30, backgroundColor: 'rgba(204,26,26,0.1)', alignItems: 'center', justifyContent: 'center', marginBottom: 14 },
   titulo:      { fontSize: 20, fontWeight: '900', color: '#1A1A1A', marginBottom: 8, textAlign: 'center' },

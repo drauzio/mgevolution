@@ -6,19 +6,67 @@ import {
 import {
   UserRound, LogOut, ScanFace, ChevronRight,
   Camera, Pencil, Check, X, Calendar, User, Trash2,
+  CreditCard, Clock, ShieldAlert,
 } from 'lucide-react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { useAuth } from '../../src/contexts/AuthContext';
 import { useRouter } from 'expo-router';
 import api from '../../src/services/api';
+import { buscarStatus } from '../../src/services/checkout';
 import { formatarData, dataParaISO, dataParaDisplay, formatarTelefone, formatarCPF } from '../../src/utils/format';
 import { validarCPF } from '../../src/utils/validators';
+
+function CardPlano({ status }) {
+  const router = useRouter();
+  if (!status) return null;
+
+  const config = {
+    ativa:    { Icone: CreditCard, color: '#15803d', bg: '#F0FDF4', titulo: status.plano },
+    carencia: { Icone: Clock,      color: '#B45309', bg: '#FFFBEB', titulo: 'Período gratuito (carência)' },
+    expirado: { Icone: ShieldAlert,color: '#CC1A1A', bg: '#FFF0F0', titulo: 'Nenhum plano ativo' },
+  }[status.status];
+  const { Icone } = config;
+
+  let subtitulo = '';
+  if (status.status === 'ativa') {
+    subtitulo = `Vence em ${dataParaDisplay(status.data_fim)}`;
+  } else if (status.status === 'carencia') {
+    subtitulo = status.dias_restantes === 0
+      ? 'Último dia'
+      : `${status.dias_restantes} dia${status.dias_restantes !== 1 ? 's' : ''} restante${status.dias_restantes !== 1 ? 's' : ''}`;
+    if (status.data_fim_carencia) subtitulo += ` · até ${dataParaDisplay(status.data_fim_carencia)}`;
+  } else {
+    subtitulo = 'Assine um plano para continuar com acesso completo.';
+  }
+
+  return (
+    <View style={s.secao}>
+      <View style={[s.item, { borderTopWidth: 0, paddingVertical: 16 }]}>
+        <View style={s.itemLeft}>
+          <View style={[s.iconBox, { backgroundColor: config.bg }]}>
+            <Icone size={18} color={config.color} strokeWidth={2} />
+          </View>
+          <View>
+            <Text style={s.itemLabel}>{config.titulo}</Text>
+            <Text style={s.itemSub}>{subtitulo}</Text>
+          </View>
+        </View>
+        {status.status !== 'ativa' && (
+          <TouchableOpacity onPress={() => router.push('/assinar')} style={s.acaoBtn2}>
+            <Text style={s.acaoBtn2Text}>Assinar</Text>
+          </TouchableOpacity>
+        )}
+      </View>
+    </View>
+  );
+}
 
 export default function Perfil() {
   const { usuario, sair, faceIdAtivo, habilitarFaceId, desabilitarFaceId } = useAuth();
   const router = useRouter();
 
   const [perfil, setPerfil]           = useState(null);
+  const [statusPlano, setStatusPlano] = useState(null);
   const [carregando, setCarregando]   = useState(true);
   const [editando, setEditando]       = useState(false);
   const [salvando, setSalvando]       = useState(false);
@@ -49,7 +97,13 @@ export default function Perfil() {
     }
   }, []);
 
+  const isAluno = (usuario?.perfis ?? []).includes('aluno') || usuario?.perfil === 'aluno';
+
   useEffect(() => { carregarPerfil(); }, [carregarPerfil]);
+  useEffect(() => {
+    if (!isAluno) return;
+    buscarStatus().then(setStatusPlano).catch(() => {});
+  }, [isAluno]);
 
   async function salvar() {
     if (!form.nome.trim()) { Alert.alert('Atenção', 'Nome é obrigatório.'); return; }
@@ -214,6 +268,9 @@ export default function Perfil() {
         <Text style={s.nomeHeader}>{perfil?.nome ?? usuario?.nome}</Text>
         <Text style={s.emailHeader}>{perfil?.email ?? usuario?.email}</Text>
       </View>
+
+      {/* Plano / Carência */}
+      <CardPlano status={statusPlano} />
 
       {/* Dados pessoais */}
       <View style={s.secao}>
@@ -455,6 +512,11 @@ const s = StyleSheet.create({
   acaoBtnSave:      { backgroundColor: '#CC1A1A' },
   acaoBtnSaveWide:  { flexDirection: 'row', gap: 6, paddingHorizontal: 14, width: 'auto' },
   acaoBtnSaveText:  { color: '#fff', fontSize: 13, fontWeight: '700' },
+  acaoBtn2: {
+    height: 32, paddingHorizontal: 14, borderRadius: 9,
+    backgroundColor: '#CC1A1A', alignItems: 'center', justifyContent: 'center',
+  },
+  acaoBtn2Text: { color: '#fff', fontSize: 12, fontWeight: '700' },
 
   item: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',

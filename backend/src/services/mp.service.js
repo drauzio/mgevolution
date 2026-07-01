@@ -16,7 +16,7 @@ async function criarPreferencia({ id_usuario, id_plano, nome_usuario, email_usua
   if (!planoRes.recordset.length) throw new Error('Plano não encontrado')
   const plano = planoRes.recordset[0]
 
-  const backUrl = process.env.MP_BACK_URL || process.env.FRONTEND_URL || 'https://seusite.com.br'
+  const backUrl = process.env.MP_BACK_URL || process.env.FRONTEND_URL || 'https://mgevolution.com.br'
 
   const preference = new Preference(mp)
   const result = await preference.create({
@@ -143,7 +143,7 @@ async function buscarStatusAluno(id_usuario) {
   const row = carenciaRes.recordset[0]
   if (row?.data_fim_carencia) {
     const dias = row.dias_restantes
-    if (dias >= 0) return { status: 'carencia', dias_restantes: dias }
+    if (dias >= 0) return { status: 'carencia', dias_restantes: dias, data_fim_carencia: row.data_fim_carencia }
   }
 
   return { status: 'expirado', dias_restantes: 0 }

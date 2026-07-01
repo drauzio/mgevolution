@@ -2,7 +2,7 @@ require('dotenv').config()
 const express = require('express')
 const cors = require('cors')
 const path = require('path')
-const rateLimit = require('express-rate-limit')
+const { rateLimit, ipKeyGenerator } = require('express-rate-limit')
 const { authMiddleware } = require('./middleware/auth')
 const { iniciarCrons } = require('./jobs/whatsappCron')
 
@@ -11,10 +11,14 @@ const app = express()
 // Azure passa X-Forwarded-For com porta (ex: 1.2.3.4:5678) — confia no proxy
 app.set('trust proxy', 1)
 
-// Azure inclui porta no IP — remove para o rate-limit aceitar
+// Azure inclui porta no IP (só em IPv4, ex: "1.2.3.4:5678") — remove antes de normalizar.
+// Usa ipKeyGenerator para IPv6 em vez de strip manual, que colapsava endereços diferentes na mesma chave.
+const IPV4_COM_PORTA = /^(\d{1,3}\.){3}\d{1,3}:\d+$/
+
 function keyGeneratorIp(req) {
-  const ip = req.ip || req.socket?.remoteAddress || '0.0.0.0'
-  return ip.replace(/^::ffff:/, '').replace(/:\d+$/, '')
+  const raw = (req.ip || req.socket?.remoteAddress || '0.0.0.0').replace(/^::ffff:/, '')
+  const ip = IPV4_COM_PORTA.test(raw) ? raw.replace(/:\d+$/, '') : raw
+  return ipKeyGenerator(ip)
 }
 
 const limiterGeral = rateLimit({

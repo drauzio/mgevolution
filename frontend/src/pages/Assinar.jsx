@@ -267,6 +267,16 @@ export default function Assinar() {
   // ── PLANOS ───────────────────────────────────────────────────────────────
   return (
     <Pagina>
+      {/* Voltar */}
+      <div style={{ marginBottom: 8 }}>
+        <button
+          onClick={() => navigate(-1)}
+          style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 36, height: 36, borderRadius: 10, border: '1.5px solid #E0D6CA', background: '#FFF', cursor: 'pointer' }}
+        >
+          <ChevronLeft size={20} color="#1A1A1A" />
+        </button>
+      </div>
+
       {/* Cabeçalho */}
       <div style={{ textAlign: 'center', marginBottom: 32 }}>
         <div style={{ width: 68, height: 68, borderRadius: '50%', background: 'linear-gradient(135deg,#CC1A1A,#E53E3E)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 18px', boxShadow: '0 8px 24px rgba(204,26,26,0.25)' }}>
