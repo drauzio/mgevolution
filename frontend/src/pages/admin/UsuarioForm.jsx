@@ -150,7 +150,7 @@ export default function UsuarioForm() {
     <div style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
 
       {/* Cabeçalho */}
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16 }}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
         <div>
           <h1 style={{ fontSize: 26, fontWeight: 900, color: '#1A1A1A', textTransform: 'uppercase', letterSpacing: '0.03em', marginBottom: 6 }}>
             {isEdicao ? 'Editar Usuário' : 'Novo Usuário'}
@@ -159,7 +159,7 @@ export default function UsuarioForm() {
             {isEdicao ? 'Atualize os dados e perfis do usuário.' : 'Preencha os dados e defina os perfis de acesso.'}
           </p>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0, flexWrap: 'wrap' }}>
           {isEdicao && <BtnExcluir onClick={toggleAtivo} loading={inativando} label={usuarioAtivo ? 'Inativar' : 'Reativar'} />}
           <BtnCancelar onClick={() => navigate('/admin/usuarios')} />
           <BtnSalvar onClick={salvar} loading={salvando} />
@@ -184,7 +184,7 @@ export default function UsuarioForm() {
         </div>
 
         {/* Linha 1: Nome + Email */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+        <div className="uf-grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
           <Campo label="Nome completo" erro={erros.nome}>
             <input
               style={{ ...inputBase, border: inputBorder(erros.nome) }}
@@ -207,7 +207,7 @@ export default function UsuarioForm() {
         </div>
 
         {/* Linha 2: Telefone + CPF */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+        <div className="uf-grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
           <Campo label="Telefone" erro={erros.telefone}>
             <input
               style={{ ...inputBase, border: inputBorder(erros.telefone) }}
@@ -228,7 +228,7 @@ export default function UsuarioForm() {
         </div>
 
         {/* Linha 3: Nascimento + Sexo + Senha */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 16 }}>
+        <div className="uf-grid-3" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 16 }}>
           <Campo label="Data de nascimento">
             <input
               type="date"
@@ -261,7 +261,7 @@ export default function UsuarioForm() {
         </div>
 
         {/* Linha 4: Carência + Bio */}
-        <div style={{ display: 'grid', gridTemplateColumns: '200px 1fr', gap: 16 }}>
+        <div className="uf-grid-carencia" style={{ display: 'grid', gridTemplateColumns: '200px 1fr', gap: 16 }}>
           <Campo label="Carência até">
             <input
               type="date"
@@ -287,7 +287,7 @@ export default function UsuarioForm() {
           <p style={{ fontSize: 12, fontWeight: 700, color: '#8A7F76', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 4 }}>Perfis de acesso</p>
           <p style={{ fontSize: 13, color: '#B0A89E' }}>Um usuário pode ter mais de um perfil simultaneamente.</p>
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+        <div className="uf-grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
           {PERFIS.map(p => {
             const ativo = perfis.includes(p.value)
             return (
@@ -319,7 +319,14 @@ export default function UsuarioForm() {
         </div>
       )}
 
-      <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
+      <style>{`
+        @keyframes spin { to { transform: rotate(360deg) } }
+        @media (max-width: 640px) {
+          .uf-grid-2 { grid-template-columns: 1fr !important; }
+          .uf-grid-3 { grid-template-columns: 1fr !important; }
+          .uf-grid-carencia { grid-template-columns: 1fr !important; }
+        }
+      `}</style>
     </div>
   )
 }

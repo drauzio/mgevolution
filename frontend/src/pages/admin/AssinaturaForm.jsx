@@ -164,7 +164,7 @@ export default function AssinaturaForm() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 32 }}>
 
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16 }}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
         <div>
           <h1 style={{ fontSize: 26, fontWeight: 900, color: '#1A1A1A', textTransform: 'uppercase', letterSpacing: '0.03em', marginBottom: 6 }}>
             {isEdicao ? 'Editar Assinatura' : 'Nova Assinatura'}
@@ -173,7 +173,7 @@ export default function AssinaturaForm() {
             {isEdicao ? 'Atualize os dados da assinatura.' : 'Vincule um aluno a um plano.'}
           </p>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0, flexWrap: 'wrap' }}>
           {isEdicao && form.status !== 'cancelada' && (
             <BtnExcluir onClick={() => setShowModal(true)} loading={cancelando} label="Cancelar assinatura" />
           )}
@@ -184,7 +184,7 @@ export default function AssinaturaForm() {
 
       <div style={{ background: '#FFFFFF', border: '1px solid #E0D6CA', borderRadius: 20, padding: 32, display: 'flex', flexDirection: 'column', gap: 20, boxShadow: '0 2px 16px rgba(0,0,0,0.04)' }}>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+        <div className="as-grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
           <Campo label="Aluno">
             {isEdicao ? (
               <div style={{ ...inputStyle, display: 'flex', alignItems: 'center', background: '#F7F3EE', color: '#1A1A1A', cursor: 'not-allowed' }}>
@@ -222,7 +222,7 @@ export default function AssinaturaForm() {
           </div>
         )}
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+        <div className="as-grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
           <Campo label="Data de início">
             <input
               type="date"
@@ -237,7 +237,7 @@ export default function AssinaturaForm() {
           </Campo>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+        <div className="as-grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
           <Campo label="Status">
             <select value={form.status} onChange={set('status')} style={selectStyle}>
               {STATUS_OPCOES.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
@@ -307,6 +307,12 @@ export default function AssinaturaForm() {
           </div>
         </div>
       )}
+
+      <style>{`
+        @media (max-width: 640px) {
+          .as-grid-2 { grid-template-columns: 1fr !important; }
+        }
+      `}</style>
 
     </div>
   )

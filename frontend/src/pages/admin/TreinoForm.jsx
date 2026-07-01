@@ -673,7 +673,7 @@ export default function TreinoForm() {
           </Campo>
 
           {!isProtocolos && (
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+            <div className="treino-grid-inner" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
               <Campo label="Início">
                 <input style={inputStyle} type="date" value={form.data_inicio} onChange={setF('data_inicio')} />
               </Campo>

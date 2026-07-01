@@ -228,10 +228,16 @@ export default function LayoutAdmin() {
       {/* Área principal */}
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0, overflow: 'hidden' }}>
         <TopBarAdmin onMenuClick={() => setDrawer(true)} />
-        <main style={{ flex: 1, overflowY: 'auto', padding: '40px 48px 80px' }}>
+        <main className="adm-main" style={{ flex: 1, overflowY: 'auto', padding: '40px 48px 80px' }}>
           <Outlet />
         </main>
       </div>
+
+      <style>{`
+        @media (max-width: 700px) {
+          .adm-main { padding: 20px 16px 60px !important; }
+        }
+      `}</style>
     </div>
   )
 }
