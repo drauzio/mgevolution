@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useNavigate, useSearchParams, useLocation } from 'react-router-dom'
 import useSWR from 'swr'
 import { ShieldCheck, Loader2, CheckCircle2, Copy, Check, ChevronLeft, QrCode, Lock, CreditCard, Zap } from 'lucide-react'
 import { buscarPlanos, buscarConfig, pagar, cancelarPagamento } from '../services/checkout'
@@ -24,8 +24,10 @@ function carregarSdk() {
 
 export default function Assinar() {
   const navigate = useNavigate()
+  const location = useLocation()
   const [searchParams] = useSearchParams()
   const idPlanoPre = searchParams.get('id_plano')
+  const temHistorico = location.key !== 'default'
 
   const { data: planos = [], isLoading: carregandoPlanos } = useSWR('planos-publicos', buscarPlanos)
 
@@ -45,6 +47,12 @@ export default function Assinar() {
     const plano = planosAtivos.find(p => String(p.id_plano) === String(idPlanoPre))
     if (plano) iniciarPagamento(plano)
   }, [idPlanoPre, planosAtivos.length])
+
+  // Avisa o app nativo (quando embutido numa WebView) em qual etapa a página está,
+  // pra ele decidir se mostra o rodapé "Já paguei — verificar acesso"
+  useEffect(() => {
+    window.ReactNativeWebView?.postMessage(JSON.stringify({ tipo: 'mg_fase', fase }))
+  }, [fase])
 
   async function iniciarPagamento(plano) {
     setPlano(plano)
@@ -267,15 +275,17 @@ export default function Assinar() {
   // ── PLANOS ───────────────────────────────────────────────────────────────
   return (
     <Pagina>
-      {/* Voltar */}
-      <div style={{ marginBottom: 8 }}>
-        <button
-          onClick={() => navigate(-1)}
-          style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 36, height: 36, borderRadius: 10, border: '1.5px solid #E0D6CA', background: '#FFF', cursor: 'pointer' }}
-        >
-          <ChevronLeft size={20} color="#1A1A1A" />
-        </button>
-      </div>
+      {/* Voltar (só mostra quando tem pra onde voltar de verdade) */}
+      {temHistorico && (
+        <div style={{ marginBottom: 8 }}>
+          <button
+            onClick={() => navigate(-1)}
+            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 36, height: 36, borderRadius: 10, border: '1.5px solid #E0D6CA', background: '#FFF', cursor: 'pointer' }}
+          >
+            <ChevronLeft size={20} color="#1A1A1A" />
+          </button>
+        </div>
+      )}
 
       {/* Cabeçalho */}
       <div style={{ textAlign: 'center', marginBottom: 32 }}>

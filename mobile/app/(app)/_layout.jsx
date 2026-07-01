@@ -63,6 +63,7 @@ function TelaExpirado({ onPagamentoConcluido }) {
   const [webviewUrl, setWebviewUrl]         = useState('');
   const [webviewToken, setWebviewToken]     = useState('');
   const [pagou, setPagou]                   = useState(false);
+  const [faseWebview, setFaseWebview]       = useState('pagamento');
 
   useEffect(() => {
     buscarPlanos()
@@ -76,6 +77,7 @@ function TelaExpirado({ onPagamentoConcluido }) {
     setWebviewToken(token || '');
     setWebviewUrl(`${WEB_URL}/assinar?id_plano=${id_plano}`);
     setPagou(false);
+    setFaseWebview('pagamento');
     setWebviewVisible(true);
   }
 
@@ -90,6 +92,13 @@ function TelaExpirado({ onPagamentoConcluido }) {
       setWebviewVisible(false);
       onPagamentoConcluido();
     }
+  }
+
+  function onMessage(event) {
+    try {
+      const data = JSON.parse(event.nativeEvent.data);
+      if (data.tipo === 'mg_fase') setFaseWebview(data.fase);
+    } catch {}
   }
 
   const injectJS = webviewToken
@@ -116,6 +125,7 @@ function TelaExpirado({ onPagamentoConcluido }) {
             source={{ uri: webviewUrl }}
             injectedJavaScriptBeforeContentLoaded={injectJS}
             onNavigationStateChange={onNavChange}
+            onMessage={onMessage}
             javaScriptEnabled
             domStorageEnabled
             startInLoadingState
@@ -125,14 +135,16 @@ function TelaExpirado({ onPagamentoConcluido }) {
               </View>
             )}
           />
-          <View style={[wv.footer, { paddingBottom: insets.bottom + 8 }]}>
-            <TouchableOpacity
-              onPress={() => { setPagou(true); fecharWebView(); }}
-              style={wv.jaPageiBtn}
-            >
-              <Text style={wv.jaPageiTxt}>Já paguei — verificar acesso</Text>
-            </TouchableOpacity>
-          </View>
+          {(faseWebview === 'pagamento' || faseWebview === 'pix') && (
+            <View style={[wv.footer, { paddingBottom: insets.bottom + 8 }]}>
+              <TouchableOpacity
+                onPress={() => { setPagou(true); fecharWebView(); }}
+                style={wv.jaPageiBtn}
+              >
+                <Text style={wv.jaPageiTxt}>Já paguei — verificar acesso</Text>
+              </TouchableOpacity>
+            </View>
+          )}
         </SafeAreaView>
       </Modal>
 
