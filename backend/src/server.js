@@ -8,8 +8,14 @@ const { iniciarCrons } = require('./jobs/whatsappCron')
 
 const app = express()
 
-// Azure (e qualquer proxy reverso) envia X-Forwarded-For — precisa confiar nele
+// Azure passa X-Forwarded-For com porta (ex: 1.2.3.4:5678) — confia no proxy
 app.set('trust proxy', 1)
+
+// Azure inclui porta no IP — remove para o rate-limit aceitar
+function keyGeneratorIp(req) {
+  const ip = req.ip || req.socket?.remoteAddress || '0.0.0.0'
+  return ip.replace(/^::ffff:/, '').replace(/:\d+$/, '')
+}
 
 const limiterGeral = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -17,6 +23,7 @@ const limiterGeral = rateLimit({
   message: { erro: 'Muitas requisições, tente novamente em alguns minutos.' },
   standardHeaders: true,
   legacyHeaders: false,
+  keyGenerator: keyGeneratorIp,
 })
 
 const limiterLogin = rateLimit({
@@ -25,6 +32,7 @@ const limiterLogin = rateLimit({
   message: { erro: 'Muitas tentativas de login. Tente novamente em 5 minutos.' },
   standardHeaders: true,
   legacyHeaders: false,
+  keyGenerator: keyGeneratorIp,
 })
 
 const allowedOrigin = process.env.CORS_ORIGIN
