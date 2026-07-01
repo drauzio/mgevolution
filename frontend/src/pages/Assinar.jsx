@@ -304,7 +304,7 @@ export default function Assinar() {
                   background: destaque ? 'linear-gradient(135deg,#CC1A1A,#E53E3E)' : '#FFF',
                   border: destaque ? 'none' : '1.5px solid #E0D6CA',
                   borderRadius: 18,
-                  padding: '20px 22px',
+                  padding: destaque ? '40px 22px 20px' : '20px 22px',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'space-between',

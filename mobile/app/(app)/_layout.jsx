@@ -2,7 +2,7 @@ import { useState, useCallback, useRef, useEffect } from 'react';
 import { Tabs, useRouter, useFocusEffect } from 'expo-router';
 import { View, Text, TouchableOpacity, ScrollView, ActivityIndicator, StyleSheet, Modal, SafeAreaView } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Home, Dumbbell, Salad, TrendingUp, UserRound, Clock, ShieldCheck, X, CheckCircle } from 'lucide-react-native';
+import { Home, Dumbbell, Salad, TrendingUp, UserRound, Clock, ShieldCheck, X, CheckCircle, LogOut } from 'lucide-react-native';
 import { WebView } from 'react-native-webview';
 import * as SecureStore from 'expo-secure-store';
 import Constants from 'expo-constants';
@@ -179,7 +179,12 @@ function TelaExpirado({ onPagamentoConcluido }) {
 
         <Text style={exp.rodape}>Pagamento seguro via Mercado Pago · Pix ou Cartão</Text>
 
-        <TouchableOpacity onPress={async () => { await sair(); router.replace('/(auth)/login'); }} style={exp.sairBtn}>
+        <TouchableOpacity
+          onPress={async () => { await sair(); router.replace('/(auth)/login'); }}
+          style={exp.sairBtn}
+          activeOpacity={0.8}
+        >
+          <LogOut size={16} color="#8A7F76" strokeWidth={2} />
           <Text style={exp.sairTxt}>Sair da conta</Text>
         </TouchableOpacity>
       </ScrollView>
@@ -351,8 +356,12 @@ const exp = StyleSheet.create({
   btnTxt:     { color: '#FFF', fontSize: 13, fontWeight: '700' },
   erro:       { color: '#CC1A1A', fontSize: 13, textAlign: 'center', marginTop: 16 },
   rodape:     { color: '#C4B9A8', fontSize: 11, textAlign: 'center', marginTop: 24 },
-  sairBtn:    { alignItems: 'center', marginTop: 12, padding: 8 },
-  sairTxt:    { fontSize: 13, color: '#8A7F76' },
+  sairBtn:    {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
+    alignSelf: 'center', marginTop: 20, paddingVertical: 12, paddingHorizontal: 22,
+    borderRadius: 12, borderWidth: 1.5, borderColor: '#E0D6CA', backgroundColor: '#FFF',
+  },
+  sairTxt:    { fontSize: 13, fontWeight: '700', color: '#8A7F76' },
 });
 
 const wv = StyleSheet.create({
