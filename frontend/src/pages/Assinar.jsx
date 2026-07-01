@@ -152,6 +152,16 @@ export default function Assinar() {
   // ── PIX ──────────────────────────────────────────────────────────────────
   if (fase === 'pix') return (
     <Pagina>
+      <div style={{ display: 'flex', alignItems: 'center', marginBottom: 24 }}>
+        <button
+          onClick={voltar}
+          style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 36, height: 36, borderRadius: 10, border: '1.5px solid #E0D6CA', background: '#FFF', cursor: 'pointer', flexShrink: 0 }}
+        >
+          <ChevronLeft size={20} color="#1A1A1A" />
+        </button>
+        <p style={{ fontSize: 16, fontWeight: 800, color: '#1A1A1A', margin: '0 auto' }}>Pagamento via Pix</p>
+        <div style={{ width: 36 }} />
+      </div>
       <div style={{ textAlign: 'center' }}>
         <div style={{ width: 72, height: 72, borderRadius: '50%', background: 'linear-gradient(135deg,#16A34A,#22C55E)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px', boxShadow: '0 8px 24px rgba(22,163,74,0.2)' }}>
           <QrCode size={32} color="#FFF" />
